@@ -110,7 +110,7 @@ function setEmailType(type) { _currentEmailType = type; }
 
 // ── Helper: Send email ──
 async function sendEmail(to, subject, html) {
-  if (!transporter) {
+  if (!useResend && !transporter) {
     console.warn('[EMAIL] Transporter not initialized, skipping email to', to);
     logEmail(to, subject, _currentEmailType, 'failed');
     return false;
