@@ -602,21 +602,23 @@ select option{background:var(--bg3);}
 
   /* Top Traders leaderboard - keep 3 columns but compact */
   #leaderboard-podium{
-    grid-template-columns:1fr 1.2fr 1fr !important;gap:4px !important;padding:10px 6px !important;
+    grid-template-columns:1fr 1.3fr 1fr !important;gap:3px !important;padding:10px 4px !important;
   }
   #leaderboard-podium > div{
-    min-height:auto !important;padding:8px 4px !important;
+    min-height:auto !important;padding:8px 2px !important;
   }
-  #leaderboard-podium [style*="font-size:16px"]{font-size:12px !important;}
+  #leaderboard-podium [style*="font-size:16px"]{font-size:11px !important;}
   #leaderboard-podium [style*="font-size:14px"]{font-size:10px !important;}
-  #leaderboard-podium [style*="font-size:18px"]{font-size:13px !important;}
-  #leaderboard-podium [style*="font-size:20px"]{font-size:14px !important;}
-  #leaderboard-podium [style*="font-size:11px"]{font-size:9px !important;}
-  #leaderboard-podium [style*="font-size:10px"]{font-size:8px !important;}
-  #leaderboard-podium [style*="width:60px;height:60px"]{width:40px !important;height:40px !important;font-size:14px !important;}
-  #leaderboard-podium [style*="width:70px;height:70px"]{width:48px !important;height:48px !important;font-size:16px !important;}
-  #leaderboard-podium table{font-size:8px !important;}
-  #leaderboard-podium td{padding:2px 4px !important;font-size:8px !important;}
+  #leaderboard-podium [style*="font-size:18px"]{font-size:12px !important;}
+  #leaderboard-podium [style*="font-size:20px"]{font-size:13px !important;}
+  #leaderboard-podium [style*="font-size:11px"]{font-size:8px !important;}
+  #leaderboard-podium [style*="font-size:10px"]{font-size:7px !important;}
+  #leaderboard-podium [style*="width:60px;height:60px"]{width:36px !important;height:36px !important;font-size:13px !important;}
+  #leaderboard-podium [style*="width:70px;height:70px"]{width:44px !important;height:44px !important;font-size:15px !important;}
+  /* Hide the strategy/broker/member info on mobile — too wide */
+  #leaderboard-podium > div > div:last-child{display:none !important;}
+  #leaderboard-podium [style*="width:56px;height:56px"]{width:34px !important;height:34px !important;font-size:12px !important;}
+  #leaderboard-podium [style*="width:64px;height:64px"]{width:40px !important;height:40px !important;font-size:14px !important;}
 
   /* New to trading + active traders — fit in one row */
   #page-dashboard .page-header > div:nth-child(2){
