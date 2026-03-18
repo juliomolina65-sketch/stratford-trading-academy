@@ -896,6 +896,7 @@ app.get('/api/admin/members', async (req, res) => {
         email: d.email || '',
         plan: d.plan || 'free',
         subscriptionStatus: d.subscriptionStatus || 'none',
+        accountStatus: d.accountStatus || 'active',
         isAdmin: d.isAdmin || false,
         referredBy: d.referredBy || null,
         affiliateReferralCount: d.affiliateReferralCount || 0,
@@ -903,6 +904,11 @@ app.get('/api/admin/members', async (req, res) => {
         points: d.points || 0,
         tradeCount: d.tradeCount || 0,
         totalPnl: d.totalPnl || 0,
+        winCount: d.winCount || 0,
+        lossCount: d.lossCount || 0,
+        activeStrategies: d.activeStrategies || [],
+        activeBroker: d.activeBroker || 'paper',
+        tier: d.tier || null,
         createdAt: d.createdAt ? (d.createdAt.toDate ? d.createdAt.toDate().toISOString() : d.createdAt) : null,
         referrals: referrals
       });
