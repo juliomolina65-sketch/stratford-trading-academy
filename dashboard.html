@@ -697,6 +697,22 @@ select option{background:var(--bg3);}
 </head>
 <body>
 
+<!-- Mobile experience banner -->
+<div id="mobile-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:999;background:linear-gradient(135deg,#111827,#0a0e17);border-top:1px solid rgba(0,184,230,.2);padding:14px 16px;text-align:center;box-shadow:0 -4px 20px rgba(0,0,0,.5)">
+  <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px">
+    <span style="font-size:16px">💻</span>
+    <span style="font-size:13px;font-weight:600;color:#e5e7eb">For the best experience, use desktop</span>
+  </div>
+  <div style="font-size:11px;color:#9ca3af;margin-bottom:10px">Full charts, detailed stats, and easier navigation on a larger screen</div>
+  <button onclick="document.getElementById('mobile-banner').style.display='none';localStorage.setItem('sa_mobile_banner_dismissed','1')" style="background:none;border:1px solid rgba(0,184,230,.3);border-radius:6px;color:#00c8f0;font-size:11px;padding:6px 20px;cursor:pointer;font-family:inherit">Got it</button>
+</div>
+<script>
+// Show mobile banner after 3 seconds on small screens (only once per session)
+if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed')){
+  setTimeout(function(){ var b=document.getElementById('mobile-banner'); if(b)b.style.display='block'; }, 3000);
+}
+</script>
+
 <!-- Lightweight Charts (TradingView) -->
 <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 
