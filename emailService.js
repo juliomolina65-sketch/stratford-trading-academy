@@ -56,7 +56,7 @@ function emailWrapper(title, content) {
   <div style="text-align:center;padding:20px 0;font-size:11px;color:${BRAND.textMuted}">
     <p style="margin:0 0 6px">Stratford Academy &mdash; Automated Futures Trading Signals</p>
     <p style="margin:0">NQ / MNQ / ES / MES &bull; Fully Automated &bull; No Experience Needed</p>
-    <p style="margin:8px 0 0"><a href="https://www.stratfordtradingacademy.com/dashboard" style="color:${BRAND.accent};text-decoration:none">Open Dashboard</a> &bull; <a href="https://www.stratfordtradingacademy.com/dashboard.html#settings" style="color:${BRAND.textMuted};text-decoration:none">Manage Notifications</a></p>
+    <p style="margin:8px 0 0"><a href="https://www.stratfordtradingacademy.com/dashboard.html" style="color:${BRAND.accent};text-decoration:none">Open Dashboard</a> &bull; <a href="https://www.stratfordtradingacademy.com/dashboard.html#settings" style="color:${BRAND.textMuted};text-decoration:none">Manage Notifications</a></p>
   </div>
 </div>
 </body></html>`;
@@ -151,7 +151,7 @@ function sendWelcomeEmail(email, name) {
         </div>
       </div>
       <div style="text-align:center;margin-top:24px">
-        <a href="https://www.stratfordtradingacademy.com/dashboard" style="display:inline-block;background:${BRAND.accent};color:#000;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:8px;font-size:14px">Open Your Dashboard</a>
+        <a href="https://www.stratfordtradingacademy.com/dashboard.html" style="display:inline-block;background:${BRAND.accent};color:#000;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:8px;font-size:14px">Open Your Dashboard</a>
       </div>
       <div style="text-align:center;margin-top:16px">
         <span style="font-size:12px;color:${BRAND.textMuted}">+100 reward points added to your account!</span>
@@ -193,7 +193,7 @@ function sendSubscriptionEmail(email, name, plan) {
         ✅ +300 reward points added to your account
       </div>
       <div style="text-align:center;margin-top:24px">
-        <a href="https://www.stratfordtradingacademy.com/dashboard" style="display:inline-block;background:${planColor};color:#000;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:8px;font-size:14px">Go to Dashboard</a>
+        <a href="https://www.stratfordtradingacademy.com/dashboard.html" style="display:inline-block;background:${planColor};color:#000;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:8px;font-size:14px">Go to Dashboard</a>
       </div>
     </div>
   `);
@@ -284,7 +284,7 @@ function sendAffiliateCommissionEmail(email, name, commission) {
       </div>
       <p style="font-size:12px;color:${BRAND.textMuted};text-align:center;margin-top:16px">You earn 25% recurring commission every month your referrals stay subscribed!</p>
       <div style="text-align:center;margin-top:16px">
-        <a href="https://www.stratfordtradingacademy.com/dashboard" style="display:inline-block;background:${BRAND.green};color:#000;font-weight:700;text-decoration:none;padding:12px 36px;border-radius:8px;font-size:13px">View Affiliate Dashboard</a>
+        <a href="https://www.stratfordtradingacademy.com/dashboard.html" style="display:inline-block;background:${BRAND.green};color:#000;font-weight:700;text-decoration:none;padding:12px 36px;border-radius:8px;font-size:13px">View Affiliate Dashboard</a>
       </div>
     </div>
   `);
@@ -326,7 +326,7 @@ function sendWeeklySummaryEmail(email, name, stats) {
         </table>
       </div>
       <div style="text-align:center;margin-top:20px">
-        <a href="https://www.stratfordtradingacademy.com/dashboard" style="display:inline-block;background:${BRAND.accent};color:#000;font-weight:700;text-decoration:none;padding:12px 36px;border-radius:8px;font-size:13px">View Full Report</a>
+        <a href="https://www.stratfordtradingacademy.com/dashboard.html" style="display:inline-block;background:${BRAND.accent};color:#000;font-weight:700;text-decoration:none;padding:12px 36px;border-radius:8px;font-size:13px">View Full Report</a>
       </div>
     </div>
   `);
@@ -545,7 +545,7 @@ function sendReengagementEmail(email, name, milestone, stats) {
         💡 ${config.nudge}
       </div>
       <div style="text-align:center">
-        <a href="https://www.stratfordtradingacademy.com/dashboard" style="display:inline-block;background:${BRAND.accent};color:#000;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:8px;font-size:14px">${config.cta}</a>
+        <a href="https://www.stratfordtradingacademy.com/dashboard.html" style="display:inline-block;background:${BRAND.accent};color:#000;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:8px;font-size:14px">${config.cta}</a>
       </div>
     </div>
   `);
@@ -563,7 +563,7 @@ function sendCustomEmail(email, name, subject, bodyText) {
     <div style="padding:0 28px 28px">
       <div style="color:${BRAND.text};font-size:14px;line-height:1.8;white-space:pre-line">${bodyText}</div>
       <div style="text-align:center;margin-top:24px">
-        <a href="https://www.stratfordtradingacademy.com/dashboard" style="display:inline-block;background:${BRAND.accent};color:#000;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:8px;font-size:14px">Open Dashboard</a>
+        <a href="https://www.stratfordtradingacademy.com/dashboard.html" style="display:inline-block;background:${BRAND.accent};color:#000;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:8px;font-size:14px">Open Dashboard</a>
       </div>
     </div>
   `);
