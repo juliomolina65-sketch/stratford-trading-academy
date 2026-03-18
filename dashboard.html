@@ -375,15 +375,37 @@ select option{background:var(--bg3);}
   .strat-ctas{grid-template-columns:1fr !important;}
   .strat-ctas > div{flex-direction:column !important;align-items:flex-start !important;}
 
-  /* Strategy card header - stack on mobile */
+  /* Strategy card header - compact on mobile */
   #page-strategies [onclick*="toggleStratCard"]{
-    flex-wrap:wrap !important;gap:12px !important;
+    padding:12px 14px !important;flex-wrap:wrap !important;gap:8px !important;
+  }
+  #page-strategies [onclick*="toggleStratCard"] [style*="width:44px;height:44px"]{
+    width:32px !important;height:32px !important;font-size:15px !important;border-radius:8px !important;
+  }
+  #page-strategies [onclick*="toggleStratCard"] [style*="font-size:16px;font-weight:600"]{
+    font-size:14px !important;gap:6px !important;flex-wrap:wrap !important;
+  }
+  #page-strategies [onclick*="toggleStratCard"] [style*="font-size:12px;color:var(--text2)"]{
+    font-size:11px !important;margin-top:1px !important;
+  }
+  #page-strategies [onclick*="toggleStratCard"] > div:first-child{
+    gap:10px !important;
   }
   #page-strategies [onclick*="toggleStratCard"] > div:last-child{
-    width:100%;justify-content:space-between !important;flex-wrap:wrap;gap:8px !important;
+    width:100%;justify-content:space-between !important;flex-wrap:wrap;gap:6px !important;
   }
   #page-strategies [onclick*="toggleStratCard"] > div:last-child > div:first-child{
-    gap:12px !important;
+    gap:10px !important;
+  }
+  #page-strategies [onclick*="toggleStratCard"] [style*="font-size:15px;font-weight:600"]{
+    font-size:13px !important;
+  }
+  #page-strategies [onclick*="toggleStratCard"] [style*="gap:16px"]{
+    gap:10px !important;
+  }
+  /* Strategy cards - less margin between them */
+  #page-strategies .panel{
+    margin-bottom:8px !important;
   }
 
   /* Strategy expanded - quick stat pills wrap */
