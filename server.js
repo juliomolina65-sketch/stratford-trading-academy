@@ -1118,14 +1118,23 @@ app.post('/api/webhook', async (req, res) => {
       // Check if user has an open trade for this strategy (for closing)
       if (tradeAction === 'SELL' || tradeAction === 'CLOSE') {
         // Try to close an open trade — match by strategy (ticker may differ per user tier)
-        const openTrades = await dbAdmin.collection('users').doc(uid)
-          .collection('trades')
-          .where('strategy', '==', strategy)
-          .where('status', '==', 'open')
-          .limit(1)
-          .get();
+        // Retry up to 3 times with delay to handle Firestore index propagation
+        let openTrades = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          openTrades = await dbAdmin.collection('users').doc(uid)
+            .collection('trades')
+            .where('strategy', '==', strategy)
+            .where('status', '==', 'open')
+            .limit(1)
+            .get();
+          if (!openTrades.empty) break;
+          if (attempt < 2) {
+            console.log(`  → User ${uid}: no open trade found, retrying in 1s (attempt ${attempt + 1}/3)...`);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
 
-        if (!openTrades.empty) {
+        if (openTrades && !openTrades.empty) {
           const openTrade = openTrades.docs[0];
           const openData = openTrade.data();
           const pointDiff = tradePrice - openData.entryPrice;
@@ -1159,6 +1168,11 @@ app.post('/api/webhook', async (req, res) => {
           //   });
           // }
 
+          subscriberCount++;
+          continue;
+        } else {
+          // No open trade found after retries — skip this user, don't open a phantom SELL
+          console.warn(`  → User ${uid}: SELL signal but no open trade found after retries — skipping`);
           subscriberCount++;
           continue;
         }
