@@ -118,7 +118,7 @@ async function sendEmail(to, subject, html) {
   try {
     if (useResend && resendClient) {
       await resendClient.emails.send({
-        from: 'Stratford Academy <onboarding@resend.dev>',
+        from: 'Stratford Academy <noreply@stratfordtradingacademy.com>',
         to: to,
         subject: subject,
         html: html
