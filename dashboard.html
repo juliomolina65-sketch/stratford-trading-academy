@@ -9011,7 +9011,13 @@ function updatePaperFromSignal(act, ticker, qty) {
 function updatePaperDemoStats(){
   if(!userTradesCache||userTradesCache.length===0)return;
   var demo=JSON.parse(localStorage.getItem('sa_paper_demo')||'null');
-  if(!demo)return; // No paper demo connected
+
+  // If no paper demo in localStorage but user has trades, auto-create it
+  if(!demo && userTradesCache.length > 0){
+    demo = { strategy:'Stratford Alpha', balance:'$150,000', tier:'150k', broker:'paper' };
+    localStorage.setItem('sa_paper_demo', JSON.stringify(demo));
+  }
+  if(!demo)return;
 
   // Parse starting balance from stored format like "$150,000"
   var startBalance=150000;
