@@ -9,7 +9,13 @@ let admin;
 let dbAdmin;
 try {
   admin = require('firebase-admin');
-  const serviceAccount = require('./firebase-service-account.json');
+  let serviceAccount;
+  // Try environment variable first (for Railway/cloud), then fall back to local file
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  } else {
+    serviceAccount = require('./firebase-service-account.json');
+  }
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
@@ -17,7 +23,7 @@ try {
   console.log('Firebase Admin SDK initialized');
 } catch (err) {
   console.warn('Firebase Admin SDK not initialized:', err.message);
-  console.warn('Webhook endpoint will not work until firebase-service-account.json is added.');
+  console.warn('Set FIREBASE_SERVICE_ACCOUNT env var or add firebase-service-account.json');
 }
 
 // Stripe SDK
