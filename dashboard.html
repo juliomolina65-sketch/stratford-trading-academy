@@ -542,6 +542,17 @@ select option{background:var(--bg3);}
   #leaderboard-podium table{font-size:8px !important;}
   #leaderboard-podium td{padding:2px 4px !important;font-size:8px !important;}
 
+  /* New to trading + active traders — fit in one row */
+  #page-dashboard .page-header > div:nth-child(2){
+    padding:6px 10px !important;flex:1 !important;min-width:0 !important;
+  }
+  #page-dashboard .page-header > div:nth-child(2) span{font-size:11px !important;}
+  #page-dashboard .page-header > div:nth-child(3){
+    padding:5px 10px !important;
+  }
+  #page-dashboard .page-header > div:nth-child(3) [style*="font-size:13px"]{font-size:11px !important;}
+  #page-dashboard .page-header > div:nth-child(3) [style*="font-size:12px"]{font-size:10px !important;}
+
   /* Top Strategy section - compact */
   #page-dashboard [style*="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:relative"]{
     padding:14px 16px !important;flex-wrap:wrap !important;gap:10px !important;
