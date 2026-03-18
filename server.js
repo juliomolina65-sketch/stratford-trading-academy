@@ -969,6 +969,50 @@ app.post('/api/admin/toggle-member', async (req, res) => {
   }
 });
 
+// ---- Admin: Grant/revoke membership access ----
+app.post('/api/admin/grant-access', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const { uid, targetUid, plan, action } = req.body; // action: 'grant' or 'revoke'
+  if (!uid || !targetUid) return res.status(400).json({ error: 'Missing uid or targetUid' });
+
+  // Verify admin
+  try {
+    const adminDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!adminDoc.exists) return res.status(401).json({ error: 'Unauthorized' });
+    const email = (adminDoc.data().email || '').toLowerCase();
+    if (!ADMIN_EMAILS.includes(email)) return res.status(403).json({ error: 'Admin access required' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+
+  try {
+    if (action === 'revoke') {
+      await dbAdmin.collection('users').doc(targetUid).set({
+        plan: 'free',
+        subscriptionStatus: null,
+        grantedBy: null,
+        grantedAt: null,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      console.log(`[ADMIN] Revoked access for ${targetUid}`);
+      res.json({ success: true, plan: 'free', status: 'revoked' });
+    } else {
+      const grantPlan = plan || 'alpha';
+      await dbAdmin.collection('users').doc(targetUid).set({
+        plan: grantPlan,
+        subscriptionStatus: 'active',
+        grantedBy: uid,
+        grantedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      console.log(`[ADMIN] Granted ${grantPlan} access to ${targetUid}`);
+      res.json({ success: true, plan: grantPlan, status: 'active' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ---- Admin: Get a member's trades & P&L ----
 app.get('/api/admin/member-trades/:targetUid', async (req, res) => {
   if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
