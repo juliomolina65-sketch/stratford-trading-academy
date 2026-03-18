@@ -89,11 +89,23 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
             subscribedAt: admin.firestore.FieldValue.serverTimestamp()
           }, { merge: true });
           console.log(`[STRIPE-WEBHOOK] User ${uid} subscribed to ${plan}`);
+
+          // Send subscription confirmed email + admin alert
+          const userDoc = await dbAdmin.collection('users').doc(uid).get();
+          const userData = userDoc.exists ? userDoc.data() : {};
+          if (userData.email) {
+            emailService.sendSubscriptionEmail(userData.email, userData.name || 'Trader', plan);
+            emailService.sendAdminAlert(ADMIN_EMAILS, 'new_subscription', {
+              name: userData.name || 'Unknown', email: userData.email, plan, amount: {alpha:99,pro:189,elite:250}[plan] || 0
+            });
+          }
         }
         break;
       }
 
-      case 'invoice.paid': {
+      case 'invoice.paid':
+      case 'invoice_payment.paid':
+      case 'invoice.payment_succeeded': {
         const invoice = event.data.object;
         const customerId = invoice.customer;
         // Find user by stripeCustomerId
