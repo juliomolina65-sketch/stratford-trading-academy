@@ -430,12 +430,44 @@ select option{background:var(--bg3);}
   }
   #page-strategies .strat-details [style*="font-size:22px"]{font-size:16px !important;}
   #page-strategies .strat-details [style*="font-size:20px"]{font-size:15px !important;}
-  /* Account tier cards compact */
-  #page-strategies .strat-details [style*="font-size:28px"]{font-size:20px !important;}
-  #page-strategies .strat-details [style*="font-size:24px"]{font-size:18px !important;}
+  /* Account tier cards - horizontal scroll instead of stacked */
+  #page-strategies [style*="grid-template-columns:1fr 1fr 1fr;gap:1px"]{
+    display:flex !important;overflow-x:auto !important;gap:8px !important;padding:8px 14px 14px !important;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;background:none !important;
+  }
+  #page-strategies [style*="grid-template-columns:1fr 1fr 1fr;gap:1px"] > div{
+    min-width:240px !important;flex-shrink:0 !important;scroll-snap-align:start;border-radius:8px !important;border:1px solid var(--border) !important;
+  }
+  #page-strategies [style*="font-size:28px"]{font-size:22px !important;}
   /* Trade frequency pills compact */
-  #page-strategies .strat-details [style*="display:flex;align-items:center;gap:14px;padding:12px"]{
+  #page-strategies .strat-card-body [style*="display:flex;align-items:center;gap:14px;padding:12px"]{
     padding:8px 10px !important;gap:10px !important;
+  }
+  /* Description text tighter */
+  #page-strategies .strat-card-body [style*="padding:20px 24px;font-size:14px"]{
+    padding:12px 14px !important;font-size:12px !important;
+  }
+  #page-strategies .strat-card-body [style*="padding:20px 24px;font-size:13px"]{
+    padding:12px 14px !important;font-size:12px !important;
+  }
+  /* Choose account size label tighter */
+  #page-strategies .strat-card-body [style*="padding:18px 24px 10px"]{
+    padding:10px 14px 6px !important;
+  }
+  /* What is MNQ section compact */
+  #page-strategies .strat-card-body [style*="padding:16px 24px;background:rgba"]{
+    padding:10px 14px !important;
+  }
+  /* Connect buttons tighter */
+  #page-strategies .strat-ctas{
+    padding:12px 14px !important;gap:8px !important;
+  }
+  /* Backtest performance section compact */
+  #page-strategies .strat-card-body [style*="padding:14px 24px"]{
+    padding:10px 14px !important;
+  }
+  /* Long/Short breakdown compact */
+  #page-strategies .strat-card-body [style*="display:flex;gap:12px;padding:14px"]{
+    padding:8px 14px !important;gap:8px !important;
   }
 
   /* Strategy expanded - 6-col stat grids */
