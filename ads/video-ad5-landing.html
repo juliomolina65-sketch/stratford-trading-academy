@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Stratford Academy — Landing Page Showcase</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:'Inter',sans-serif;overflow:hidden}
+
+.video{width:1080px;height:1080px;background:#050a14;position:relative;overflow:hidden}
+
+.progress{position:absolute;top:0;left:0;height:3px;background:linear-gradient(90deg,#00d97e,#00c8f0,#8b6fff);z-index:9999;width:0;animation:progress 30s linear forwards}
+
+/* ===== AMBIENT ===== */
+.ambient-glow1{position:absolute;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(0,200,240,.1),transparent 60%);filter:blur(40px);animation:glowDrift 8s infinite alternate}
+.ambient-glow2{position:absolute;bottom:-200px;left:-100px;width:500px;height:500px;background:radial-gradient(circle,rgba(139,111,255,.08),transparent 60%);filter:blur(40px);animation:glowDrift 10s 2s infinite alternate}
+
+/* ===== SCENE 1: TITLE INTRO (0-4s) ===== */
+.scene1{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;animation:sceneOut .5s 4s forwards}
+
+.s1-logo{display:flex;align-items:center;gap:14px;opacity:0;animation:fadeUp .5s .3s forwards;margin-bottom:20px}
+.s1-logo .i{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#00c8f0,#8b6fff);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;box-shadow:0 0 30px rgba(0,200,240,.3)}
+.s1-logo .n{font-size:22px;font-weight:700;color:#f1f5f9}
+
+.s1-presents{font-size:14px;text-transform:uppercase;letter-spacing:.2em;color:rgba(148,163,184,.4);opacity:0;animation:fadeUp .4s .8s forwards;margin-bottom:24px}
+
+.s1-headline{font-size:64px;font-weight:900;color:#fff;text-align:center;line-height:1.05;letter-spacing:-.03em;opacity:0;animation:fadeUp .5s 1.2s forwards}
+.s1-headline .gradient{background:linear-gradient(135deg,#00c8f0,#8b6fff,#00d97e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200% 200%;animation:gradShift 3s 1.5s infinite}
+
+.s1-sub{font-size:20px;color:rgba(148,163,184,.5);margin-top:14px;opacity:0;animation:fadeUp .4s 1.8s forwards}
+
+/* ===== SCENE 2: HERO SECTION (4-9s) ===== */
+.scene2{position:absolute;inset:0;z-index:90;opacity:0;animation:sceneIn .5s 4.2s forwards, sceneOut .5s 9s forwards}
+
+.browser{position:absolute;top:50px;left:60px;right:60px;bottom:50px;background:#0a0e17;border-radius:12px;border:1px solid rgba(255,255,255,.1);overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6);opacity:0;animation:browserIn .6s 4.5s forwards}
+.browser-bar{height:32px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;padding:0 12px;gap:6px}
+.browser-dot{width:8px;height:8px;border-radius:50%}
+.browser-dot.r{background:#ff5f57}.browser-dot.y{background:#ffbd2e}.browser-dot.g{background:#28c840}
+.browser-url{margin-left:10px;background:rgba(255,255,255,.05);border-radius:4px;padding:3px 10px;font-size:10px;color:rgba(148,163,184,.5);font-family:'JetBrains Mono',monospace}
+
+.hero-mock{padding:30px;text-align:center;opacity:0;animation:fadeIn .4s 5s forwards}
+.hero-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:30px}
+.hero-nav-logo{display:flex;align-items:center;gap:6px}
+.hero-nav-logo .i{width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,#00c8f0,#8b6fff);font-size:8px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center}
+.hero-nav-logo .t{font-size:12px;font-weight:700;color:#f1f5f9}
+.hero-nav-links{display:flex;gap:14px;font-size:10px;color:rgba(148,163,184,.4)}
+.hero-nav-btn{background:#00c8f0;color:#000;font-size:10px;font-weight:700;padding:5px 14px;border-radius:6px}
+
+.hero-h1{font-size:44px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:10px}
+.hero-h1 .acc{background:linear-gradient(135deg,#00c8f0,#8b6fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-p{font-size:14px;color:rgba(148,163,184,.6);margin-bottom:16px}
+.hero-btn{display:inline-block;background:linear-gradient(135deg,#00c8f0,#00b4d8);color:#000;font-size:14px;font-weight:700;padding:10px 28px;border-radius:8px;box-shadow:0 0 30px rgba(0,200,240,.2)}
+
+.hero-stats{display:flex;gap:20px;justify-content:center;margin-top:24px}
+.hero-stat{text-align:center;opacity:0}
+.hero-stat:nth-child(1){animation:cardIn .3s 5.5s forwards}
+.hero-stat:nth-child(2){animation:cardIn .3s 5.7s forwards}
+.hero-stat:nth-child(3){animation:cardIn .3s 5.9s forwards}
+.hero-stat:nth-child(4){animation:cardIn .3s 6.1s forwards}
+.hero-stat .v{font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#00d97e}
+.hero-stat .l{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:rgba(148,163,184,.4)}
+
+/* Highlight pulse on hero */
+.hero-highlight{position:absolute;top:55px;left:65px;right:65px;height:280px;border:2px solid rgba(0,200,240,.3);border-radius:10px;opacity:0;animation:highlightPulse 2s 6.5s forwards;pointer-events:none}
+
+.s2-label{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(0,200,240,.08);border:1px solid rgba(0,200,240,.25);border-radius:8px;padding:6px 18px;font-size:12px;color:#00c8f0;font-weight:600;white-space:nowrap;opacity:0;animation:fadeIn .3s 5s forwards}
+
+/* ===== SCENE 3: HOW IT WORKS + PERFORMANCE (9-15s) ===== */
+.scene3{position:absolute;inset:0;z-index:80;opacity:0;animation:sceneIn .5s 9.2s forwards, sceneOut .5s 15s forwards}
+
+.s3-title{position:absolute;top:50px;left:50%;transform:translateX(-50%);font-size:16px;text-transform:uppercase;letter-spacing:.15em;color:#00c8f0;opacity:0;animation:fadeUp .3s 9.5s forwards}
+
+/* How it works steps */
+.hiw-container{position:absolute;top:110px;left:60px;right:60px}
+.hiw-steps{display:flex;gap:16px}
+.hiw-step{flex:1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px;text-align:center;opacity:0;transform:translateY(20px)}
+.hiw-step:nth-child(1){animation:cardIn .4s 9.8s forwards}
+.hiw-step:nth-child(2){animation:cardIn .4s 10.1s forwards}
+.hiw-step:nth-child(3){animation:cardIn .4s 10.4s forwards}
+.hiw-num{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#00c8f0,#8b6fff);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;margin:0 auto 10px}
+.hiw-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
+.hiw-desc{font-size:11px;color:rgba(148,163,184,.5);line-height:1.4}
+
+/* Performance section */
+.perf-section{position:absolute;top:320px;left:60px;right:60px}
+.perf-label{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:rgba(148,163,184,.3);margin-bottom:12px;opacity:0;animation:fadeIn .3s 11s forwards}
+.perf-big{font-size:90px;font-weight:900;font-family:'JetBrains Mono',monospace;color:#00d97e;line-height:1;letter-spacing:-.05em;text-shadow:0 0 50px rgba(0,217,126,.3);opacity:0;animation:slamIn .3s 11.3s forwards}
+.perf-sub{font-size:14px;color:rgba(148,163,184,.4);margin-top:4px;opacity:0;animation:fadeUp .3s 11.6s forwards}
+
+/* Mini chart */
+.perf-chart{position:absolute;top:530px;left:60px;right:60px;height:180px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:16px;opacity:0;animation:cardIn .4s 12s forwards;overflow:hidden}
+.perf-chart-title{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:rgba(148,163,184,.3);margin-bottom:8px}
+.chart-svg{width:100%;height:120px}
+.chart-line-path{stroke:#00d97e;stroke-width:2.5;fill:none;stroke-dasharray:800;stroke-dashoffset:800;animation:drawLine 3s 12.5s forwards}
+.chart-area{fill:url(#perfGrad);opacity:0;animation:fadeIn .5s 14s forwards}
+
+/* Monthly bars */
+.perf-bars{position:absolute;top:740px;left:60px;right:60px;display:flex;gap:6px;align-items:flex-end;height:120px;opacity:0;animation:fadeIn .3s 13s forwards}
+.month-bar{flex:1;background:linear-gradient(180deg,#00d97e,rgba(0,217,126,.3));border-radius:4px 4px 0 0;opacity:0;transform-origin:bottom}
+.month-bar:nth-child(1){height:45%;animation:barGrow .3s 13.2s forwards}
+.month-bar:nth-child(2){height:62%;animation:barGrow .3s 13.3s forwards}
+.month-bar:nth-child(3){height:38%;animation:barGrow .3s 13.4s forwards}
+.month-bar:nth-child(4){height:75%;animation:barGrow .3s 13.5s forwards}
+.month-bar:nth-child(5){height:58%;animation:barGrow .3s 13.6s forwards}
+.month-bar:nth-child(6){height:82%;animation:barGrow .3s 13.7s forwards}
+.month-bar:nth-child(7){height:50%;animation:barGrow .3s 13.8s forwards}
+.month-bar:nth-child(8){height:90%;animation:barGrow .3s 13.9s forwards}
+.month-bar:nth-child(9){height:65%;animation:barGrow .3s 14s forwards}
+.month-bar:nth-child(10){height:78%;animation:barGrow .3s 14.1s forwards}
+.month-bar:nth-child(11){height:95%;animation:barGrow .3s 14.2s forwards}
+.month-bar:nth-child(12){height:70%;animation:barGrow .3s 14.3s forwards}
+.month-bar.red{background:linear-gradient(180deg,#ef4444,rgba(239,68,68,.3))}
+
+.bar-labels{position:absolute;top:870px;left:60px;right:60px;display:flex;gap:6px}
+.bar-label{flex:1;text-align:center;font-size:8px;color:rgba(148,163,184,.3);opacity:0;animation:fadeIn .3s 14.5s forwards}
+
+/* ===== SCENE 4: PRICING (15-20s) ===== */
+.scene4{position:absolute;inset:0;z-index:70;opacity:0;animation:sceneIn .5s 15.2s forwards, sceneOut .5s 20s forwards}
+
+.s4-title{position:absolute;top:60px;left:50%;transform:translateX(-50%);text-align:center}
+.s4-title h2{font-size:40px;font-weight:900;color:#fff;opacity:0;animation:fadeUp .4s 15.5s forwards}
+.s4-title .sub{font-size:14px;color:rgba(148,163,184,.5);margin-top:6px;opacity:0;animation:fadeUp .3s 15.8s forwards}
+
+.pricing-cards{position:absolute;top:180px;left:50px;right:50px;display:flex;gap:16px}
+.price-card{flex:1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:28px;text-align:center;opacity:0;transform:translateY(30px)}
+.price-card:nth-child(1){animation:cardIn .4s 16s forwards}
+.price-card:nth-child(2){animation:cardIn .4s 16.3s forwards}
+.price-card:nth-child(3){animation:cardIn .4s 16.6s forwards}
+.price-card.popular{border-color:rgba(0,200,240,.4);background:rgba(0,200,240,.04);position:relative}
+.price-card.popular::before{content:'MOST POPULAR';position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#00c8f0,#8b6fff);color:#fff;font-size:9px;font-weight:700;padding:4px 14px;border-radius:10px;letter-spacing:.08em}
+
+.pc-name{font-size:20px;font-weight:700;color:#fff;margin-bottom:4px}
+.pc-price{font-size:48px;font-weight:900;font-family:'JetBrains Mono',monospace;color:#00c8f0;line-height:1}
+.pc-period{font-size:12px;color:rgba(148,163,184,.4);margin-bottom:14px}
+.pc-features{list-style:none;text-align:left;font-size:12px;color:rgba(148,163,184,.6);line-height:2}
+.pc-features li::before{content:'✓ ';color:#00d97e;font-weight:700}
+.pc-btn{display:inline-block;margin-top:14px;background:#00c8f0;color:#000;font-size:12px;font-weight:700;padding:8px 24px;border-radius:8px}
+.pc-btn.outline{background:transparent;border:1px solid rgba(255,255,255,.15);color:#f1f5f9}
+
+/* Reviews strip */
+.reviews-strip{position:absolute;top:680px;left:50px;right:50px;display:flex;gap:12px;overflow:hidden}
+.review-card{min-width:280px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:16px;opacity:0}
+.review-card:nth-child(1){animation:slideLeft .5s 17.5s forwards}
+.review-card:nth-child(2){animation:slideLeft .5s 17.7s forwards}
+.review-card:nth-child(3){animation:slideLeft .5s 17.9s forwards}
+.rc-stars{color:#f59e0b;font-size:12px;letter-spacing:2px;margin-bottom:6px}
+.rc-text{font-size:11px;color:rgba(255,255,255,.6);line-height:1.5;font-style:italic;margin-bottom:8px}
+.rc-author{font-size:10px;font-weight:600;color:#fff}
+.rc-pnl{font-size:10px;color:#00d97e;font-family:'JetBrains Mono',monospace}
+
+.s4-rating{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;opacity:0;animation:fadeUp .3s 18.5s forwards}
+.s4-rating .score{font-size:32px;font-weight:900;color:#f59e0b}
+.s4-rating .stars{font-size:20px;color:#f59e0b;letter-spacing:3px}
+.s4-rating .count{font-size:12px;color:rgba(148,163,184,.4)}
+
+/* ===== SCENE 5: CTA (20-30s) ===== */
+.scene5{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;z-index:60;opacity:0;animation:sceneIn .5s 20.3s forwards}
+
+.s5-logo{display:flex;align-items:center;gap:12px;margin-bottom:30px;opacity:0;animation:fadeUp .4s 20.5s forwards}
+.s5-logo .i{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#00c8f0,#8b6fff);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;box-shadow:0 0 25px rgba(0,200,240,.3)}
+.s5-logo .n{font-size:20px;font-weight:700;color:#f1f5f9}
+
+.s5-headline{font-size:56px;font-weight:900;color:#fff;text-align:center;line-height:1.1;letter-spacing:-.03em;opacity:0;animation:fadeUp .5s 21s forwards}
+.s5-headline .green{color:#00d97e}
+
+.s5-sub{font-size:18px;color:rgba(148,163,184,.6);margin-top:12px;opacity:0;animation:fadeUp .3s 21.5s forwards}
+
+.s5-stats{display:flex;gap:14px;margin-top:28px}
+.s5-stat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px 20px;text-align:center;opacity:0}
+.s5-stat:nth-child(1){animation:cardIn .3s 22s forwards}
+.s5-stat:nth-child(2){animation:cardIn .3s 22.2s forwards}
+.s5-stat:nth-child(3){animation:cardIn .3s 22.4s forwards}
+.s5-stat:nth-child(4){animation:cardIn .3s 22.6s forwards}
+.s5-stat .v{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.s5-stat .l{font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:rgba(148,163,184,.4);margin-top:2px}
+
+.s5-cta{margin-top:32px;opacity:0;animation:ctaPop .5s 23s forwards}
+.s5-btn{background:linear-gradient(135deg,#00d97e,#00c8f0);color:#000;font-size:22px;font-weight:800;padding:20px 52px;border-radius:12px;display:inline-block;position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,217,126,.3)}
+.s5-btn::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent 40%,rgba(255,255,255,.3) 50%,transparent 60%);animation:btnShine 2s 23.5s infinite}
+
+.s5-note{font-size:14px;color:rgba(148,163,184,.5);margin-top:12px;opacity:0;animation:fadeUp .3s 23.5s forwards}
+.s5-disclaimer{font-size:10px;color:rgba(148,163,184,.25);margin-top:16px;text-align:center;opacity:0;animation:fadeIn .3s 24s forwards}
+
+/* ===== KEYFRAMES ===== */
+@keyframes fadeIn{to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sceneOut{to{opacity:0;pointer-events:none}}
+@keyframes sceneIn{from{opacity:0}to{opacity:1}}
+@keyframes cardIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slamIn{0%{opacity:0;transform:scale(2.5)}60%{opacity:1;transform:scale(.95)}100%{opacity:1;transform:scale(1)}}
+@keyframes progress{from{width:0}to{width:100%}}
+@keyframes drawLine{to{stroke-dashoffset:0}}
+@keyframes ctaPop{from{opacity:0;transform:scale(.7)}60%{opacity:1;transform:scale(1.05)}to{opacity:1;transform:scale(1)}}
+@keyframes btnShine{0%{transform:translateX(-100%) rotate(45deg)}100%{transform:translateX(100%) rotate(45deg)}}
+@keyframes browserIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+@keyframes highlightPulse{0%{opacity:0}30%{opacity:1}70%{opacity:1}100%{opacity:0}}
+@keyframes slideLeft{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes barGrow{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
+@keyframes glowDrift{from{transform:translate(0,0)}to{transform:translate(30px,20px)}}
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+.replay{position:absolute;bottom:20px;right:20px;z-index:10000;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:13px;font-weight:600;padding:8px 18px;border-radius:8px;cursor:pointer;opacity:0;animation:fadeIn .5s 28s forwards;font-family:'Inter',sans-serif}
+.replay:hover{background:rgba(0,200,240,.15);border-color:#00c8f0;color:#00c8f0}
+</style>
+</head>
+<body>
+
+<div class="video">
+  <div class="progress"></div>
+  <div class="ambient-glow1"></div>
+  <div class="ambient-glow2"></div>
+
+  <!-- SCENE 1: TITLE -->
+  <div class="scene1">
+    <div class="s1-logo"><div class="i">ST</div><div class="n">Stratford Academy</div></div>
+    <div class="s1-presents">Presents</div>
+    <div class="s1-headline">The Future of<br><span class="gradient">Automated Trading</span></div>
+    <div class="s1-sub">NQ & MNQ Futures · Fully Hands-Off</div>
+  </div>
+
+  <!-- SCENE 2: HERO -->
+  <div class="scene2">
+    <div class="browser">
+      <div class="browser-bar">
+        <div class="browser-dot r"></div><div class="browser-dot y"></div><div class="browser-dot g"></div>
+        <div class="browser-url">stratfordacademy.com</div>
+      </div>
+      <div class="hero-mock">
+        <div class="hero-nav">
+          <div class="hero-nav-logo"><div class="i">ST</div><div class="t">Stratford Academy</div></div>
+          <div class="hero-nav-links"><span>How It Works</span><span>Performance</span><span>Pricing</span><span>Reviews</span><span>FAQ</span></div>
+          <div class="hero-nav-btn">Start Free Demo</div>
+        </div>
+        <div class="hero-h1">Stop Trading.<br>Start <span class="acc">Automating.</span></div>
+        <div class="hero-p">Automated NQ & MNQ futures trading. Connect your broker and let our algorithm do the rest.</div>
+        <div class="hero-btn">Start Free Demo →</div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="v">71.95%</div><div class="l">Win Rate</div></div>
+          <div class="hero-stat"><div class="v" style="color:#00c8f0">+$994K</div><div class="l">Net Profit</div></div>
+          <div class="hero-stat"><div class="v" style="color:#8b6fff">3.15</div><div class="l">Profit Factor</div></div>
+          <div class="hero-stat"><div class="v" style="color:#f59e0b">4,800+</div><div class="l">Active Traders</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-highlight"></div>
+    <div class="s2-label">stratfordacademy.com — Live Now</div>
+  </div>
+
+  <!-- SCENE 3: HOW IT WORKS + PERFORMANCE -->
+  <div class="scene3">
+    <div class="s3-title">How It Works & Performance</div>
+    <div class="hiw-container">
+      <div class="hiw-steps">
+        <div class="hiw-step">
+          <div class="hiw-num">1</div>
+          <div class="hiw-title">Sign Up</div>
+          <div class="hiw-desc">Create your free account in 30 seconds. No credit card.</div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-num">2</div>
+          <div class="hiw-title">Connect Broker</div>
+          <div class="hiw-desc">Link Tradovate, NinjaTrader, or Rithmic in minutes.</div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-num">3</div>
+          <div class="hiw-title">Automate</div>
+          <div class="hiw-desc">Algorithm trades 24/5. You profit while you sleep.</div>
+        </div>
+      </div>
+    </div>
+    <div class="perf-section">
+      <div class="perf-label">Backtested Net Profit · Jan 2022 – Mar 2026</div>
+      <div class="perf-big">+$994K</div>
+      <div class="perf-sub">On 1 NQ contract · 4,154 total trades</div>
+    </div>
+    <div class="perf-chart">
+      <div class="perf-chart-title">Equity Curve — Cumulative P&L</div>
+      <svg class="chart-svg" viewBox="0 0 800 120" preserveAspectRatio="none">
+        <defs><linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(0,217,126,.25)"/><stop offset="100%" stop-color="rgba(0,217,126,0)"/></linearGradient></defs>
+        <path class="chart-area" d="M0,110 L30,108 60,105 100,102 140,98 180,100 220,92 260,88 300,90 340,80 380,75 420,78 460,65 500,60 540,55 580,50 620,42 660,38 700,30 740,22 780,15 800,10 800,120 0,120Z"/>
+        <path class="chart-line-path" d="M0,110 L30,108 60,105 100,102 140,98 180,100 220,92 260,88 300,90 340,80 380,75 420,78 460,65 500,60 540,55 580,50 620,42 660,38 700,30 740,22 780,15 800,10"/>
+      </svg>
+    </div>
+    <div class="perf-bars">
+      <div class="month-bar"></div>
+      <div class="month-bar"></div>
+      <div class="month-bar red"></div>
+      <div class="month-bar"></div>
+      <div class="month-bar"></div>
+      <div class="month-bar"></div>
+      <div class="month-bar red"></div>
+      <div class="month-bar"></div>
+      <div class="month-bar"></div>
+      <div class="month-bar"></div>
+      <div class="month-bar"></div>
+      <div class="month-bar"></div>
+    </div>
+    <div class="bar-labels">
+      <div class="bar-label">Jan</div><div class="bar-label">Feb</div><div class="bar-label">Mar</div>
+      <div class="bar-label">Apr</div><div class="bar-label">May</div><div class="bar-label">Jun</div>
+      <div class="bar-label">Jul</div><div class="bar-label">Aug</div><div class="bar-label">Sep</div>
+      <div class="bar-label">Oct</div><div class="bar-label">Nov</div><div class="bar-label">Dec</div>
+    </div>
+  </div>
+
+  <!-- SCENE 4: PRICING + REVIEWS -->
+  <div class="scene4">
+    <div class="s4-title">
+      <h2>Pick Your Plan</h2>
+      <div class="sub">Start free. Upgrade when you're ready.</div>
+    </div>
+    <div class="pricing-cards">
+      <div class="price-card">
+        <div class="pc-name">Alpha</div>
+        <div class="pc-price">$99</div>
+        <div class="pc-period">/month</div>
+        <ul class="pc-features">
+          <li>1 MNQ contract</li>
+          <li>Paper + live trading</li>
+          <li>Email support</li>
+        </ul>
+        <div class="pc-btn outline">Select Plan</div>
+      </div>
+      <div class="price-card popular">
+        <div class="pc-name" style="color:#00c8f0">Pro</div>
+        <div class="pc-price">$189</div>
+        <div class="pc-period">/month</div>
+        <ul class="pc-features">
+          <li>5 MNQ contracts</li>
+          <li>Priority execution</li>
+          <li>Affiliate access</li>
+          <li>Discord community</li>
+        </ul>
+        <div class="pc-btn">Select Plan</div>
+      </div>
+      <div class="price-card">
+        <div class="pc-name">Elite</div>
+        <div class="pc-price">$250</div>
+        <div class="pc-period">/month</div>
+        <ul class="pc-features">
+          <li>1 NQ full contract</li>
+          <li>VIP support</li>
+          <li>Early access features</li>
+        </ul>
+        <div class="pc-btn outline">Select Plan</div>
+      </div>
+    </div>
+    <div class="reviews-strip">
+      <div class="review-card">
+        <div class="rc-stars">★★★★★</div>
+        <div class="rc-text">"Strategy runs itself. I check once a day and the P&L keeps climbing."</div>
+        <div class="rc-author">Sarah K. · <span class="rc-pnl">+$24,190</span></div>
+      </div>
+      <div class="review-card">
+        <div class="rc-stars">★★★★★</div>
+        <div class="rc-text">"Passed my prop firm eval in 8 days. Didn't touch a single chart."</div>
+        <div class="rc-author">Marcus R. · <span class="rc-pnl">+$28,740</span></div>
+      </div>
+      <div class="review-card">
+        <div class="rc-stars">★★★★★</div>
+        <div class="rc-text">"Best investment I've made. The algorithm does what I never could."</div>
+        <div class="rc-author">Jason T. · <span class="rc-pnl">+$17,430</span></div>
+      </div>
+    </div>
+    <div class="s4-rating">
+      <div class="score">4.9</div>
+      <div><div class="stars">★★★★★</div><div class="count">520+ verified reviews</div></div>
+    </div>
+  </div>
+
+  <!-- SCENE 5: CTA -->
+  <div class="scene5">
+    <div class="s5-logo"><div class="i">ST</div><div class="n">Stratford Academy</div></div>
+    <div class="s5-headline">Start Trading<br><span class="green">Smarter</span> Today</div>
+    <div class="s5-sub">Free forever paper demo. No credit card required.</div>
+    <div class="s5-stats">
+      <div class="s5-stat"><div class="v" style="color:#00d97e">+$994K</div><div class="l">Net Profit</div></div>
+      <div class="s5-stat"><div class="v" style="color:#00c8f0">71.95%</div><div class="l">Win Rate</div></div>
+      <div class="s5-stat"><div class="v" style="color:#8b6fff">4,154</div><div class="l">Trades</div></div>
+      <div class="s5-stat"><div class="v" style="color:#f59e0b">4,800+</div><div class="l">Traders</div></div>
+    </div>
+    <div class="s5-cta"><div class="s5-btn">Start Free Demo →</div></div>
+    <div class="s5-note">No credit card · Cancel anytime</div>
+    <div class="s5-disclaimer">Past performance does not guarantee future results. Trading futures involves substantial risk.</div>
+  </div>
+
+  <button class="replay" onclick="location.reload()">↻ Replay</button>
+</div>
+
+</body>
+</html>

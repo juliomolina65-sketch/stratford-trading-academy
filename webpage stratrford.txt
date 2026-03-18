@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Stratford Academy — Automated NQ/MNQ Futures Trading</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e17;--bg2:#111827;--bg3:#1a2236;
+  --border:rgba(255,255,255,.08);
+  --text:#f1f5f9;--text2:#94a3b8;--text3:#64748b;
+  --accent:#00c8f0;--purple:#8b6fff;--green:#00d97e;--amber:#f59e0b;--red:#ef4444;
+  --mono:'SF Mono','Fira Code','Consolas',monospace;
+  --sans:-apple-system,'Segoe UI','Inter',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,14,23,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700;color:var(--text)}
+.nav-logo span{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{color:var(--text2);font-size:13px;font-weight:500;text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{display:flex;align-items:center;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 20px;border-radius:7px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn-primary{background:var(--accent);color:#000}.btn-primary:hover{background:#33d4f5;text-decoration:none}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}.btn-outline:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.btn-purple{background:var(--purple);color:#fff}.btn-purple:hover{background:#a08aff;text-decoration:none}
+.btn-lg{padding:14px 32px;font-size:15px;border-radius:9px}
+
+/* HERO */
+.hero{padding:140px 40px 80px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:900px;height:900px;background:radial-gradient(circle,rgba(0,200,240,.08) 0%,rgba(139,111,255,.04) 40%,transparent 70%);pointer-events:none}
+.hero::after{content:'';position:absolute;top:200px;right:10%;width:400px;height:400px;background:radial-gradient(circle,rgba(139,111,255,.06) 0%,transparent 60%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,217,126,.08);border:1px solid rgba(0,217,126,.2);border-radius:20px;padding:5px 16px;font-size:12px;color:var(--green);font-weight:500;margin-bottom:24px}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-size:56px;font-weight:800;line-height:1.1;max-width:800px;margin:0 auto 20px;letter-spacing:-.02em}
+.hero h1 .accent{background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:18px;color:var(--text2);max-width:560px;margin:0 auto 36px;line-height:1.65}
+.hero-btns{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:48px}
+.hero-stats{display:flex;align-items:center;justify-content:center;gap:40px;padding-top:24px;border-top:1px solid var(--border);max-width:600px;margin:0 auto}
+.hero-stat{text-align:center}
+.hero-stat .val{font-size:24px;font-weight:700;font-family:var(--mono);color:var(--text)}
+.hero-stat .lbl{font-size:11px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.06em}
+
+/* SECTIONS */
+.section{padding:80px 40px;max-width:1100px;margin:0 auto}
+.section-label{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:12px;font-family:var(--mono)}
+.section-title{font-size:36px;font-weight:700;margin-bottom:12px;letter-spacing:-.01em}
+.section-sub{font-size:15px;color:var(--text2);max-width:520px;line-height:1.6;margin-bottom:48px}
+.section-center{text-align:center}
+.section-center .section-sub{margin-left:auto;margin-right:auto}
+
+/* HOW IT WORKS */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.step{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:32px 28px;position:relative;transition:all .3s}
+.step:hover{border-color:rgba(0,200,240,.25);transform:translateY(-4px)}
+.step-num{width:36px;height:36px;border-radius:10px;background:rgba(0,200,240,.1);border:1px solid rgba(0,200,240,.2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent);margin-bottom:18px}
+.step h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.step p{font-size:13px;color:var(--text2);line-height:1.6}
+.step-icon{font-size:28px;margin-bottom:14px}
+
+/* STATS SHOWCASE */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:14px;overflow:hidden;margin-bottom:32px}
+.stat-card{background:var(--bg2);padding:28px 24px;text-align:center}
+.stat-card .val{font-size:28px;font-weight:700;font-family:var(--mono);margin-bottom:4px}
+.stat-card .lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+.stat-card.green .val{color:var(--green)}
+.stat-card.accent .val{color:var(--accent)}
+.stat-card.purple .val{color:var(--purple)}
+.stat-card.amber .val{color:var(--amber)}
+.perf-banner{background:linear-gradient(135deg,rgba(0,200,240,.06),rgba(139,111,255,.06));border:1px solid rgba(0,200,240,.12);border-radius:12px;padding:20px 28px;display:flex;align-items:center;justify-content:space-between}
+.perf-banner .label{font-size:13px;color:var(--text2)}
+.perf-banner .big{font-size:32px;font-weight:700;font-family:var(--mono);color:var(--green)}
+.disclaimer-text{font-size:10px;color:var(--text3);line-height:1.6;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* FEATURES */
+.features-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.feature{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;display:flex;gap:16px;transition:all .3s}
+.feature:hover{border-color:rgba(0,200,240,.2);transform:translateY(-2px)}
+.feature-icon{width:40px;height:40px;border-radius:10px;background:rgba(0,200,240,.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.feature h3{font-size:14px;font-weight:600;margin-bottom:4px}
+.feature p{font-size:12px;color:var(--text2);line-height:1.5}
+
+/* PRICING */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.price-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:32px 28px;position:relative;transition:all .3s}
+.price-card:hover{transform:translateY(-4px)}
+.price-card.featured{border-color:rgba(0,200,240,.3);background:linear-gradient(180deg,rgba(0,200,240,.04),var(--bg2))}
+.price-card.featured::before{content:'MOST POPULAR';position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 14px;border-radius:0 0 6px 6px;letter-spacing:.08em}
+.price-label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px}
+.price-card.featured .price-label{color:var(--accent);margin-top:14px}
+.price-amt{font-size:36px;font-weight:700;margin-bottom:2px}
+.price-amt span{font-size:14px;color:var(--text3);font-weight:400}
+.price-desc{font-size:12px;color:var(--text3);margin-bottom:20px}
+.price-features{list-style:none;margin-bottom:24px;display:flex;flex-direction:column;gap:8px}
+.price-features li{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:8px}
+.price-features li .ck{color:var(--green)}
+.price-features li .no{color:var(--text3)}
+
+/* TESTIMONIALS */
+.testimonials-scroll{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.testi-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:22px;transition:all .3s}
+.testi-card:hover{border-color:rgba(0,200,240,.15)}
+.testi-stars{color:var(--amber);font-size:12px;margin-bottom:10px;letter-spacing:2px}
+.testi-text{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+.testi-author{display:flex;align-items:center;gap:10px}
+.testi-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff}
+.testi-name{font-size:12px;font-weight:600;color:var(--text)}
+.testi-loc{font-size:10px;color:var(--text3)}
+
+/* LEADERBOARD */
+.lb-table{width:100%;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.lb-row{display:grid;grid-template-columns:40px 1.5fr 1fr 1fr 1fr;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--bg2);transition:background .2s}
+.lb-row:last-child{border-bottom:none}
+.lb-row:hover{background:var(--bg3)}
+.lb-row.header{background:var(--bg3);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:600;padding:10px 18px}
+.lb-rank{font-family:var(--mono);font-weight:700;font-size:14px;color:var(--text)}
+.lb-name{font-size:13px;font-weight:500;color:var(--text)}
+.lb-pnl{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--green)}
+.lb-strat{font-size:11px;color:var(--accent)}
+.lb-wr{font-family:var(--mono);font-size:12px;color:var(--text2)}
+.lb-gold{color:var(--amber)!important}
+.lb-silver{color:#c0c0c0!important}
+.lb-bronze{color:#cd7f32!important}
+
+/* FAQ */
+.faq-list{display:flex;flex-direction:column;gap:8px;max-width:700px;margin:0 auto}
+.faq-item{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.faq-q{padding:16px 20px;font-size:14px;font-weight:500;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:background .2s}
+.faq-q:hover{background:var(--bg3)}
+.faq-q .arrow{font-size:16px;color:var(--text3);transition:transform .3s}
+.faq-item.open .faq-q .arrow{transform:rotate(180deg)}
+.faq-a{padding:0 20px;max-height:0;overflow:hidden;transition:max-height .3s,padding .3s}
+.faq-item.open .faq-a{padding:0 20px 16px;max-height:300px}
+.faq-a p{font-size:13px;color:var(--text2);line-height:1.6}
+
+/* CTA */
+.cta-section{text-align:center;padding:80px 40px;position:relative}
+.cta-section::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(circle,rgba(0,200,240,.06) 0%,rgba(139,111,255,.03) 50%,transparent 70%);pointer-events:none}
+.cta-section h2{font-size:36px;font-weight:700;margin-bottom:12px}
+.cta-section p{font-size:15px;color:var(--text2);margin-bottom:32px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.6}
+
+/* FOOTER */
+.footer{border-top:1px solid var(--border);padding:40px;display:flex;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto}
+.footer-left{font-size:12px;color:var(--text3)}
+.footer-links{display:flex;gap:20px}
+.footer-links a{font-size:12px;color:var(--text3);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--text)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);max-width:1100px;margin:0 auto}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .nav{padding:0 16px}
+  .nav-links{display:none}
+  .hero{padding:110px 20px 60px}
+  .hero h1{font-size:32px}
+  .hero p{font-size:15px}
+  .hero-stats{flex-wrap:wrap;gap:20px}
+  .section{padding:50px 20px}
+  .section-title{font-size:26px}
+  .steps{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .features-grid{grid-template-columns:1fr}
+  .pricing-grid{grid-template-columns:1fr;max-width:380px;margin:0 auto}
+  .testimonials-scroll{grid-template-columns:1fr}
+  .lb-row{grid-template-columns:30px 1.2fr 1fr 1fr;font-size:11px}
+  .lb-row .lb-wr{display:none}
+  .hero-btns{flex-direction:column}
+  .footer{flex-direction:column;gap:16px;text-align:center}
+  .perf-banner{flex-direction:column;text-align:center;gap:10px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-logo">
+    <span>ST</span>
+    Stratford Academy
+  </div>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#performance">Performance</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#reviews">Reviews</a>
+    <a href="#faq">FAQ</a>
+  </div>
+  <div class="nav-cta">
+    <a href="/dashboard.html?signin=1" class="btn btn-outline">Sign In</a>
+    <a href="/dashboard.html" class="btn btn-primary">Start Free Demo</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge"><span class="dot"></span> Live Trading — 4,800+ Active Traders</div>
+  <h1>Automated <span class="accent">NQ & MNQ</span> Futures Trading</h1>
+  <p>Connect your broker, activate a strategy, and let Stratford Academy trade for you. Fully automated. Zero emotion. Consistent results.</p>
+  <div class="hero-btns">
+    <a href="/dashboard.html" class="btn btn-primary btn-lg">Start 30-Day Free Demo</a>
+    <a href="#performance" class="btn btn-outline btn-lg">View Strategy Stats</a>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="val" style="color:var(--green)">71.95%</div><div class="lbl">Win Rate</div></div>
+    <div class="hero-stat"><div class="val" style="color:var(--accent)">3.15</div><div class="lbl">Profit Factor</div></div>
+    <div class="hero-stat"><div class="val" style="color:var(--green)">+$994K</div><div class="lbl">Net Profit</div></div>
+    <div class="hero-stat"><div class="val" style="color:var(--purple)">4,154</div><div class="lbl">Trades Backtested</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<section class="section section-center" id="how">
+  <div class="section-label">How It Works</div>
+  <div class="section-title">Start Trading in 3 Simple Steps</div>
+  <div class="section-sub">No coding, no chart watching, no manual trading. Set it up once and the strategy handles everything.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-icon">🧠</div>
+      <h3>Pick a Strategy</h3>
+      <p>Browse our proven algorithmic strategies. Stratford Alpha trades NQ & MNQ futures with a 71.95% win rate backtested over 4+ years.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-icon">🔗</div>
+      <h3>Connect Your Broker</h3>
+      <p>Link your Tradovate, NinjaTrader, or Rithmic account in under 5 minutes. We support all major futures brokers and prop firms.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-icon">⚡</div>
+      <h3>Signals Execute Automatically</h3>
+      <p>Trades are placed directly on your broker account in real-time. No manual clicking, no alerts to follow. Fully hands-off.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PERFORMANCE -->
+<section class="section section-center" id="performance">
+  <div class="section-label">Strategy Performance</div>
+  <div class="section-title">Stratford Alpha — Backtested Results</div>
+  <div class="section-sub">Transparent performance data from Jan 2022 — Mar 2026 on 1 NQ contract. Every trade recorded and verifiable.</div>
+
+  <div class="stats-grid">
+    <div class="stat-card green"><div class="val">+$994,690</div><div class="lbl">Net Profit</div></div>
+    <div class="stat-card accent"><div class="val">71.95%</div><div class="lbl">Win Rate</div></div>
+    <div class="stat-card purple"><div class="val">3.15</div><div class="lbl">Profit Factor</div></div>
+    <div class="stat-card green"><div class="val">+$478</div><div class="lbl">Avg Trade</div></div>
+    <div class="stat-card amber"><div class="val">-4.2%</div><div class="lbl">Max Drawdown</div></div>
+    <div class="stat-card accent"><div class="val">4.82</div><div class="lbl">Sharpe Ratio</div></div>
+  </div>
+
+  <div class="perf-banner">
+    <div class="label">2026 Year-to-Date Performance</div>
+    <div class="big">+68.4%</div>
+  </div>
+
+  <div class="disclaimer-text">* All performance figures shown are based on backtested results from Jan 2022 — Mar 2026 on 1 NQ contract. Past performance is not indicative of future results. Trading futures involves substantial risk of loss and is not suitable for all investors. Potential earnings are hypothetical projections based on historical backtest data and do not account for slippage, commissions, or market conditions.</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="section-label">Platform Features</div>
+  <div class="section-title">Everything You Need</div>
+  <div class="section-sub">A complete automated trading platform built for both beginners and experienced traders.</div>
+  <div class="features-grid">
+    <div class="feature">
+      <div class="feature-icon">📄</div>
+      <div><h3>Paper Demo Account</h3><p>Test any strategy risk-free with simulated trades for 30 days. No broker credentials needed.</p></div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📊</div>
+      <div><h3>Live Dashboard</h3><p>Track your P&L, trade history, and strategy performance in real-time from one clean interface.</p></div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🏢</div>
+      <div><h3>Prop Firm Compatible</h3><p>Designed to stay within drawdown limits. Works with Apex, TopStep, My Funded Futures, and more.</p></div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📅</div>
+      <div><h3>Trading Calendar</h3><p>Visual monthly calendar with daily P&L breakdown, notes, and performance stats at a glance.</p></div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🏅</div>
+      <div><h3>Rewards & Affiliate</h3><p>Earn points for activity, unlock tiers, and earn 20% commissions through our affiliate program.</p></div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔔</div>
+      <div><h3>Smart Alerts</h3><p>Get email, webhook, and SMS notifications for every trade, drawdown warning, and milestone.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- LEADERBOARD -->
+<section class="section section-center" id="leaderboard">
+  <div class="section-label">Top Traders</div>
+  <div class="section-title">2026 Leaderboard</div>
+  <div class="section-sub">Real traders, real results. See who's leading this year with Stratford Academy strategies.</div>
+
+  <div class="lb-table">
+    <div class="lb-row header">
+      <div>#</div><div>Trader</div><div>P&L</div><div>Strategy</div><div>Win Rate</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank lb-gold">1</div><div class="lb-name">Marcus R.</div><div class="lb-pnl">+$28,740</div><div class="lb-strat">Stratford Alpha</div><div class="lb-wr">78.3%</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank lb-silver">2</div><div class="lb-name">Sarah K.</div><div class="lb-pnl">+$24,190</div><div class="lb-strat">Stratford Alpha</div><div class="lb-wr">74.6%</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank lb-bronze">3</div><div class="lb-name">David C.</div><div class="lb-pnl">+$21,850</div><div class="lb-strat">Stratford Alpha</div><div class="lb-wr">72.1%</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank">4</div><div class="lb-name">Emily W.</div><div class="lb-pnl">+$19,620</div><div class="lb-strat">Stratford Alpha</div><div class="lb-wr">76.8%</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank">5</div><div class="lb-name">Jason T.</div><div class="lb-pnl">+$17,430</div><div class="lb-strat">Stratford Alpha</div><div class="lb-wr">69.5%</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank">6</div><div class="lb-name">Aisha M.</div><div class="lb-pnl">+$15,880</div><div class="lb-strat">Stratford Alpha</div><div class="lb-wr">71.2%</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank">7</div><div class="lb-name">Ryan P.</div><div class="lb-pnl">+$14,250</div><div class="lb-strat">Stratford Alpha</div><div class="lb-wr">68.9%</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PRICING -->
+<section class="section section-center" id="pricing">
+  <div class="section-label">Pricing</div>
+  <div class="section-title">Simple, Transparent Plans</div>
+  <div class="section-sub">Start with a 30-day free demo. Upgrade when you're ready to trade live. Cancel anytime.</div>
+
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="price-label">Alpha</div>
+      <div class="price-amt">$99 <span>/mo</span></div>
+      <div class="price-desc">For individual traders getting started</div>
+      <ul class="price-features">
+        <li><span class="ck">✓</span> Live signal execution</li>
+        <li><span class="ck">✓</span> Up to 2 strategies</li>
+        <li><span class="ck">✓</span> 1 broker account</li>
+        <li><span class="ck">✓</span> Any account size</li>
+        <li><span class="ck">✓</span> Email notifications</li>
+        <li><span class="no">—</span> <span style="color:var(--text3)">Webhook alerts</span></li>
+        <li><span class="no">—</span> <span style="color:var(--text3)">Priority support</span></li>
+      </ul>
+      <a href="/dashboard.html" class="btn btn-outline" style="width:100%">Select Alpha</a>
+    </div>
+
+    <div class="price-card">
+      <div class="price-label">Pro</div>
+      <div class="price-amt">$189 <span>/mo</span></div>
+      <div class="price-desc">For active traders scaling up</div>
+      <ul class="price-features">
+        <li><span class="ck">✓</span> Live signal execution</li>
+        <li><span class="ck">✓</span> Up to 5 strategies</li>
+        <li><span class="ck">✓</span> Up to 3 broker accounts</li>
+        <li><span class="ck">✓</span> Any account size</li>
+        <li><span class="ck">✓</span> Email + webhook alerts</li>
+        <li><span class="ck">✓</span> Trade analytics dashboard</li>
+        <li><span class="no">—</span> <span style="color:var(--text3)">Priority support</span></li>
+      </ul>
+      <a href="/dashboard.html" class="btn btn-outline" style="width:100%">Select Pro</a>
+    </div>
+
+    <div class="price-card featured">
+      <div class="price-label">Elite</div>
+      <div class="price-amt">$250 <span>/mo</span></div>
+      <div class="price-desc">For serious traders who want it all</div>
+      <ul class="price-features">
+        <li><span class="ck">✓</span> Live signal execution</li>
+        <li><span class="ck">✓</span> 10+ strategies</li>
+        <li><span class="ck">✓</span> Unlimited broker accounts</li>
+        <li><span class="ck">✓</span> Any account size</li>
+        <li><span class="ck">✓</span> Email + webhook + SMS</li>
+        <li><span class="ck">✓</span> Trade analytics dashboard</li>
+        <li><span class="ck">✓</span> Priority support</li>
+      </ul>
+      <a href="/dashboard.html" class="btn btn-primary" style="width:100%">Select Elite</a>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- REVIEWS -->
+<section class="section section-center" id="reviews">
+  <div class="section-label">Reviews</div>
+  <div class="section-title">What Traders Are Saying</div>
+  <div class="section-sub">520+ verified reviews from real traders using Stratford Academy.</div>
+
+  <div class="testimonials-scroll">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"Finally something that actually works. I've tried so many signal services over the years. Stratford Alpha is the first where I saw consistent results from day one."</div>
+      <div class="testi-author"><div class="testi-avatar">MR</div><div><div class="testi-name">Marcus R.</div><div class="testi-loc">Chicago, IL</div></div></div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"Passed my Apex eval on the second try using the MNQ setup. The max drawdown stayed well within the rules. Now I'm running it on my funded account."</div>
+      <div class="testi-author"><div class="testi-avatar">SK</div><div><div class="testi-name">Sarah K.</div><div class="testi-loc">Austin, TX</div></div></div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"I work a 9-5 and don't have time to watch charts. Stratford Academy handles everything. I wake up, check my phone, and see trades already executed."</div>
+      <div class="testi-author"><div class="testi-avatar">DC</div><div><div class="testi-name">David C.</div><div class="testi-loc">Toronto, CA</div></div></div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"Connected my Tradovate account in under 5 minutes. Had a question about contract sizing and support got back to me within an hour. Clean, fast platform."</div>
+      <div class="testi-author"><div class="testi-avatar">EW</div><div><div class="testi-name">Emily W.</div><div class="testi-loc">London, UK</div></div></div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"The paper demo convinced me. After watching it trade for two weeks with a 72% win rate, I went live. No regrets — performing exactly like the backtest."</div>
+      <div class="testi-author"><div class="testi-avatar">JT</div><div><div class="testi-name">Jason T.</div><div class="testi-loc">Miami, FL</div></div></div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"Replaced my $200/mo Discord signal group. Everything is automatic now. Better results, zero effort. Should have switched sooner."</div>
+      <div class="testi-author"><div class="testi-avatar">AM</div><div><div class="testi-name">Aisha M.</div><div class="testi-loc">Dubai, UAE</div></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FAQ -->
+<section class="section section-center" id="faq">
+  <div class="section-label">FAQ</div>
+  <div class="section-title">Frequently Asked Questions</div>
+  <div class="section-sub">Everything you need to know before getting started.</div>
+
+  <div class="faq-list">
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">What is Stratford Academy?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Stratford Academy is an automated futures trading platform. We provide algorithmic strategies that trade NQ (NASDAQ 100) and MNQ (Micro NASDAQ) futures contracts directly on your broker account — fully hands-off.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Do I need trading experience?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>No. Our platform is built for beginners and experienced traders alike. We provide a complete setup guide, education section, and a 30-day paper demo so you can learn and test without risking real money.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Which brokers are supported?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>We support Tradovate (recommended), NinjaTrader, and Rithmic. We're also compatible with prop firms including Apex Trader Funding, TopStep, and My Funded Futures.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Is the 30-day demo really free?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Yes, 100% free. The paper demo uses simulated trades — no real money, no broker credentials needed. You can test the strategy risk-free for 30 days before deciding to go live.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">What are the subscription plans?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Alpha ($99/mo) — 2 strategies, 1 broker. Pro ($189/mo) — 5 strategies, 3 brokers. Elite ($250/mo) — 10+ strategies, unlimited brokers, priority support. All plans include a 30-day free trial.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Can I cancel anytime?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Yes. No contracts, no commitments. Cancel your subscription whenever you want from your Account page. You'll retain access until the end of your billing period.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Does it work with prop firms?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Absolutely. Our MNQ setups are specifically designed to stay within prop firm drawdown limits. Traders have passed evals with Apex, TopStep, and My Funded Futures using our strategies.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">How fast are trades executed?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Signals are sent to your broker within milliseconds. Orders typically fill in under 1 second. This is faster than any manual trader could execute.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FINAL CTA -->
+<section class="cta-section">
+  <h2>Ready to Trade Smarter?</h2>
+  <p>Join 4,800+ traders using Stratford Academy to automate their NQ & MNQ futures trading. Start with a free 30-day paper demo.</p>
+  <div style="display:flex;align-items:center;justify-content:center;gap:14px">
+    <a href="/dashboard.html" class="btn btn-primary btn-lg">Start Free Demo</a>
+    <a href="#performance" class="btn btn-outline btn-lg">View Performance</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div class="divider"></div>
+<footer class="footer">
+  <div class="footer-left">&copy; 2026 Stratford Academy. All rights reserved.</div>
+  <div class="footer-links">
+    <a href="/dashboard.html?signin=1">Dashboard</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+    <a href="#" onclick="alert('Contact: support@stratfordacademy.com');return false">Contact</a>
+  </div>
+</footer>
+
+<script>
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    const t=document.querySelector(a.getAttribute('href'));
+    if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'});}
+  });
+});
+
+// Animate elements on scroll
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}
+  });
+},{threshold:0.1});
+document.querySelectorAll('.step,.feature,.price-card,.testi-card,.stat-card').forEach(el=>{
+  el.style.opacity='0';el.style.transform='translateY(20px)';el.style.transition='opacity .5s,transform .5s';
+  observer.observe(el);
+});
+
+// Nav background on scroll
+window.addEventListener('scroll',()=>{
+  const nav=document.querySelector('.nav');
+  if(window.scrollY>50){nav.style.background='rgba(10,14,23,.95)';nav.style.borderBottomColor='rgba(255,255,255,.1)';}
+  else{nav.style.background='rgba(10,14,23,.85)';nav.style.borderBottomColor='rgba(255,255,255,.08)';}
+});
+
+
+</script>
+</body>
+</html>

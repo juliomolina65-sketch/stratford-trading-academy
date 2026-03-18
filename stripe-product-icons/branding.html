@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head><style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; color:#fff; font-family:-apple-system,sans-serif; padding:30px; }
+  h1 { font-size:22px; margin-bottom:6px; }
+  p { color:#888; font-size:13px; margin-bottom:24px; }
+  .section { margin-bottom:36px; }
+  .section h2 { font-size:16px; color:#00b8e6; margin-bottom:12px; }
+  .row { display:flex; gap:24px; align-items:flex-end; flex-wrap:wrap; }
+  canvas { border:1px solid #333; border-radius:8px; }
+  .dl { display:inline-block; background:#00b8e6; color:#000; padding:8px 18px; border-radius:6px; font-weight:600; text-decoration:none; cursor:pointer; font-size:13px; margin-top:8px; }
+  .dl:hover { opacity:0.8; }
+  .colors { display:flex; gap:16px; margin-top:12px; }
+  .color-card { text-align:center; }
+  .color-swatch { width:80px; height:80px; border-radius:12px; border:2px solid #333; margin-bottom:6px; }
+  .color-hex { font-family:'SF Mono',monospace; font-size:13px; font-weight:600; }
+  .color-label { font-size:11px; color:#888; margin-top:2px; }
+</style></head>
+<body>
+
+<h1>Stratford Academy — Stripe Branding Assets</h1>
+<p>Click download buttons to save each asset. Then upload to Stripe Dashboard → Settings → Branding.</p>
+
+<!-- ICON (Square 512x512) -->
+<div class="section">
+  <h2>1. Icon (Square — 512x512)</h2>
+  <p style="margin-bottom:12px">Used as your business icon in Stripe checkout, invoices, receipts.</p>
+  <div class="row">
+    <div style="text-align:center">
+      <canvas id="c-icon" width="512" height="512"></canvas><br>
+      <a class="dl" onclick="dl('c-icon','stratford-icon-512.png')">Download Icon (Dark)</a>
+    </div>
+    <div style="text-align:center">
+      <canvas id="c-icon-light" width="512" height="512"></canvas><br>
+      <a class="dl" onclick="dl('c-icon-light','stratford-icon-light-512.png')">Download Icon (Light)</a>
+    </div>
+  </div>
+</div>
+
+<!-- LOGO (Wide 800x200) -->
+<div class="section">
+  <h2>2. Logo (Wide — 800x200)</h2>
+  <p style="margin-bottom:12px">Appears at top of Stripe Checkout page, customer portal, and emails.</p>
+  <div class="row">
+    <div style="text-align:center">
+      <canvas id="c-logo" width="800" height="200"></canvas><br>
+      <a class="dl" onclick="dl('c-logo','stratford-logo-dark.png')">Download Logo (Dark BG)</a>
+    </div>
+    <div style="text-align:center">
+      <canvas id="c-logo-light" width="800" height="200"></canvas><br>
+      <a class="dl" onclick="dl('c-logo-light','stratford-logo-light.png')">Download Logo (Light BG)</a>
+    </div>
+  </div>
+</div>
+
+<!-- COLORS -->
+<div class="section">
+  <h2>3. Brand Colors</h2>
+  <p style="margin-bottom:12px">Use these in Stripe Dashboard → Settings → Branding → Colors</p>
+  <div class="colors">
+    <div class="color-card">
+      <div class="color-swatch" style="background:#00b8e6"></div>
+      <div class="color-hex">#00b8e6</div>
+      <div class="color-label">Accent Color</div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#8b6fff"></div>
+      <div class="color-hex">#8b6fff</div>
+      <div class="color-label">Secondary</div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#0a0e17"></div>
+      <div class="color-hex">#0a0e17</div>
+      <div class="color-label">Brand (Dark)</div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#ffffff; border-color:#ddd"></div>
+      <div class="color-hex">#ffffff</div>
+      <div class="color-label">Brand (Light)</div>
+    </div>
+  </div>
+  <div style="margin-top:16px;background:#1a1f2e;border:1px solid #333;border-radius:8px;padding:16px 20px;max-width:500px">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">Stripe Settings → Branding:</div>
+    <div style="font-size:12px;color:#aaa;line-height:1.8">
+      <b>Accent color:</b> <code style="color:#00b8e6">#00b8e6</code><br>
+      <b>Brand color:</b> <code style="color:#8b6fff">#0a0e17</code> (or <code>#8b6fff</code> for purple)<br>
+      <b>Icon:</b> Upload the dark icon<br>
+      <b>Logo:</b> Upload the light BG logo (Stripe checkout has white bg)
+    </div>
+  </div>
+</div>
+
+<script>
+function dl(id, name) {
+  const c = document.getElementById(id);
+  const a = document.createElement('a');
+  a.download = name;
+  a.href = c.toDataURL('image/png');
+  a.click();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+function drawShield(ctx, cx, cy, scale, color1, color2) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const grad = ctx.createLinearGradient(-40, -60, 40, 60);
+  grad.addColorStop(0, color1);
+  grad.addColorStop(1, color2);
+
+  // Matches the SVG: M20 2L4 8v14c0 10 6.5 19 16 22 9.5-3 16-12 16-22V8L20 2
+  // Normalized to center (0,0), scaled to ~120px tall
+  // Outer shield — clean pointed top, straight sides, smooth curved bottom
+  function shieldPath(topY, sideX, sideTopY, sideBottomY, curveY, bottomY) {
+    ctx.beginPath();
+    ctx.moveTo(0, topY);                    // Top point
+    ctx.lineTo(-sideX, sideTopY);           // Top-left
+    ctx.lineTo(-sideX, sideBottomY);        // Left side down
+    // Curved bottom — smooth arc to bottom point
+    ctx.bezierCurveTo(-sideX, curveY, -sideX*0.4, bottomY, 0, bottomY + 8);
+    ctx.bezierCurveTo(sideX*0.4, bottomY, sideX, curveY, sideX, sideBottomY);
+    ctx.lineTo(sideX, sideTopY);            // Right side up
+    ctx.closePath();
+  }
+
+  // Outer shield
+  shieldPath(-58, 44, -38, 10, 42, 55);
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Inner shield (slightly smaller, same proportions)
+  shieldPath(-46, 34, -30, 8, 34, 44);
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // SA text centered
+  ctx.fillStyle = grad;
+  ctx.font = '800 32px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.letterSpacing = '2px';
+  ctx.fillText('SA', 1, 8);
+
+  ctx.restore();
+}
+
+// ============ ICON (Dark) ============
+(function(){
+  const c = document.getElementById('c-icon');
+  const ctx = c.getContext('2d');
+  const w=512, h=512;
+
+  // Background
+  roundRect(ctx, 0, 0, w, h, 80);
+  ctx.clip();
+  const bg = ctx.createLinearGradient(0,0,w,h);
+  bg.addColorStop(0, '#0a0e17'); bg.addColorStop(1, '#111b2e');
+  ctx.fillStyle = bg; ctx.fillRect(0,0,w,h);
+
+  // Glow
+  const glow = ctx.createRadialGradient(w*0.35, h*0.3, 0, w*0.35, h*0.3, w*0.5);
+  glow.addColorStop(0, '#00b8e6'); glow.addColorStop(1, 'transparent');
+  ctx.globalAlpha = 0.1; ctx.fillStyle = glow; ctx.fillRect(0,0,w,h); ctx.globalAlpha=1;
+
+  // Shield
+  drawShield(ctx, 256, 220, 2.2, '#00b8e6', '#00d4ff');
+
+  // Border
+  ctx.save();
+  roundRect(ctx, 1, 1, w-2, h-2, 80);
+  ctx.strokeStyle = 'rgba(0,184,230,0.25)'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.restore();
+})();
+
+// ============ ICON (Light) ============
+(function(){
+  const c = document.getElementById('c-icon-light');
+  const ctx = c.getContext('2d');
+  const w=512, h=512;
+
+  roundRect(ctx, 0, 0, w, h, 80);
+  ctx.clip();
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,w,h);
+
+  // Subtle glow
+  const glow = ctx.createRadialGradient(w*0.35, h*0.3, 0, w*0.35, h*0.3, w*0.5);
+  glow.addColorStop(0, '#00b8e6'); glow.addColorStop(1, 'transparent');
+  ctx.globalAlpha = 0.06; ctx.fillStyle = glow; ctx.fillRect(0,0,w,h); ctx.globalAlpha=1;
+
+  drawShield(ctx, 256, 220, 2.2, '#0090b3', '#006d8a');
+
+  ctx.save();
+  roundRect(ctx, 1, 1, w-2, h-2, 80);
+  ctx.strokeStyle = 'rgba(0,144,179,0.2)'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.restore();
+})();
+
+// ============ LOGO (Dark BG) ============
+(function(){
+  const c = document.getElementById('c-logo');
+  const ctx = c.getContext('2d');
+  const w=800, h=200;
+
+  roundRect(ctx, 0, 0, w, h, 20);
+  ctx.clip();
+  const bg = ctx.createLinearGradient(0,0,w,0);
+  bg.addColorStop(0, '#0a0e17'); bg.addColorStop(1, '#0f1520');
+  ctx.fillStyle = bg; ctx.fillRect(0,0,w,h);
+
+  // Shield icon
+  drawShield(ctx, 90, 100, 1.1, '#00b8e6', '#00d4ff');
+
+  // Text
+  const tGrad = ctx.createLinearGradient(160, 60, 600, 140);
+  tGrad.addColorStop(0, '#00b8e6'); tGrad.addColorStop(1, '#8b6fff');
+
+  ctx.fillStyle = '#e8f4f8';
+  ctx.font = '700 46px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('Stratford', 165, 85);
+
+  ctx.fillStyle = tGrad;
+  ctx.font = '800 46px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillText('Academy', 420, 85);
+
+  ctx.fillStyle = 'rgba(0,184,230,0.5)';
+  ctx.font = '600 14px "SF Mono", monospace, sans-serif';
+  ctx.fillText('AUTOMATED FUTURES TRADING', 168, 125);
+
+  // Border
+  ctx.save();
+  roundRect(ctx, 0.5, 0.5, w-1, h-1, 20);
+  ctx.strokeStyle = 'rgba(0,184,230,0.15)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.restore();
+})();
+
+// ============ LOGO (Light BG) ============
+(function(){
+  const c = document.getElementById('c-logo-light');
+  const ctx = c.getContext('2d');
+  const w=800, h=200;
+
+  roundRect(ctx, 0, 0, w, h, 20);
+  ctx.clip();
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,w,h);
+
+  drawShield(ctx, 90, 100, 1.1, '#0090b3', '#006d8a');
+
+  ctx.fillStyle = '#0a0e17';
+  ctx.font = '700 46px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('Stratford', 165, 85);
+
+  const tGrad = ctx.createLinearGradient(420, 60, 650, 120);
+  tGrad.addColorStop(0, '#0090b3'); tGrad.addColorStop(1, '#6b4fcf');
+  ctx.fillStyle = tGrad;
+  ctx.font = '800 46px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillText('Academy', 420, 85);
+
+  ctx.fillStyle = 'rgba(0,144,179,0.45)';
+  ctx.font = '600 14px "SF Mono", monospace, sans-serif';
+  ctx.fillText('AUTOMATED FUTURES TRADING', 168, 125);
+
+  ctx.save();
+  roundRect(ctx, 0.5, 0.5, w-1, h-1, 20);
+  ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.restore();
+})();
+</script>
+</body>
+</html>

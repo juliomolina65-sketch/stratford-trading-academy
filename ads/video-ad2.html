@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Stratford Academy — Video Ad 2 (Scroll Stopper)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:'Inter',sans-serif;overflow:hidden}
+
+.video{width:1080px;height:1080px;background:#050a14;position:relative;overflow:hidden}
+
+/* ===== FLASH EFFECT (0s) ===== */
+.flash{position:absolute;inset:0;background:#fff;z-index:500;animation:flashBang .15s .1s forwards}
+.flash2{position:absolute;inset:0;background:#00d97e;z-index:499;opacity:0;animation:flashBang .1s 2.8s forwards}
+.flash3{position:absolute;inset:0;background:#00c8f0;z-index:498;opacity:0;animation:flashBang .1s 5.5s forwards}
+
+/* ===== GLITCH OVERLAY ===== */
+.glitch-overlay{position:absolute;inset:0;z-index:400;pointer-events:none;opacity:0}
+.glitch-overlay.active{animation:glitchFlicker .3s .2s forwards}
+.glitch-line{position:absolute;left:0;right:0;height:2px;background:rgba(0,200,240,.4)}
+
+/* ===== SCANLINES ===== */
+.scanlines{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.15) 2px,rgba(0,0,0,.15) 4px);z-index:300;pointer-events:none;opacity:.3}
+
+/* ===== SCENE 1: THE HOOK (0s – 5s) ===== */
+/* Money counter that slams in immediately */
+.scene1{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;animation:sceneOut .3s 5s forwards}
+
+.hook-top{font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.2em;color:rgba(148,163,184,.5);opacity:0;animation:slamIn .2s .2s forwards;margin-bottom:12px}
+
+.money-counter{font-size:140px;font-weight:900;font-family:'JetBrains Mono',monospace;color:#00d97e;line-height:1;letter-spacing:-.05em;opacity:0;text-shadow:0 0 60px rgba(0,217,126,.4),0 0 120px rgba(0,217,126,.2);position:relative}
+.money-counter{animation:slamIn .15s .3s forwards,moneyGlow 1s .5s infinite}
+
+.hook-while{font-size:28px;font-weight:600;color:rgba(255,255,255,.7);margin-top:20px;opacity:0;animation:typeIn .4s .8s forwards}
+
+.hook-sleeping{font-size:52px;font-weight:900;color:#fff;margin-top:4px;opacity:0;animation:slamIn .15s 1.2s forwards}
+
+.hook-line{width:200px;height:3px;background:linear-gradient(90deg,#00d97e,#00c8f0);margin-top:30px;opacity:0;transform:scaleX(0);animation:lineGrow .4s 1.6s forwards}
+
+.hook-sub{font-size:18px;color:rgba(148,163,184,.6);margin-top:16px;opacity:0;animation:fadeUp .3s 2s forwards}
+
+/* Floating $ particles */
+.money-particle{position:absolute;font-family:'JetBrains Mono',monospace;font-weight:700;color:rgba(0,217,126,.15);font-size:48px;opacity:0;z-index:1}
+.mp1{top:10%;left:10%;animation:moneyFloat 3s .5s infinite}
+.mp2{top:20%;right:15%;animation:moneyFloat 2.5s .8s infinite;font-size:36px}
+.mp3{bottom:20%;left:20%;animation:moneyFloat 3.5s .3s infinite;font-size:56px}
+.mp4{bottom:15%;right:10%;animation:moneyFloat 2.8s 1s infinite;font-size:40px}
+.mp5{top:50%;left:5%;animation:moneyFloat 3.2s .6s infinite;font-size:32px}
+.mp6{top:40%;right:5%;animation:moneyFloat 2.6s .2s infinite;font-size:44px}
+
+/* ===== SCENE 2: RAPID STATS (5s – 9s) ===== */
+.scene2{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;z-index:40;opacity:0;animation:sceneIn .2s 5.2s forwards, sceneOut .3s 9s forwards}
+
+.rapid-container{width:100%}
+
+.rapid-stat{display:flex;align-items:center;justify-content:space-between;padding:20px 0;border-bottom:1px solid rgba(255,255,255,.06);opacity:0;transform:translateX(-60px)}
+.rapid-stat:nth-child(1){animation:slideRight .25s 5.5s forwards}
+.rapid-stat:nth-child(2){animation:slideRight .25s 5.75s forwards}
+.rapid-stat:nth-child(3){animation:slideRight .25s 6s forwards}
+.rapid-stat:nth-child(4){animation:slideRight .25s 6.25s forwards}
+.rapid-stat:nth-child(5){animation:slideRight .25s 6.5s forwards}
+
+.rapid-stat .label{font-size:22px;color:rgba(148,163,184,.6);font-weight:500}
+.rapid-stat .val{font-size:48px;font-weight:900;font-family:'JetBrains Mono',monospace;letter-spacing:-.03em}
+
+.scene2-tag{font-size:14px;text-transform:uppercase;letter-spacing:.2em;color:#00c8f0;margin-bottom:30px;opacity:0;animation:fadeIn .3s 5.3s forwards}
+
+/* ===== SCENE 3: THE REVEAL (9s – 14s) ===== */
+.scene3{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px;z-index:30;opacity:0;animation:sceneIn .3s 9.3s forwards, sceneOut .3s 14s forwards}
+
+.reveal-q{font-size:26px;color:rgba(148,163,184,.5);font-weight:600;margin-bottom:20px;opacity:0;animation:fadeUp .4s 9.5s forwards}
+.reveal-headline{font-size:68px;font-weight:900;color:#fff;text-align:center;line-height:1.05;letter-spacing:-.03em;opacity:0;animation:slamIn .2s 9.9s forwards}
+.reveal-headline .cyan{color:#00c8f0}
+.reveal-headline .green{color:#00d97e}
+
+.reveal-sub{font-size:22px;color:rgba(148,163,184,.7);text-align:center;margin-top:20px;line-height:1.5;opacity:0;animation:fadeUp .4s 10.5s forwards}
+
+.reveal-features{display:flex;gap:16px;margin-top:40px;flex-wrap:wrap;justify-content:center}
+.reveal-feat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:14px 22px;font-size:16px;font-weight:600;color:#f1f5f9;opacity:0;display:flex;align-items:center;gap:8px}
+.reveal-feat .dot{width:6px;height:6px;border-radius:50%}
+.reveal-feat:nth-child(1){animation:popIn .3s 11s forwards}
+.reveal-feat:nth-child(2){animation:popIn .3s 11.2s forwards}
+.reveal-feat:nth-child(3){animation:popIn .3s 11.4s forwards}
+.reveal-feat:nth-child(4){animation:popIn .3s 11.6s forwards}
+
+/* ===== SCENE 4: SOCIAL PROOF (14s – 18s) ===== */
+.scene4{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;z-index:20;opacity:0;animation:sceneIn .3s 14.3s forwards, sceneOut .3s 18s forwards}
+
+.proof-header{font-size:18px;text-transform:uppercase;letter-spacing:.15em;color:rgba(148,163,184,.5);margin-bottom:12px;opacity:0;animation:fadeIn .3s 14.5s forwards}
+.proof-rating{font-size:56px;font-weight:900;color:#f59e0b;margin-bottom:6px;opacity:0;animation:slamIn .2s 14.7s forwards}
+.proof-stars{font-size:40px;color:#f59e0b;letter-spacing:6px;margin-bottom:8px;opacity:0;animation:fadeIn .3s 14.9s forwards}
+.proof-count{font-size:16px;color:rgba(148,163,184,.5);margin-bottom:40px;opacity:0;animation:fadeIn .3s 15.1s forwards}
+
+.testimonials{display:flex;gap:16px;width:100%}
+.testi{flex:1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:24px;opacity:0;transform:translateY(30px)}
+.testi:nth-child(1){animation:cardIn .4s 15.3s forwards}
+.testi:nth-child(2){animation:cardIn .4s 15.6s forwards}
+.testi:nth-child(3){animation:cardIn .4s 15.9s forwards}
+.testi-text{font-size:14px;color:rgba(255,255,255,.7);line-height:1.6;margin-bottom:16px;font-style:italic}
+.testi-author{display:flex;align-items:center;gap:10px}
+.testi-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#00c8f0,#8b6fff);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
+.testi-name{font-size:13px;font-weight:600;color:#fff}
+.testi-pnl{font-size:11px;color:#00d97e;font-family:'JetBrains Mono',monospace;font-weight:600}
+
+/* ===== SCENE 5: CTA FINALE (18s – 23s) ===== */
+.scene5{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px;z-index:10;opacity:0;animation:sceneIn .3s 18.3s forwards}
+
+.final-badge{background:rgba(0,217,126,.1);border:1px solid rgba(0,217,126,.3);border-radius:24px;padding:8px 22px;font-size:14px;color:#00d97e;font-weight:700;display:inline-flex;align-items:center;gap:8px;margin-bottom:30px;opacity:0;animation:fadeUp .3s 18.5s forwards}
+.final-badge .pulse{width:8px;height:8px;border-radius:50%;background:#00d97e;animation:blink 1s infinite}
+
+.final-logo{display:flex;align-items:center;gap:14px;margin-bottom:30px;opacity:0;animation:fadeUp .3s 18.7s forwards}
+.final-logo .icon{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#00c8f0,#8b6fff);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;box-shadow:0 0 30px rgba(0,200,240,.3)}
+.final-logo .name{font-size:26px;font-weight:800;color:#fff}
+
+.final-offer{font-size:72px;font-weight:900;color:#fff;text-align:center;line-height:1.05;letter-spacing:-.03em;opacity:0;animation:slamIn .2s 19s forwards}
+.final-offer .free{background:linear-gradient(135deg,#00d97e,#00c8f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+.final-detail{font-size:22px;color:rgba(148,163,184,.6);margin-top:14px;opacity:0;animation:fadeUp .3s 19.5s forwards}
+
+.final-cta-wrap{margin-top:40px;opacity:0;animation:ctaPop .4s 19.8s forwards}
+.final-btn{background:linear-gradient(135deg,#00d97e,#00c8f0);color:#000;font-size:26px;font-weight:800;padding:24px 64px;border-radius:14px;display:inline-block;position:relative;overflow:hidden}
+.final-btn::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent 40%,rgba(255,255,255,.3) 50%,transparent 60%);animation:btnShine 2s 20s infinite}
+
+.final-urgency{display:flex;align-items:center;gap:8px;margin-top:20px;opacity:0;animation:fadeIn .3s 20.3s forwards}
+.final-urgency .timer{font-size:15px;color:#f59e0b;font-weight:700;font-family:'JetBrains Mono',monospace}
+.final-urgency .txt{font-size:14px;color:rgba(148,163,184,.5)}
+
+.final-disclaimer{font-size:11px;color:rgba(148,163,184,.3);margin-top:24px;opacity:0;animation:fadeIn .3s 20.5s forwards}
+
+/* ===== AMBIENT ===== */
+.bg-noise{position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");z-index:200;pointer-events:none;opacity:.5}
+
+.corner-accent{position:absolute;z-index:100;opacity:0;animation:fadeIn .5s 0s forwards}
+.corner-accent.tl{top:0;left:0;width:120px;height:120px;border-top:3px solid #00c8f0;border-left:3px solid #00c8f0}
+.corner-accent.tr{top:0;right:0;width:120px;height:120px;border-top:3px solid #8b6fff;border-right:3px solid #8b6fff}
+.corner-accent.bl{bottom:0;left:0;width:120px;height:120px;border-bottom:3px solid #00d97e;border-left:3px solid #00d97e}
+.corner-accent.br{bottom:0;right:0;width:120px;height:120px;border-bottom:3px solid #f59e0b;border-right:3px solid #f59e0b}
+
+/* Progress bar */
+.progress{position:absolute;bottom:0;left:0;height:4px;background:linear-gradient(90deg,#00d97e,#00c8f0,#8b6fff);z-index:600;width:0;animation:progress 23s linear forwards}
+
+/* ===== KEYFRAMES ===== */
+@keyframes flashBang{
+  0%{opacity:1}
+  100%{opacity:0}
+}
+@keyframes slamIn{
+  0%{opacity:0;transform:scale(2.5)}
+  60%{opacity:1;transform:scale(.95)}
+  100%{opacity:1;transform:scale(1)}
+}
+@keyframes typeIn{
+  0%{opacity:0;letter-spacing:.3em}
+  100%{opacity:1;letter-spacing:.05em}
+}
+@keyframes fadeIn{to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sceneOut{to{opacity:0;pointer-events:none}}
+@keyframes sceneIn{from{opacity:0}to{opacity:1}}
+@keyframes lineGrow{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
+@keyframes popIn{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
+@keyframes cardIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideRight{from{opacity:0;transform:translateX(-60px)}to{opacity:1;transform:translateX(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes progress{from{width:0}to{width:100%}}
+
+@keyframes moneyGlow{
+  0%,100%{text-shadow:0 0 60px rgba(0,217,126,.4),0 0 120px rgba(0,217,126,.2)}
+  50%{text-shadow:0 0 80px rgba(0,217,126,.6),0 0 160px rgba(0,217,126,.3)}
+}
+
+@keyframes moneyFloat{
+  0%{opacity:0;transform:translateY(0) rotate(0deg)}
+  15%{opacity:.2}
+  50%{opacity:.1;transform:translateY(-80px) rotate(10deg)}
+  85%{opacity:.15}
+  100%{opacity:0;transform:translateY(-160px) rotate(-5deg)}
+}
+
+@keyframes ctaPop{
+  from{opacity:0;transform:scale(.7)}
+  60%{opacity:1;transform:scale(1.08)}
+  to{opacity:1;transform:scale(1)}
+}
+
+@keyframes btnShine{
+  0%{transform:translateX(-100%) rotate(45deg)}
+  100%{transform:translateX(100%) rotate(45deg)}
+}
+
+@keyframes glitchFlicker{
+  0%{opacity:1}
+  20%{opacity:0}
+  40%{opacity:.8}
+  60%{opacity:0}
+  80%{opacity:.5}
+  100%{opacity:0}
+}
+
+/* ===== REPLAY ===== */
+.replay{position:absolute;bottom:20px;right:20px;z-index:700;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:14px;font-weight:600;padding:10px 20px;border-radius:8px;cursor:pointer;opacity:0;animation:fadeIn .5s 22s forwards;font-family:'Inter',sans-serif;transition:all .2s}
+.replay:hover{background:rgba(0,200,240,.15);border-color:#00c8f0;color:#00c8f0}
+</style>
+</head>
+<body>
+
+<div class="video">
+  <!-- Ambient -->
+  <div class="bg-noise"></div>
+  <div class="scanlines"></div>
+  <div class="corner-accent tl"></div>
+  <div class="corner-accent tr"></div>
+  <div class="corner-accent bl"></div>
+  <div class="corner-accent br"></div>
+  <div class="progress"></div>
+
+  <!-- Flash effects -->
+  <div class="flash"></div>
+  <div class="flash2"></div>
+  <div class="flash3"></div>
+
+  <!-- SCENE 1: HOOK — 0-5s -->
+  <div class="scene1">
+    <div class="money-particle mp1">$</div>
+    <div class="money-particle mp2">$</div>
+    <div class="money-particle mp3">$</div>
+    <div class="money-particle mp4">$</div>
+    <div class="money-particle mp5">$</div>
+    <div class="money-particle mp6">$</div>
+
+    <div class="hook-top">Last Night's P&L</div>
+    <div class="money-counter">+$4,847</div>
+    <div class="hook-while">while you were</div>
+    <div class="hook-sleeping">SLEEPING.</div>
+    <div class="hook-line"></div>
+    <div class="hook-sub">100% automated. Zero screen time.</div>
+  </div>
+
+  <!-- SCENE 2: RAPID STATS — 5-9s -->
+  <div class="scene2">
+    <div class="scene2-tag">Backtested Performance · Jan 2022 – Mar 2026</div>
+    <div class="rapid-container">
+      <div class="rapid-stat">
+        <span class="label">Net Profit</span>
+        <span class="val" style="color:#00d97e">+$994,690</span>
+      </div>
+      <div class="rapid-stat">
+        <span class="label">Win Rate</span>
+        <span class="val" style="color:#00c8f0">71.95%</span>
+      </div>
+      <div class="rapid-stat">
+        <span class="label">Profit Factor</span>
+        <span class="val" style="color:#8b6fff">3.15</span>
+      </div>
+      <div class="rapid-stat">
+        <span class="label">Sharpe Ratio</span>
+        <span class="val" style="color:#f59e0b">4.82</span>
+      </div>
+      <div class="rapid-stat">
+        <span class="label">Total Trades</span>
+        <span class="val" style="color:#fff">4,154</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 3: REVEAL — 9-14s -->
+  <div class="scene3">
+    <div class="reveal-q">What is this?</div>
+    <div class="reveal-headline"><span class="cyan">Stratford</span> <span class="green">Alpha</span><br>Trades For You.</div>
+    <div class="reveal-sub">A fully automated NQ futures algorithm.<br>It connects to your broker and executes trades 24/5.</div>
+    <div class="reveal-features">
+      <div class="reveal-feat"><div class="dot" style="background:#00d97e"></div>No charts needed</div>
+      <div class="reveal-feat"><div class="dot" style="background:#00c8f0"></div>No manual trading</div>
+      <div class="reveal-feat"><div class="dot" style="background:#8b6fff"></div>Works while you sleep</div>
+      <div class="reveal-feat"><div class="dot" style="background:#f59e0b"></div>Prop firm compatible</div>
+    </div>
+  </div>
+
+  <!-- SCENE 4: SOCIAL PROOF — 14-18s -->
+  <div class="scene4">
+    <div class="proof-header">Verified Reviews</div>
+    <div class="proof-rating">4.9</div>
+    <div class="proof-stars">★★★★★</div>
+    <div class="proof-count">from 520+ traders</div>
+    <div class="testimonials">
+      <div class="testi">
+        <div class="testi-text">"Strategy runs itself. I check once a day and the P&L keeps climbing."</div>
+        <div class="testi-author">
+          <div class="testi-avatar">SK</div>
+          <div>
+            <div class="testi-name">Sarah K.</div>
+            <div class="testi-pnl">+$24,190</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi">
+        <div class="testi-text">"Passed my Apex eval in 8 days. Didn't touch a single chart."</div>
+        <div class="testi-author">
+          <div class="testi-avatar">MR</div>
+          <div>
+            <div class="testi-name">Marcus R.</div>
+            <div class="testi-pnl">+$28,740</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi">
+        <div class="testi-text">"Best investment I've made. The algorithm does what I never could."</div>
+        <div class="testi-author">
+          <div class="testi-avatar">JT</div>
+          <div>
+            <div class="testi-name">Jason T.</div>
+            <div class="testi-pnl">+$17,430</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 5: CTA — 18-23s -->
+  <div class="scene5">
+    <div class="final-badge"><span class="pulse"></span> Limited Spots Available</div>
+    <div class="final-logo">
+      <div class="icon">ST</div>
+      <div class="name">Stratford Academy</div>
+    </div>
+    <div class="final-offer">Try It <span class="free">FREE</span><br>Forever</div>
+    <div class="final-detail">No credit card. No commitment. Cancel anytime.</div>
+    <div class="final-cta-wrap"><div class="final-btn">Start Free Demo →</div></div>
+    <div class="final-urgency">
+      <span class="timer">⚡</span>
+      <span class="txt">4,800+ traders already joined</span>
+    </div>
+    <div class="final-disclaimer">Past performance does not guarantee future results. Trading futures involves substantial risk.</div>
+  </div>
+
+  <button class="replay" onclick="location.reload()">↻ Replay</button>
+</div>
+
+</body>
+</html>

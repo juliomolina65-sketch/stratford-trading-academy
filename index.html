@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Stratford Academy — Automated NQ, ES & Micro Futures Trading</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 48'%3E%3Cpath d='M20 2L4 8v14c0 10 6.5 19 16 22 9.5-3 16-12 16-22V8L20 2z' stroke='url(%23g)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M20 5.5L7 10.5v11.5c0 8.5 5.5 16 13 18.5 7.5-2.5 13-10 13-18.5V10.5L20 5.5z' stroke='url(%23g)' stroke-width='1.2' fill='none'/%3E%3Ctext x='20' y='30' text-anchor='middle' font-family='sans-serif' font-size='12' font-weight='700' letter-spacing='1' fill='url(%23g)'%3ESA%3C/text%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='40' y2='48'%3E%3Cstop stop-color='%2300b8e6'/%3E%3Cstop offset='1' stop-color='%238b6fff'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e17;--bg2:#111827;--bg3:#1a2236;
+  --border:rgba(255,255,255,.08);
+  --text:#f1f5f9;--text2:#94a3b8;--text3:#64748b;
+  --accent:#00c8f0;--purple:#8b6fff;--green:#00d97e;--amber:#f59e0b;--red:#ef4444;
+  --mono:'SF Mono','Fira Code','Consolas',monospace;
+  --sans:-apple-system,'Segoe UI','Inter',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,14,23,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700;color:var(--text)}
+.nav-logo span{display:flex;align-items:center;justify-content:center}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{color:var(--text2);font-size:13px;font-weight:500;text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{display:flex;align-items:center;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 20px;border-radius:7px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn-primary{background:var(--accent);color:#000}.btn-primary:hover{background:#33d4f5;text-decoration:none}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}.btn-outline:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.btn-purple{background:var(--purple);color:#fff}.btn-purple:hover{background:#a08aff;text-decoration:none}
+.btn-lg{padding:14px 32px;font-size:15px;border-radius:9px}
+
+/* HERO */
+.hero{padding:140px 40px 80px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:900px;height:900px;background:radial-gradient(circle,rgba(0,200,240,.08) 0%,rgba(139,111,255,.04) 40%,transparent 70%);pointer-events:none}
+.hero::after{content:'';position:absolute;top:200px;right:10%;width:400px;height:400px;background:radial-gradient(circle,rgba(139,111,255,.06) 0%,transparent 60%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,217,126,.08);border:1px solid rgba(0,217,126,.2);border-radius:20px;padding:5px 16px;font-size:12px;color:var(--green);font-weight:500;margin-bottom:24px}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-size:56px;font-weight:800;line-height:1.1;max-width:800px;margin:0 auto 20px;letter-spacing:-.02em}
+.hero h1 .accent{background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:18px;color:var(--text2);max-width:560px;margin:0 auto 36px;line-height:1.65}
+.hero-btns{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:48px}
+.hero-stats{display:flex;align-items:center;justify-content:center;gap:40px;padding-top:24px;border-top:1px solid var(--border);max-width:600px;margin:0 auto}
+.hero-stat{text-align:center}
+.hero-stat .val{font-size:24px;font-weight:700;font-family:var(--mono);color:var(--text)}
+.hero-stat .lbl{font-size:11px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.06em}
+
+/* SECTIONS */
+.section{padding:80px 40px;max-width:1100px;margin:0 auto}
+.section-label{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:12px;font-family:var(--mono)}
+.section-title{font-size:36px;font-weight:700;margin-bottom:12px;letter-spacing:-.01em}
+.section-sub{font-size:15px;color:var(--text2);max-width:520px;line-height:1.6;margin-bottom:48px}
+.section-center{text-align:center}
+.section-center .section-sub{margin-left:auto;margin-right:auto}
+
+/* HOW IT WORKS */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.step{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:32px 28px;position:relative;transition:all .3s}
+.step:hover{border-color:rgba(0,200,240,.25);transform:translateY(-4px)}
+.step-num{width:36px;height:36px;border-radius:10px;background:rgba(0,200,240,.1);border:1px solid rgba(0,200,240,.2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent);margin-bottom:18px}
+.step h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.step p{font-size:13px;color:var(--text2);line-height:1.6}
+.step-icon{font-size:28px;margin-bottom:14px}
+
+/* STATS SHOWCASE */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:14px;overflow:hidden;margin-bottom:32px}
+.stat-card{background:var(--bg2);padding:28px 24px;text-align:center}
+.stat-card .val{font-size:28px;font-weight:700;font-family:var(--mono);margin-bottom:4px}
+.stat-card .lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+.stat-card.green .val{color:var(--green)}
+.stat-card.accent .val{color:var(--accent)}
+.stat-card.purple .val{color:var(--purple)}
+.stat-card.amber .val{color:var(--amber)}
+.perf-banner{background:linear-gradient(135deg,rgba(0,200,240,.06),rgba(139,111,255,.06));border:1px solid rgba(0,200,240,.12);border-radius:12px;padding:20px 28px;display:flex;align-items:center;justify-content:space-between}
+.perf-banner .label{font-size:13px;color:var(--text2)}
+.perf-banner .big{font-size:32px;font-weight:700;font-family:var(--mono);color:var(--green)}
+.disclaimer-text{font-size:10px;color:var(--text3);line-height:1.6;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* FEATURES */
+.features-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.feature{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;display:flex;gap:16px;transition:all .3s}
+.feature:hover{border-color:rgba(0,200,240,.2);transform:translateY(-2px)}
+.feature-icon{width:40px;height:40px;border-radius:10px;background:rgba(0,200,240,.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.feature h3{font-size:14px;font-weight:600;margin-bottom:4px}
+.feature p{font-size:12px;color:var(--text2);line-height:1.5}
+
+/* PRICING */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.price-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:32px 28px;position:relative;transition:all .3s}
+.price-card:hover{transform:translateY(-4px)}
+.price-card.featured{border-color:rgba(0,200,240,.3);background:linear-gradient(180deg,rgba(0,200,240,.04),var(--bg2))}
+.price-card.featured::before{content:'MOST POPULAR';position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 14px;border-radius:0 0 6px 6px;letter-spacing:.08em}
+.price-label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px}
+.price-card.featured .price-label{color:var(--accent);margin-top:14px}
+.price-amt{font-size:36px;font-weight:700;margin-bottom:2px}
+.price-amt span{font-size:14px;color:var(--text3);font-weight:400}
+.price-desc{font-size:12px;color:var(--text3);margin-bottom:20px}
+.price-features{list-style:none;margin-bottom:24px;display:flex;flex-direction:column;gap:8px}
+.price-features li{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:8px}
+.price-features li .ck{color:var(--green)}
+.price-features li .no{color:var(--text3)}
+
+/* TESTIMONIALS */
+.testimonials-scroll{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.testi-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:22px;transition:all .3s}
+.testi-card:hover{border-color:rgba(0,200,240,.15)}
+.testi-stars{color:var(--amber);font-size:12px;margin-bottom:10px;letter-spacing:2px}
+.testi-text{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+.testi-author{display:flex;align-items:center;gap:10px}
+.testi-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff}
+.testi-name{font-size:12px;font-weight:600;color:var(--text)}
+.testi-loc{font-size:10px;color:var(--text3)}
+
+/* LEADERBOARD */
+.lb-table{width:100%;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.lb-row{display:grid;grid-template-columns:40px 1.5fr 1fr 1fr 1fr;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--bg2);transition:background .2s}
+.lb-row:last-child{border-bottom:none}
+.lb-row:hover{background:var(--bg3)}
+.lb-row.header{background:var(--bg3);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:600;padding:10px 18px}
+.lb-rank{font-family:var(--mono);font-weight:700;font-size:14px;color:var(--text)}
+.lb-name{font-size:13px;font-weight:500;color:var(--text)}
+.lb-pnl{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--green)}
+.lb-strat{font-size:11px;color:var(--accent)}
+.lb-wr{font-family:var(--mono);font-size:12px;color:var(--text2)}
+.lb-gold{color:var(--amber)!important}
+.lb-silver{color:#c0c0c0!important}
+.lb-bronze{color:#cd7f32!important}
+
+/* FAQ */
+.faq-list{display:flex;flex-direction:column;gap:8px;max-width:700px;margin:0 auto}
+.faq-item{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.faq-q{padding:16px 20px;font-size:14px;font-weight:500;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:background .2s}
+.faq-q:hover{background:var(--bg3)}
+.faq-q .arrow{font-size:16px;color:var(--text3);transition:transform .3s}
+.faq-item.open .faq-q .arrow{transform:rotate(180deg)}
+.faq-a{padding:0 20px;max-height:0;overflow:hidden;transition:max-height .3s,padding .3s}
+.faq-item.open .faq-a{padding:0 20px 16px;max-height:300px}
+.faq-a p{font-size:13px;color:var(--text2);line-height:1.6}
+
+/* CTA */
+.cta-section{text-align:center;padding:80px 40px;position:relative}
+.cta-section::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(circle,rgba(0,200,240,.06) 0%,rgba(139,111,255,.03) 50%,transparent 70%);pointer-events:none}
+.cta-section h2{font-size:36px;font-weight:700;margin-bottom:12px}
+.cta-section p{font-size:15px;color:var(--text2);margin-bottom:32px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.6}
+
+/* FOOTER */
+.footer{border-top:1px solid var(--border);padding:40px;display:flex;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto}
+.footer-left{font-size:12px;color:var(--text3)}
+.footer-links{display:flex;gap:20px}
+.footer-links a{font-size:12px;color:var(--text3);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--text)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);max-width:1100px;margin:0 auto}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .nav{padding:0 16px}
+  .nav-links{display:none}
+  .hero{padding:110px 20px 60px}
+  .hero h1{font-size:32px}
+  .hero p{font-size:15px}
+  .hero-stats{flex-wrap:wrap;gap:20px}
+  .section{padding:50px 20px}
+  .section-title{font-size:26px}
+  .steps{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .features-grid{grid-template-columns:1fr}
+  .pricing-grid{grid-template-columns:1fr;max-width:380px;margin:0 auto}
+  .strats-grid{grid-template-columns:repeat(2,1fr)!important}
+  .testimonials-scroll{grid-template-columns:1fr}
+  .lb-row{grid-template-columns:30px 1.2fr 1fr 1fr;font-size:11px}
+  .lb-row .lb-wr{display:none}
+  .hero-btns{flex-direction:column}
+  .footer{flex-direction:column;gap:16px;text-align:center}
+  .perf-banner{flex-direction:column;text-align:center;gap:10px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-logo">
+    <span><svg width="28" height="32" viewBox="0 0 40 48" fill="none"><path d="M20 2L4 8v14c0 10 6.5 19 16 22 9.5-3 16-12 16-22V8L20 2z" stroke="url(#sg)" stroke-width="1.5" fill="none"/><path d="M20 5.5L7 10.5v11.5c0 8.5 5.5 16 13 18.5 7.5-2.5 13-10 13-18.5V10.5L20 5.5z" stroke="url(#sg)" stroke-width="1.2" fill="none"/><text x="20" y="30" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="12" font-weight="700" letter-spacing="1" fill="url(#sg)">SA</text><defs><linearGradient id="sg" x1="0" y1="0" x2="40" y2="48"><stop stop-color="#00b8e6"/><stop offset="1" stop-color="#8b6fff"/></linearGradient></defs></svg></span>
+    Stratford Academy
+  </div>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#strategies">Strategies</a>
+    <a href="#performance">Performance</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#reviews">Reviews</a>
+    <a href="#faq">FAQ</a>
+  </div>
+  <div class="nav-cta">
+    <a href="#" onclick="showSigninModal();return false" class="btn btn-outline">Sign In</a>
+    <a href="#" onclick="showSignupModal();return false" class="btn btn-primary">Start Free Demo</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge"><span class="dot"></span> Live Trading — 4,800+ Active Traders</div>
+  <h1>Automated <span class="accent">NQ, ES & Micro</span> Futures Trading</h1>
+  <p style="max-width:640px;margin:0 auto 24px;font-size:17px;line-height:1.7">Stratford Academy is an automated trading platform built for <strong style="color:var(--text)">everyone</strong> — students, 9-to-5 workers, side hustlers, experienced traders, and anyone who wants their money working while they sleep. Whether you're a complete beginner or an advanced trader looking for a hands-free edge, you just connect and let the bot handle everything.</p>
+  <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:28px">
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(0,217,126,.07);border:1px solid rgba(0,217,126,.18);border-radius:20px;padding:5px 14px"><span style="font-size:13px">🎓</span><span style="font-size:12px;color:var(--green);font-weight:500">Complete Beginner? Perfect</span></div>
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(139,111,255,.07);border:1px solid rgba(139,111,255,.18);border-radius:20px;padding:5px 14px"><span style="font-size:13px">💰</span><span style="font-size:12px;color:var(--purple);font-weight:500">Want Extra Income? Start Here</span></div>
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(0,200,240,.07);border:1px solid rgba(0,200,240,.18);border-radius:20px;padding:5px 14px"><span style="font-size:13px">🤖</span><span style="font-size:12px;color:var(--accent);font-weight:500">Zero Manual Trading</span></div>
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,168,38,.07);border:1px solid rgba(255,168,38,.18);border-radius:20px;padding:5px 14px"><span style="font-size:13px">📈</span><span style="font-size:12px;color:var(--orange);font-weight:500">Advanced? We Got Strategies</span></div>
+  </div>
+  <div class="hero-btns">
+    <a href="#" onclick="showSignupModal();return false" class="btn btn-primary btn-lg">Start Your Free Account</a>
+    <a href="#beginners" class="btn btn-outline btn-lg">I'm New — Show Me How</a>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="val" style="color:var(--green)">87.27%</div><div class="lbl">Best Win Rate</div></div>
+    <div class="hero-stat"><div class="val" style="color:var(--accent)">4</div><div class="lbl">Proven Strategies</div></div>
+    <div class="hero-stat"><div class="val" style="color:var(--green)">+$3.1M</div><div class="lbl">Backtested Profit</div></div>
+    <div class="hero-stat"><div class="val" style="color:var(--purple)">18,000+</div><div class="lbl">Trades Tested</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<section class="section section-center" id="how">
+  <div class="section-label">How It Works</div>
+  <div class="section-title">Start Trading in 3 Simple Steps</div>
+  <div class="section-sub">No coding, no chart watching, no manual trading. Set it up once and the strategy handles everything.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-icon">🧠</div>
+      <h3>Pick a Strategy</h3>
+      <p>Browse 4 proven strategies across NASDAQ (NQ/MNQ) and S&P 500 (ES/MES) futures — all backtested over 4+ years with win rates up to 87%.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-icon">🔗</div>
+      <h3>Connect Your Broker</h3>
+      <p>Link your Tradovate, NinjaTrader, or Rithmic account in under 5 minutes. We support all major futures brokers and prop firms.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-icon">⚡</div>
+      <h3>Signals Execute Automatically</h3>
+      <p>Trades are placed directly on your broker account in real-time. No manual clicking, no alerts to follow. Fully hands-off.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BUILT FOR BEGINNERS -->
+<section class="section section-center" id="beginners">
+  <div class="section-label" style="color:var(--green)">Zero Experience Required</div>
+  <div class="section-title">Know Nothing About Trading? Perfect.</div>
+  <div class="section-sub">Whether you're a college student, a 9-to-5 worker, or just someone who wants extra income — Stratford Academy was built for you. No trading knowledge needed. The bot trades, you earn.</div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:14px;overflow:hidden;margin-bottom:28px" class="strats-grid">
+    <div style="background:var(--bg2);padding:28px 24px;text-align:center">
+      <div style="font-size:32px;margin-bottom:12px">🎓</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">Free Learning Center</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6">5 beginner guides covering futures pairs, prop firms, indicators, automated trading, and key terms — all in plain English.</div>
+    </div>
+    <div style="background:var(--bg2);padding:28px 24px;text-align:center">
+      <div style="font-size:32px;margin-bottom:12px">🤖</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">The Bot Does Everything</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6">Our algorithm analyzes the market, places trades, sets stop losses, and manages risk — 24/5. You don't lift a finger.</div>
+    </div>
+    <div style="background:var(--bg2);padding:28px 24px;text-align:center">
+      <div style="font-size:32px;margin-bottom:12px">💰</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">Extra Income on Autopilot</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6">Start with a free paper demo — it never expires. When you're ready, connect a broker or prop firm and let the strategy work while you live your life.</div>
+    </div>
+  </div>
+
+  <a href="#" onclick="showSignupModal();return false" class="btn btn-primary btn-lg" style="margin:0 auto;display:inline-flex">Start Free — No Experience Needed</a>
+</section>
+
+<div class="divider"></div>
+
+<!-- AFFILIATE PROGRAM -->
+<section class="section section-center" id="affiliate">
+  <div class="section-label">Earn With Us</div>
+  <div class="section-title">Affiliate Program — Earn 25% Monthly</div>
+  <div class="section-sub">Refer friends to Stratford Academy and earn <strong style="color:#00d97e">25% recurring commission</strong> on their subscription — every single month.</div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:800px;margin:36px auto 32px;text-align:center">
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:28px 20px">
+      <div style="font-size:32px;margin-bottom:12px">📤</div>
+      <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:6px">Share Your Link</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">Get your unique referral link and share it on social media, with friends, or in trading communities.</div>
+    </div>
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:28px 20px">
+      <div style="font-size:32px;margin-bottom:12px">👥</div>
+      <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:6px">Friends Subscribe</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">When someone signs up through your link and subscribes to any plan, they're linked to you forever.</div>
+    </div>
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:28px 20px">
+      <div style="font-size:32px;margin-bottom:12px">💰</div>
+      <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:6px">You Earn 25%</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">Earn 25% of their monthly subscription — every month they stay subscribed. No cap on referrals.</div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:center;gap:28px;margin-bottom:32px;flex-wrap:wrap">
+    <div style="text-align:center">
+      <div style="font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Alpha ($99/mo)</div>
+      <div style="font-size:28px;font-weight:800;color:#00d97e;font-family:'JetBrains Mono',monospace">$24.75<span style="font-size:12px;color:rgba(255,255,255,.4)">/mo</span></div>
+    </div>
+    <div style="width:1px;background:rgba(255,255,255,.1)"></div>
+    <div style="text-align:center">
+      <div style="font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Pro ($189/mo)</div>
+      <div style="font-size:28px;font-weight:800;color:#00d97e;font-family:'JetBrains Mono',monospace">$47.25<span style="font-size:12px;color:rgba(255,255,255,.4)">/mo</span></div>
+    </div>
+    <div style="width:1px;background:rgba(255,255,255,.1)"></div>
+    <div style="text-align:center">
+      <div style="font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Elite ($250/mo)</div>
+      <div style="font-size:28px;font-weight:800;color:#00d97e;font-family:'JetBrains Mono',monospace">$62.50<span style="font-size:12px;color:rgba(255,255,255,.4)">/mo</span></div>
+    </div>
+  </div>
+
+  <div style="background:rgba(0,217,126,.04);border:1px solid rgba(0,217,126,.15);border-radius:10px;padding:16px 20px;max-width:640px;margin:0 auto 32px;font-size:13px;color:rgba(255,255,255,.6);line-height:1.7;text-align:left">
+    <strong style="color:#00d97e">Example:</strong> Refer just 10 friends who subscribe to Pro ($189/mo) and you earn <strong style="color:#fff">$472.50 every single month</strong> — passively, with no extra work. The more people you refer, the more you earn. No limits.
+  </div>
+
+  <a href="#" onclick="showSignupModal();return false" class="btn btn-primary btn-lg">Sign Up & Start Earning</a>
+</section>
+
+<div class="divider"></div>
+
+<!-- PERFORMANCE -->
+<section class="section section-center" id="performance">
+  <div class="section-label">Strategy Performance</div>
+  <div class="section-title">Backtested Results — Jan 2022 to Mar 2026</div>
+  <div class="section-sub">Transparent performance data across all strategies. Every trade recorded and verifiable over 4+ years of real market data.</div>
+
+  <div class="stats-grid">
+    <div class="stat-card green"><div class="val">+$994,690</div><div class="lbl">Net Profit</div></div>
+    <div class="stat-card accent"><div class="val">71.95%</div><div class="lbl">Win Rate</div></div>
+    <div class="stat-card purple"><div class="val">3.15</div><div class="lbl">Profit Factor</div></div>
+    <div class="stat-card green"><div class="val">+$478</div><div class="lbl">Avg Trade</div></div>
+    <div class="stat-card amber"><div class="val">-4.2%</div><div class="lbl">Max Drawdown</div></div>
+    <div class="stat-card accent"><div class="val">4.82</div><div class="lbl">Sharpe Ratio</div></div>
+  </div>
+
+  <div class="perf-banner">
+    <div class="label">2026 Year-to-Date Performance</div>
+    <div class="big">+68.4%</div>
+  </div>
+
+  <div class="disclaimer-text">* All performance figures shown are based on backtested results from Jan 2022 — Mar 2026 on 1 NQ contract. Past performance is not indicative of future results. Trading futures involves substantial risk of loss and is not suitable for all investors. Potential earnings are hypothetical projections based on historical backtest data and do not account for slippage, commissions, or market conditions.</div>
+</section>
+
+<!-- (beginners section moved up) -->
+
+<div class="divider"></div>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="section-label">Platform Features</div>
+  <div class="section-title">Everything You Need</div>
+  <div class="section-sub">A complete automated trading platform built for both beginners and experienced traders.</div>
+  <div class="features-grid">
+    <div class="feature">
+      <div class="feature-icon">📄</div>
+      <div><h3>Paper Demo Account</h3><p>Test any strategy risk-free with simulated trades — free forever. No broker credentials needed.</p></div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📊</div>
+      <div><h3>Live Dashboard</h3><p>Track your P&L, trade history, and strategy performance in real-time from one clean interface.</p></div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🏢</div>
+      <div><h3>Prop Firm Compatible</h3><p>Designed to stay within drawdown limits. Works with Apex, TopStep, My Funded Futures, and more.</p></div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📅</div>
+      <div><h3>Trading Calendar</h3><p>Visual monthly calendar with daily P&L breakdown, notes, and performance stats at a glance.</p></div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🏅</div>
+      <div><h3>Rewards & Affiliate</h3><p>Earn points for activity, unlock tiers, and earn 20% commissions through our affiliate program.</p></div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔔</div>
+      <div><h3>Smart Alerts</h3><p>Get email, webhook, and SMS notifications for every trade, drawdown warning, and milestone.</p></div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🎓</div>
+      <div><h3>Beginner Learning Center</h3><p>5 free guides covering futures pairs, prop firms, indicators, automated trading, and key terminology. No experience needed.</p></div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📈</div>
+      <div><h3>Backtest Results</h3><p>View detailed equity curves, monthly returns, and full trade breakdowns for every strategy — 4+ years of transparent data.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- LEADERBOARD -->
+<section class="section section-center" id="leaderboard">
+  <div class="section-label">Top Traders</div>
+  <div class="section-title">2026 Leaderboard</div>
+  <div class="section-sub">Real traders, real results. See who's leading this year with Stratford Academy strategies.</div>
+
+  <div class="lb-table">
+    <div class="lb-row header">
+      <div>#</div><div>Trader</div><div>P&L</div><div>Strategy</div><div>Win Rate</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank lb-gold">1</div><div class="lb-name">Marcus R.</div><div class="lb-pnl">+$28,740</div><div class="lb-strat">Stratford Apex</div><div class="lb-wr">83.1%</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank lb-silver">2</div><div class="lb-name">Sarah K.</div><div class="lb-pnl">+$24,190</div><div class="lb-strat">Stratford Alpha</div><div class="lb-wr">74.6%</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank lb-bronze">3</div><div class="lb-name">David C.</div><div class="lb-pnl">+$21,850</div><div class="lb-strat">Stratford Guardian</div><div class="lb-wr">88.2%</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank">4</div><div class="lb-name">Emily W.</div><div class="lb-pnl">+$19,620</div><div class="lb-strat">Stratford Alpha</div><div class="lb-wr">76.8%</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank">5</div><div class="lb-name">Jason T.</div><div class="lb-pnl">+$17,430</div><div class="lb-strat">Stratford Omega</div><div class="lb-wr">74.5%</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank">6</div><div class="lb-name">Aisha M.</div><div class="lb-pnl">+$15,880</div><div class="lb-strat">Stratford Apex</div><div class="lb-wr">81.2%</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank">7</div><div class="lb-name">Ryan P.</div><div class="lb-pnl">+$14,250</div><div class="lb-strat">Stratford Guardian</div><div class="lb-wr">87.9%</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PRICING -->
+<section class="section section-center" id="pricing">
+  <div class="section-label">Pricing</div>
+  <div class="section-title">Simple, Transparent Plans</div>
+  <div class="section-sub">Start with a free paper demo. Upgrade when you're ready to trade live. Cancel anytime.</div>
+
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="price-label">Alpha</div>
+      <div class="price-amt">$99 <span>/mo</span></div>
+      <div class="price-desc">For individual traders getting started</div>
+      <ul class="price-features">
+        <li><span class="ck">✓</span> Live signal execution</li>
+        <li><span class="ck">✓</span> Up to 2 strategies</li>
+        <li><span class="ck">✓</span> 1 broker account</li>
+        <li><span class="ck">✓</span> Any account size</li>
+        <li><span class="ck">✓</span> Email notifications</li>
+        <li><span class="no">—</span> <span style="color:var(--text3)">Webhook alerts</span></li>
+        <li><span class="no">—</span> <span style="color:var(--text3)">Priority support</span></li>
+      </ul>
+      <a href="#" onclick="showSignupModal();return false" class="btn btn-outline" style="width:100%">Select Alpha</a>
+    </div>
+
+    <div class="price-card">
+      <div class="price-label">Pro</div>
+      <div class="price-amt">$189 <span>/mo</span></div>
+      <div class="price-desc">For active traders scaling up</div>
+      <ul class="price-features">
+        <li><span class="ck">✓</span> Live signal execution</li>
+        <li><span class="ck">✓</span> Up to 5 strategies</li>
+        <li><span class="ck">✓</span> Up to 3 broker accounts</li>
+        <li><span class="ck">✓</span> Any account size</li>
+        <li><span class="ck">✓</span> Email + webhook alerts</li>
+        <li><span class="ck">✓</span> Trade analytics dashboard</li>
+        <li><span class="no">—</span> <span style="color:var(--text3)">Priority support</span></li>
+      </ul>
+      <a href="#" onclick="showSignupModal();return false" class="btn btn-outline" style="width:100%">Select Pro</a>
+    </div>
+
+    <div class="price-card featured">
+      <div class="price-label">Elite</div>
+      <div class="price-amt">$250 <span>/mo</span></div>
+      <div class="price-desc">For serious traders who want it all</div>
+      <ul class="price-features">
+        <li><span class="ck">✓</span> Live signal execution</li>
+        <li><span class="ck">✓</span> 10+ strategies</li>
+        <li><span class="ck">✓</span> Unlimited broker accounts</li>
+        <li><span class="ck">✓</span> Any account size</li>
+        <li><span class="ck">✓</span> Email + webhook + SMS</li>
+        <li><span class="ck">✓</span> Trade analytics dashboard</li>
+        <li><span class="ck">✓</span> Priority support</li>
+      </ul>
+      <a href="#" onclick="showSignupModal();return false" class="btn btn-primary" style="width:100%">Select Elite</a>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- REVIEWS -->
+<section class="section section-center" id="reviews">
+  <div class="section-label">Reviews</div>
+  <div class="section-title">What Traders Are Saying</div>
+  <div class="section-sub">520+ verified reviews from real traders using Stratford Academy.</div>
+
+  <div class="testimonials-scroll">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"Finally something that actually works. I've tried so many signal services over the years. Stratford Alpha is the first where I saw consistent results from day one."</div>
+      <div class="testi-author"><div class="testi-avatar">MR</div><div><div class="testi-name">Marcus R.</div><div class="testi-loc">Chicago, IL</div></div></div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"Passed my Apex eval on the second try using the MNQ setup. The max drawdown stayed well within the rules. Now I'm running it on my funded account."</div>
+      <div class="testi-author"><div class="testi-avatar">SK</div><div><div class="testi-name">Sarah K.</div><div class="testi-loc">Austin, TX</div></div></div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"I work a 9-5 and don't have time to watch charts. Stratford Academy handles everything. I wake up, check my phone, and see trades already executed."</div>
+      <div class="testi-author"><div class="testi-avatar">DC</div><div><div class="testi-name">David C.</div><div class="testi-loc">Toronto, CA</div></div></div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"Connected my Tradovate account in under 5 minutes. Had a question about contract sizing and support got back to me within an hour. Clean, fast platform."</div>
+      <div class="testi-author"><div class="testi-avatar">EW</div><div><div class="testi-name">Emily W.</div><div class="testi-loc">London, UK</div></div></div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"The paper demo convinced me. After watching it trade for two weeks with a 72% win rate, I went live. No regrets — performing exactly like the backtest."</div>
+      <div class="testi-author"><div class="testi-avatar">JT</div><div><div class="testi-name">Jason T.</div><div class="testi-loc">Miami, FL</div></div></div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"Replaced my $200/mo Discord signal group. Everything is automatic now. Better results, zero effort. Should have switched sooner."</div>
+      <div class="testi-author"><div class="testi-avatar">AM</div><div><div class="testi-name">Aisha M.</div><div class="testi-loc">Dubai, UAE</div></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- OUR STRATEGIES -->
+<section class="section section-center" id="strategies">
+  <div class="section-label">Our Strategies</div>
+  <div class="section-title">4 Proven Strategies, 2 Markets</div>
+  <div class="section-sub">Each strategy is backtested over 4+ years with thousands of trades. Pick the one that fits your style and account.</div>
+
+  <div class="strats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px">
+    <div style="background:var(--bg2);padding:24px 20px;text-align:center">
+      <div style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);margin-bottom:6px">NQ / MNQ</div>
+      <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">Stratford Alpha</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Aggressive NASDAQ strategy</div>
+      <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--green);margin-bottom:2px">71.95%</div>
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Win Rate</div>
+      <div style="font-family:var(--mono);font-size:14px;color:var(--green)">+$994K</div>
+    </div>
+    <div style="background:var(--bg2);padding:24px 20px;text-align:center">
+      <div style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);margin-bottom:6px">NQ / MNQ</div>
+      <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">Stratford Apex</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Prop firm optimized</div>
+      <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--green);margin-bottom:2px">82.13%</div>
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Win Rate</div>
+      <div style="font-family:var(--mono);font-size:14px;color:var(--green)">+$1.01M</div>
+    </div>
+    <div style="background:var(--bg2);padding:24px 20px;text-align:center">
+      <div style="font-size:11px;color:var(--green);text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);margin-bottom:6px">ES / MES</div>
+      <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">Stratford Omega</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">S&P 500 diversification</div>
+      <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--green);margin-bottom:2px">73.33%</div>
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Win Rate</div>
+      <div style="font-family:var(--mono);font-size:14px;color:var(--green)">+$549K</div>
+    </div>
+    <div style="background:var(--bg2);padding:24px 20px;text-align:center">
+      <div style="font-size:11px;color:var(--green);text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);margin-bottom:6px">ES / MES</div>
+      <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">Stratford Guardian</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Conservative high win rate</div>
+      <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--green);margin-bottom:2px">87.27%</div>
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Win Rate</div>
+      <div style="font-family:var(--mono);font-size:14px;color:var(--green)">+$603K</div>
+    </div>
+  </div>
+
+  <a href="#" onclick="showSignupModal();return false" class="btn btn-outline">View All Strategies →</a>
+</section>
+
+<div class="divider"></div>
+
+<!-- FAQ -->
+<section class="section section-center" id="faq">
+  <div class="section-label">FAQ</div>
+  <div class="section-title">Frequently Asked Questions</div>
+  <div class="section-sub">Everything you need to know before getting started.</div>
+
+  <div class="faq-list">
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">What is Stratford Academy?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Stratford Academy is an automated futures trading platform with 4 proven strategies across NASDAQ (NQ/MNQ) and S&P 500 (ES/MES) futures. Our algorithms trade directly on your broker account — fully hands-off, 24/5.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Do I need trading experience?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>No. Our platform is built for complete beginners. We have a Beginner Learning Center with 5 free guides (futures pairs, prop firms, indicators, automated trading, and terminology), a full setup guide, and a free forever paper demo so you can learn and test without risking real money.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Which brokers are supported?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>We support Tradovate (recommended), NinjaTrader, and Rithmic. We're also compatible with prop firms including Apex Trader Funding, TopStep, and My Funded Futures.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Is the paper demo really free?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Yes, 100% free forever. The paper demo uses simulated trades — no real money, no broker credentials needed. Your paper account keeps trading indefinitely — go live whenever you're ready.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">What are the subscription plans?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Alpha ($99/mo) — 2 strategies, 1 broker. Pro ($189/mo) — 5 strategies, 3 brokers. Elite ($250/mo) — 10+ strategies, unlimited brokers, priority support. Paper demo is free forever.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Can I cancel anytime?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Yes. No contracts, no commitments. Cancel your subscription whenever you want from your Account page. You'll retain access until the end of your billing period.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Does it work with prop firms?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Absolutely. All our strategies are designed to stay within prop firm drawdown limits — $2K on $50K accounts, $3K on $100K, and $4,500 on $150K. Traders have passed evals with Apex, TopStep, and My Funded Futures using our strategies.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">How fast are trades executed?<span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Signals are sent to your broker within milliseconds. Orders typically fill in under 1 second. This is faster than any manual trader could execute.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FINAL CTA -->
+<section class="cta-section">
+  <h2>Ready to Trade Smarter?</h2>
+  <p>Join 4,800+ traders using Stratford Academy to automate their NASDAQ and S&P 500 futures trading. 4 strategies, beginner-friendly guides, and a free forever paper demo.</p>
+  <div style="display:flex;align-items:center;justify-content:center;gap:14px">
+    <a href="#" onclick="showSignupModal();return false" class="btn btn-primary btn-lg">Start Free Demo</a>
+    <a href="#performance" class="btn btn-outline btn-lg">View Performance</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div class="divider"></div>
+<footer class="footer">
+  <div class="footer-left">&copy; 2026 Stratford Academy. All rights reserved.</div>
+  <div class="footer-links">
+    <a href="#" onclick="showSigninModal();return false">Dashboard</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+    <a href="#" onclick="alert('Contact: stratfordacademyllc@gmail.com');return false">Contact</a>
+  </div>
+</footer>
+
+<script>
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    const t=document.querySelector(a.getAttribute('href'));
+    if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'});}
+  });
+});
+
+// Animate elements on scroll
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}
+  });
+},{threshold:0.1});
+document.querySelectorAll('.step,.feature,.price-card,.testi-card,.stat-card').forEach(el=>{
+  el.style.opacity='0';el.style.transform='translateY(20px)';el.style.transition='opacity .5s,transform .5s';
+  observer.observe(el);
+});
+
+// Nav background on scroll
+window.addEventListener('scroll',()=>{
+  const nav=document.querySelector('.nav');
+  if(window.scrollY>50){nav.style.background='rgba(10,14,23,.95)';nav.style.borderBottomColor='rgba(255,255,255,.1)';}
+  else{nav.style.background='rgba(10,14,23,.85)';nav.style.borderBottomColor='rgba(255,255,255,.08)';}
+});
+
+
+
+</script>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyB83gjIqmxMBnfTmJ99EJb-jmPlMjr4Mv0",
+  authDomain:"stratford-academy.firebaseapp.com",
+  projectId:"stratford-academy",
+  storageBucket:"stratford-academy.firebasestorage.app",
+  messagingSenderId:"1007643740221",
+  appId:"1:1007643740221:web:38ad1191eb5028955bc254"
+});
+var auth=firebase.auth();
+var db=firebase.firestore();
+
+// Capture referral param (?ref=UID)
+(function(){
+  var params=new URLSearchParams(window.location.search);
+  var ref=params.get('ref');
+  if(ref && ref.length>5){
+    localStorage.setItem('sa_referrer', ref);
+    console.log('[AFFILIATE] Referral captured:', ref);
+  }
+})();
+
+// Check if already signed in
+auth.onAuthStateChanged(function(user){
+  if(user){
+    document.querySelector('.nav-cta').innerHTML='<a href="/dashboard.html" class="btn btn-primary">Go to Dashboard</a>';
+  }
+});
+
+function showSignupModal(){document.getElementById('lp-signup').style.display='flex';}
+function showSigninModal(){document.getElementById('lp-signup').style.display='none';document.getElementById('lp-signin').style.display='flex';}
+function closeModals(){document.getElementById('lp-signup').style.display='none';document.getElementById('lp-signin').style.display='none';}
+
+async function lpSubmitSignup(){
+  var name=document.getElementById('lp-s-name').value.trim();
+  var email=document.getElementById('lp-s-email').value.trim();
+  var pass=document.getElementById('lp-s-pass').value;
+  if(!name){alert('Please enter your name');return;}
+  if(!email||!email.includes('@')){alert('Please enter a valid email');return;}
+  if(!pass||pass.length<6){alert('Password must be at least 6 characters');return;}
+  var btn=document.querySelector('#lp-signup .lp-btn');
+  btn.textContent='Creating account...';btn.disabled=true;
+  try{
+    var cred=await auth.createUserWithEmailAndPassword(email,pass);
+    await cred.user.updateProfile({displayName:name});
+    var referrer=localStorage.getItem('sa_referrer')||null;
+    localStorage.setItem('sa_user',JSON.stringify({name:name,email:email,contact:email,signedUp:true,date:new Date().toISOString(),uid:cred.user.uid,plan:'free',points:100,referredBy:referrer}));
+    localStorage.setItem('sa_points','100');
+    localStorage.setItem('sa_points_history',JSON.stringify([{amount:100,reason:'Account created — Welcome bonus',date:new Date().toISOString()}]));
+    var firestoreData={name:name,email:email,plan:'free',signedUp:true,date:new Date().toISOString(),points:100,calendarNotes:{},connectedBrokers:[],createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+    if(referrer)firestoreData.referredBy=referrer;
+    try{await db.collection('users').doc(cred.user.uid).set(firestoreData);}catch(e){}
+    // Record referral on server
+    if(referrer){
+      try{await fetch('/api/record-referral',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({referrerUid:referrer,newUserUid:cred.user.uid,newUserName:name,newUserEmail:email})});}catch(e){}
+      localStorage.removeItem('sa_referrer');
+    }
+    // Send welcome email + admin alert
+    try{fetch('/api/notify-signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,name:name,referredBy:referrer})});}catch(e){}
+    window.location.href='/dashboard.html';
+  }catch(err){
+    var msg='Signup failed. ';
+    if(err.code==='auth/email-already-in-use')msg+='This email is already registered. Try signing in.';
+    else if(err.code==='auth/weak-password')msg+='Password is too weak.';
+    else if(err.code==='auth/invalid-email')msg+='Invalid email address.';
+    else msg+=err.message;
+    alert(msg);
+    btn.textContent='Create Free Account';btn.disabled=false;
+  }
+}
+
+async function forgotPassword(source){
+  var emailField=source==='landing'?document.getElementById('lp-i-email'):document.getElementById('signin-contact');
+  var email=(emailField&&emailField.value)?emailField.value.trim():'';
+  if(!email||!email.includes('@')){
+    email=prompt('Enter your email address to receive a password reset link:');
+    if(!email||!email.includes('@')){alert('Please enter a valid email address.');return;}
+  }
+  try{
+    await auth.sendPasswordResetEmail(email);
+    alert('Password reset email sent to '+email+'! Check your inbox (and spam folder).');
+  }catch(err){
+    if(err.code==='auth/user-not-found')alert('No account found with that email address.');
+    else if(err.code==='auth/invalid-email')alert('Please enter a valid email address.');
+    else if(err.code==='auth/too-many-requests')alert('Too many requests. Please try again later.');
+    else alert('Error sending reset email: '+err.message);
+  }
+}
+async function lpSubmitSignin(){
+  var email=document.getElementById('lp-i-email').value.trim();
+  var pass=document.getElementById('lp-i-pass').value;
+  if(!email||!email.includes('@')){alert('Please enter a valid email');return;}
+  if(!pass){alert('Please enter your password');return;}
+  var btn=document.querySelector('#lp-signin .lp-btn');
+  btn.textContent='Signing in...';btn.disabled=true;
+  try{
+    await auth.signInWithEmailAndPassword(email,pass);
+    window.location.href='/dashboard.html';
+  }catch(err){
+    var msg='Sign in failed. ';
+    if(err.code==='auth/user-not-found')msg+='No account found. Sign up first.';
+    else if(err.code==='auth/wrong-password'||err.code==='auth/invalid-credential')msg+='Invalid email or password.';
+    else if(err.code==='auth/too-many-requests')msg+='Too many attempts. Try later.';
+    else msg+=err.message;
+    alert(msg);
+    btn.textContent='Sign In';btn.disabled=false;
+  }
+}
+</script>
+
+<!-- Sign Up Modal -->
+<div id="lp-signup" style="display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;background:rgba(10,14,23,.6);backdrop-filter:blur(16px)">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:420px;max-width:95vw;box-shadow:0 24px 64px rgba(0,0,0,.6);position:relative;overflow:hidden">
+    <button onclick="closeModals()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .2s;z-index:1" onmouseover="this.style.background='rgba(255,255,255,.05)';this.style.color='#fff'" onmouseout="this.style.background='none';this.style.color='var(--text3)'">&times;</button>
+    <div style="padding:32px 28px 20px;text-align:center">
+      <div style="margin:0 auto 16px;width:50px;height:50px;display:flex;align-items:center;justify-content:center"><svg width="40" height="46" viewBox="0 0 40 48" fill="none"><path d="M20 2L4 8v14c0 10 6.5 19 16 22 9.5-3 16-12 16-22V8L20 2z" stroke="url(#lsg1)" stroke-width="1.5" fill="none"/><path d="M20 5.5L7 10.5v11.5c0 8.5 5.5 16 13 18.5 7.5-2.5 13-10 13-18.5V10.5L20 5.5z" stroke="url(#lsg1)" stroke-width="1.2" fill="none"/><text x="20" y="30" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="12" font-weight="700" letter-spacing="1" fill="url(#lsg1)">SA</text><defs><linearGradient id="lsg1" x1="0" y1="0" x2="40" y2="48"><stop stop-color="#00b8e6"/><stop offset="1" stop-color="#8b6fff"/></linearGradient></defs></svg></div>
+      <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px">Join Stratford Academy</div>
+      <div style="font-size:13px;color:var(--text2)">Create your free account to get started</div>
+      <div style="display:inline-flex;align-items:center;gap:8px;margin-top:10px;background:rgba(0,217,126,.06);border:1px solid rgba(0,217,126,.15);border-radius:20px;padding:4px 14px">
+        <span style="color:var(--green);font-size:11px;font-weight:600">FREE FOREVER</span>
+        <span style="font-size:11px;color:var(--text3)">No credit card required</span>
+      </div>
+    </div>
+    <div style="padding:0 28px 28px">
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:5px">Full Name</label>
+        <input id="lp-s-name" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;transition:border-color .2s" placeholder="Your full name" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:5px">Email Address</label>
+        <input id="lp-s-email" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;transition:border-color .2s" placeholder="you@example.com" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:5px">Password</label>
+        <input id="lp-s-pass" type="password" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;transition:border-color .2s" placeholder="Create a password (min. 6 characters)" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <button class="lp-btn" onclick="lpSubmitSignup()" style="width:100%;display:flex;align-items:center;justify-content:center;padding:12px;font-size:14px;font-weight:600;background:var(--accent);color:#000;border:none;border-radius:8px;cursor:pointer;transition:background .2s" onmouseover="this.style.background='#33d4f5'" onmouseout="this.style.background='var(--accent)'">Create Free Account</button>
+      <div style="text-align:center;margin-top:14px">
+        <span style="font-size:12px;color:var(--text3)">Already have an account? </span>
+        <span style="font-size:12px;color:var(--accent);cursor:pointer" onclick="closeModals();showSigninModal()">Log in</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sign In Modal -->
+<div id="lp-signin" style="display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;background:rgba(10,14,23,.6);backdrop-filter:blur(16px)">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:420px;max-width:95vw;box-shadow:0 24px 64px rgba(0,0,0,.6);position:relative;overflow:hidden">
+    <button onclick="closeModals()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .2s;z-index:1" onmouseover="this.style.background='rgba(255,255,255,.05)';this.style.color='#fff'" onmouseout="this.style.background='none';this.style.color='var(--text3)'">&times;</button>
+    <div style="padding:32px 28px 20px;text-align:center">
+      <div style="margin:0 auto 14px;width:50px;height:50px;display:flex;align-items:center;justify-content:center"><svg width="38" height="44" viewBox="0 0 40 48" fill="none"><path d="M20 2L4 8v14c0 10 6.5 19 16 22 9.5-3 16-12 16-22V8L20 2z" stroke="url(#lsg2)" stroke-width="1.5" fill="none"/><path d="M20 5.5L7 10.5v11.5c0 8.5 5.5 16 13 18.5 7.5-2.5 13-10 13-18.5V10.5L20 5.5z" stroke="url(#lsg2)" stroke-width="1.2" fill="none"/><text x="20" y="30" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="12" font-weight="700" letter-spacing="1" fill="url(#lsg2)">SA</text><defs><linearGradient id="lsg2" x1="0" y1="0" x2="40" y2="48"><stop stop-color="#00b8e6"/><stop offset="1" stop-color="#8b6fff"/></linearGradient></defs></svg></div>
+      <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px">Welcome Back</div>
+      <div style="font-size:13px;color:var(--text3)">Sign in to your Stratford Academy account</div>
+    </div>
+    <div style="padding:0 28px 28px">
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Email Address</label>
+        <input id="lp-i-email" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;transition:border-color .2s" placeholder="you@example.com" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="margin-bottom:8px">
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Password</label>
+        <input id="lp-i-pass" type="password" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;transition:border-color .2s" placeholder="Your password" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="text-align:right;margin-bottom:16px">
+        <span style="font-size:12px;color:var(--accent);cursor:pointer" onclick="forgotPassword('landing')">Forgot Password?</span>
+      </div>
+      <button class="lp-btn" onclick="lpSubmitSignin()" style="width:100%;display:flex;align-items:center;justify-content:center;padding:12px;font-size:14px;font-weight:600;background:var(--accent);color:#000;border:none;border-radius:8px;cursor:pointer;transition:background .2s" onmouseover="this.style.background='#33d4f5'" onmouseout="this.style.background='var(--accent)'">Sign In</button>
+      <div style="text-align:center;margin-top:14px">
+        <span style="font-size:12px;color:var(--text3)">Don't have an account? </span>
+        <span style="font-size:12px;color:var(--accent);cursor:pointer" onclick="closeModals();showSignupModal()">Sign up</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

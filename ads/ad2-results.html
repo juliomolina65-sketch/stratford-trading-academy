@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Ad 2 — Results Focused</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:-apple-system,'Segoe UI','Inter',sans-serif}
+
+.ad{width:1080px;height:1080px;background:#080d19;position:relative;overflow:hidden;display:flex;flex-direction:column}
+
+.top{flex:1;display:flex;flex-direction:column;justify-content:center;padding:70px 80px;position:relative}
+.top::before{content:'';position:absolute;top:0;right:0;width:400px;height:400px;background:radial-gradient(circle,rgba(0,217,126,.1) 0%,transparent 60%);pointer-events:none}
+
+.tag{display:inline-flex;align-items:center;gap:6px;background:rgba(0,200,240,.08);border:1px solid rgba(0,200,240,.15);border-radius:20px;padding:6px 16px;font-size:13px;color:#00c8f0;font-weight:600;margin-bottom:28px;width:fit-content}
+
+.headline{font-size:56px;font-weight:800;color:#fff;line-height:1.1;margin-bottom:20px;letter-spacing:-.02em}
+
+.subtext{font-size:20px;color:rgba(148,163,184,.85);line-height:1.6;max-width:600px}
+
+.bottom{background:linear-gradient(180deg,rgba(0,217,126,.04),rgba(0,217,126,.01));border-top:1px solid rgba(0,217,126,.15);padding:50px 80px}
+
+.pnl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:30px}
+.pnl-label{font-size:16px;color:rgba(148,163,184,.7);text-transform:uppercase;letter-spacing:.1em}
+.pnl-value{font-size:80px;font-weight:800;font-family:'SF Mono','Fira Code',monospace;color:#00d97e;letter-spacing:-.03em}
+
+.mini-stats{display:flex;gap:48px}
+.ms{text-align:left}
+.ms-val{font-size:28px;font-weight:700;font-family:'SF Mono','Fira Code',monospace;color:#fff;margin-bottom:2px}
+.ms-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:rgba(148,163,184,.5)}
+
+.footer-bar{display:flex;align-items:center;justify-content:space-between;padding:24px 80px;background:rgba(255,255,255,.02);border-top:1px solid rgba(255,255,255,.06)}
+.footer-logo{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;color:#f1f5f9}
+.footer-logo span{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#00c8f0,#8b6fff);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff}
+.footer-cta{background:#00c8f0;color:#000;font-size:16px;font-weight:700;padding:14px 32px;border-radius:10px}
+</style>
+</head>
+<body>
+<div class="ad">
+  <div class="top">
+    <div class="tag">📊 Backtested Performance — Jan 2022 to Mar 2026</div>
+    <div class="headline">What if your broker<br>traded for you?</div>
+    <div class="subtext">Stratford Alpha is a fully automated NQ futures strategy. It connects to your broker and executes trades 24/5 — no charts, no signals, no manual work.</div>
+  </div>
+
+  <div class="bottom">
+    <div class="pnl-row">
+      <div class="pnl-label">Net Profit (1 NQ)</div>
+      <div class="pnl-value">+$994,690</div>
+    </div>
+    <div class="mini-stats">
+      <div class="ms"><div class="ms-val" style="color:#00c8f0">71.95%</div><div class="ms-lbl">Win Rate</div></div>
+      <div class="ms"><div class="ms-val" style="color:#8b6fff">3.15</div><div class="ms-lbl">Profit Factor</div></div>
+      <div class="ms"><div class="ms-val" style="color:#f59e0b">-4.2%</div><div class="ms-lbl">Max Drawdown</div></div>
+      <div class="ms"><div class="ms-val">4,154</div><div class="ms-lbl">Total Trades</div></div>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <div class="footer-logo"><span>ST</span> Stratford Academy</div>
+    <div class="footer-cta">Try Free Forever</div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { margin:20px; background:#111; color:#fff; font-family:-apple-system,sans-serif; }
+  h1 { font-size:20px; margin-bottom:20px; }
+  .row { display:flex; gap:20px; margin-bottom:20px; }
+  canvas { border:1px solid #333; border-radius:12px; }
+  .dl { display:inline-block; background:#00b8e6; color:#000; padding:8px 20px; border-radius:6px; font-weight:600; text-decoration:none; margin:4px; cursor:pointer; font-size:14px; }
+  .dl:hover { opacity:0.8; }
+  p { color:#888; font-size:13px; margin-bottom:16px; }
+</style>
+</head>
+<body>
+<h1>Stripe Product Icons — Right-click each image below → "Save image as"</h1>
+<p>Or click the download buttons. Each is 512x512 PNG.</p>
+<div class="row">
+  <div style="text-align:center">
+    <canvas id="c-alpha" width="512" height="512"></canvas><br>
+    <a class="dl" onclick="dl('c-alpha','stratford-alpha.png')">Download Alpha</a>
+  </div>
+  <div style="text-align:center">
+    <canvas id="c-pro" width="512" height="512"></canvas><br>
+    <a class="dl" style="background:#8b6fff" onclick="dl('c-pro','stratford-pro.png')">Download Pro</a>
+  </div>
+  <div style="text-align:center">
+    <canvas id="c-elite" width="512" height="512"></canvas><br>
+    <a class="dl" style="background:#f0b040" onclick="dl('c-elite','stratford-elite.png')">Download Elite</a>
+  </div>
+</div>
+
+<script>
+function dl(id, name) {
+  const c = document.getElementById(id);
+  const a = document.createElement('a');
+  a.download = name;
+  a.href = c.toDataURL('image/png');
+  a.click();
+}
+
+function drawIcon(canvasId, config) {
+  const c = document.getElementById(canvasId);
+  const ctx = c.getContext('2d');
+  const w = 512, h = 512, r = 64;
+
+  // Rounded rect background
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.lineTo(w-r, 0); ctx.quadraticCurveTo(w, 0, w, r);
+  ctx.lineTo(w, h-r); ctx.quadraticCurveTo(w, h, w-r, h);
+  ctx.lineTo(r, h); ctx.quadraticCurveTo(0, h, 0, h-r);
+  ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.closePath();
+  ctx.clip();
+
+  // Background gradient
+  const bg = ctx.createLinearGradient(0, 0, w, h);
+  bg.addColorStop(0, config.bg1);
+  bg.addColorStop(1, config.bg2);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // Glow
+  const glow = ctx.createRadialGradient(w*0.3, h*0.3, 0, w*0.3, h*0.3, w*0.6);
+  glow.addColorStop(0, config.glowColor);
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.globalAlpha = 0.12;
+  ctx.fillRect(0, 0, w, h);
+  ctx.globalAlpha = 1;
+
+  // Border
+  ctx.strokeStyle = config.borderColor;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(r, 1);
+  ctx.lineTo(w-r, 1); ctx.quadraticCurveTo(w-1, 1, w-1, r);
+  ctx.lineTo(w-1, h-r); ctx.quadraticCurveTo(w-1, h-1, w-r, h-1);
+  ctx.lineTo(r, h-1); ctx.quadraticCurveTo(1, h-1, 1, h-r);
+  ctx.lineTo(1, r); ctx.quadraticCurveTo(1, 1, r, 1);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Shield
+  const sx = 256, sy = 135;
+  const shieldScale = 1.2;
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.scale(shieldScale, shieldScale);
+
+  // Shield outer
+  ctx.beginPath();
+  ctx.moveTo(0, -62);
+  ctx.lineTo(-48, -42);
+  ctx.lineTo(-48, 2);
+  ctx.quadraticCurveTo(-48, 50, 0, 68);
+  ctx.quadraticCurveTo(48, 50, 48, 2);
+  ctx.lineTo(48, -42);
+  ctx.closePath();
+  ctx.fillStyle = config.shieldFill;
+  ctx.fill();
+  const grad = ctx.createLinearGradient(-48, -62, 48, 68);
+  grad.addColorStop(0, config.color1);
+  grad.addColorStop(1, config.color2);
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Shield inner
+  ctx.beginPath();
+  ctx.moveTo(0, -50);
+  ctx.lineTo(-38, -34);
+  ctx.lineTo(-38, 0);
+  ctx.quadraticCurveTo(-38, 40, 0, 55);
+  ctx.quadraticCurveTo(38, 40, 38, 0);
+  ctx.lineTo(38, -34);
+  ctx.closePath();
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // SA text
+  ctx.fillStyle = grad;
+  ctx.font = '800 34px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('SA', 0, 5);
+
+  // Extra accent (lightning for Pro, crown for Elite)
+  if (config.accent === 'lightning') {
+    ctx.beginPath();
+    ctx.moveTo(-8, -22);
+    ctx.lineTo(-14, 0);
+    ctx.lineTo(-4, -3);
+    ctx.lineTo(-10, 18);
+    ctx.strokeStyle = '#f0b040';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+  if (config.accent === 'crown') {
+    ctx.beginPath();
+    ctx.moveTo(-22, -28);
+    ctx.lineTo(-14, -38);
+    ctx.lineTo(-6, -30);
+    ctx.lineTo(0, -42);
+    ctx.lineTo(6, -30);
+    ctx.lineTo(14, -38);
+    ctx.lineTo(22, -28);
+    ctx.strokeStyle = '#f0b040';
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+
+  ctx.restore();
+
+  // STRATFORD label
+  ctx.fillStyle = config.color1;
+  ctx.font = '700 20px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.letterSpacing = '3px';
+  ctx.fillText('S T R A T F O R D', 256, 290);
+
+  // Plan name
+  ctx.fillStyle = config.nameColor;
+  ctx.font = '800 52px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.fillText(config.name, 256, 348);
+
+  // Price
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = config.color1;
+  ctx.font = '600 22px "SF Mono", "Fira Code", monospace, sans-serif';
+  ctx.fillText(config.price, 256, 390);
+  ctx.globalAlpha = 1;
+}
+
+// Draw all 3
+drawIcon('c-alpha', {
+  bg1:'#0d1520', bg2:'#111b2e',
+  glowColor:'#00b8e6', borderColor:'rgba(0,184,230,0.3)',
+  shieldFill:'rgba(0,184,230,0.06)',
+  color1:'#00b8e6', color2:'#00d4ff',
+  nameColor:'#e0f4fc', name:'Alpha', price:'$99 / month',
+  accent: null
+});
+drawIcon('c-pro', {
+  bg1:'#0d1520', bg2:'#1a1130',
+  glowColor:'#8b6fff', borderColor:'rgba(139,111,255,0.3)',
+  shieldFill:'rgba(139,111,255,0.06)',
+  color1:'#8b6fff', color2:'#a78bfa',
+  nameColor:'#ede0fc', name:'Pro', price:'$189 / month',
+  accent: 'lightning'
+});
+drawIcon('c-elite', {
+  bg1:'#0d1520', bg2:'#1a1a10',
+  glowColor:'#f0b040', borderColor:'rgba(240,176,64,0.3)',
+  shieldFill:'rgba(240,176,64,0.06)',
+  color1:'#f0b040', color2:'#fcd34d',
+  nameColor:'#fcf0d8', name:'Elite', price:'$250 / month',
+  accent: 'crown'
+});
+</script>
+</body>
+</html>

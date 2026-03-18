@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Ad 1 — Social Feed</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:-apple-system,'Segoe UI','Inter',sans-serif}
+
+.ad{width:1080px;height:1080px;background:linear-gradient(145deg,#080d19 0%,#0d1f3c 40%,#0a1a32 70%,#0c1425 100%);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:80px}
+
+/* Glow effects */
+.ad::before{content:'';position:absolute;top:-100px;right:-100px;width:500px;height:500px;background:radial-gradient(circle,rgba(0,200,240,.12) 0%,transparent 65%);pointer-events:none}
+.ad::after{content:'';position:absolute;bottom:-150px;left:50%;width:600px;height:400px;background:radial-gradient(circle,rgba(139,111,255,.08) 0%,transparent 60%);pointer-events:none}
+
+/* Grid lines */
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,200,240,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,240,.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
+
+.logo{display:flex;align-items:center;gap:14px;margin-bottom:50px;position:relative;z-index:1}
+.logo-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#00c8f0,#8b6fff);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff}
+.logo-text{font-size:20px;font-weight:700;color:#f1f5f9;letter-spacing:-.01em}
+
+.headline{font-size:72px;font-weight:800;color:#fff;line-height:1.05;margin-bottom:24px;letter-spacing:-.03em;position:relative;z-index:1}
+.headline .accent{background:linear-gradient(135deg,#00c8f0,#8b6fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+.sub{font-size:24px;color:rgba(148,163,184,.9);line-height:1.5;margin-bottom:48px;max-width:700px;position:relative;z-index:1}
+
+.stats{display:flex;gap:40px;margin-bottom:48px;position:relative;z-index:1}
+.stat{text-align:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:24px 32px;min-width:160px}
+.stat-val{font-size:36px;font-weight:700;font-family:'SF Mono','Fira Code',monospace;margin-bottom:4px}
+.stat-val.green{color:#00d97e}
+.stat-val.cyan{color:#00c8f0}
+.stat-val.purple{color:#8b6fff}
+.stat-lbl{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:rgba(148,163,184,.6)}
+
+.cta{display:inline-flex;align-items:center;gap:10px;background:#00c8f0;color:#000;font-size:22px;font-weight:700;padding:20px 44px;border-radius:12px;position:relative;z-index:1}
+
+.badge{position:absolute;top:60px;right:60px;background:rgba(0,217,126,.1);border:1px solid rgba(0,217,126,.25);border-radius:24px;padding:8px 20px;font-size:14px;color:#00d97e;font-weight:600;display:flex;align-items:center;gap:8px;z-index:1}
+.badge .dot{width:8px;height:8px;border-radius:50%;background:#00d97e}
+</style>
+</head>
+<body>
+<div class="ad">
+  <div class="grid"></div>
+  <div class="badge"><span class="dot"></span> 4,800+ Active Traders</div>
+
+  <div class="logo">
+    <div class="logo-icon">ST</div>
+    <div class="logo-text">Stratford Academy</div>
+  </div>
+
+  <div class="headline">Stop Trading.<br>Start <span class="accent">Automating.</span></div>
+
+  <div class="sub">Automated NQ & MNQ futures trading. Connect your broker and let our algorithm do the rest.</div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val green">71.95%</div><div class="stat-lbl">Win Rate</div></div>
+    <div class="stat"><div class="stat-val cyan">+$994K</div><div class="stat-lbl">Net Profit</div></div>
+    <div class="stat"><div class="stat-val purple">3.15</div><div class="stat-lbl">Profit Factor</div></div>
+  </div>
+
+  <div class="cta">Start Free Demo &rarr;</div>
+</div>
+</body>
+</html>

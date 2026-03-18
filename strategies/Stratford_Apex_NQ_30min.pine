@@ -1,0 +1,65 @@
+//@version=6
+strategy("STRATFORD APEX | NQ 30min", overlay=true, calc_on_every_tick=true)
+// === Dallas Time Setup ===
+timeZoneOffset = -5
+startTime = timestamp("GMT-5", year, month, dayofmonth, 0, 0)
+endTime   = timestamp("GMT-5", year, month, dayofmonth, 15, 30)
+inTimeWindow = (time >= startTime and time <= endTime)
+// === Indicators ===
+fastEMA = ta.ema(close, 3)
+slowEMA = ta.ema(close, 8)
+longEMA = ta.ema(close, 20)
+rsi     = ta.rsi(close, 7)
+[macdLine, signalLine, _] = ta.macd(close, 5, 13, 5)
+[supertrend, _] = ta.supertrend(1.8, 3)
+atr          = ta.atr(20)
+trailStop    = atr * 1.0
+trailOffset  = atr * 0.2
+stopLossPoints = 40
+takeProfitPoints = 80
+// === EMA Proximity ===
+emaGap       = math.abs(fastEMA - slowEMA)
+emaThreshold = close * 0.0005
+emaNear      = emaGap <= emaThreshold
+emaCross = ta.cross(slowEMA, fastEMA)
+emaSignal = emaCross or emaNear
+// === SHORT Entry Conditions ===
+priceBreakoutShort = close < ta.lowest(close, 5)[1]
+momentumShort      = macdLine < signalLine and rsi < 55
+trendBiasShort     = close < longEMA or close < supertrend
+shortCondition     = emaSignal and priceBreakoutShort and momentumShort and trendBiasShort
+// === LONG Entry Conditions ===
+priceBreakoutLong = close > ta.highest(close, 5)[1]
+momentumLong      = macdLine > signalLine and rsi > 45
+trendBiasLong     = close > longEMA or close > supertrend
+longCondition     = emaSignal and priceBreakoutLong and momentumLong and trendBiasLong
+// === Cooldown ===
+var float lastShortTime = na
+var float lastLongTime  = na
+canEnterShort = na(lastShortTime) or (time - lastShortTime) >= 2000
+canEnterLong  = na(lastLongTime)  or (time - lastLongTime)  >= 2000
+// === SHORT Entry ===
+if shortCondition and canEnterShort and inTimeWindow
+    strategy.entry("Short", strategy.short)
+    strategy.exit("ExitShort",
+         from_entry   = "Short",
+         stop         = close + stopLossPoints,
+         limit        = close - takeProfitPoints,
+         trail_points = trailStop,
+         trail_offset = trailOffset)
+    lastShortTime := time
+// === LONG Entry ===
+if longCondition and canEnterLong and inTimeWindow
+    strategy.entry("Long", strategy.long)
+    strategy.exit("ExitLong",
+         from_entry   = "Long",
+         stop         = close - stopLossPoints,
+         limit        = close + takeProfitPoints,
+         trail_points = trailStop,
+         trail_offset = trailOffset)
+    lastLongTime := time
+// === Plots ===
+plot(fastEMA,    color=color.blue,   title="Fast EMA 3")
+plot(slowEMA,    color=color.red,    title="Slow EMA 8")
+plot(longEMA,    color=color.purple, title="Long EMA 20")
+plot(supertrend, color=color.green,  title="Supertrend Filter")

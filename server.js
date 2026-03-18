@@ -1,0 +1,1708 @@
+require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const cron = require('node-cron');
+
+// Firebase Admin SDK
+let admin;
+let dbAdmin;
+try {
+  admin = require('firebase-admin');
+  const serviceAccount = require('./firebase-service-account.json');
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+  dbAdmin = admin.firestore();
+  console.log('Firebase Admin SDK initialized');
+} catch (err) {
+  console.warn('Firebase Admin SDK not initialized:', err.message);
+  console.warn('Webhook endpoint will not work until firebase-service-account.json is added.');
+}
+
+// Stripe SDK
+let stripe;
+try {
+  stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  console.log('Stripe SDK initialized');
+} catch (err) {
+  console.warn('Stripe SDK not initialized:', err.message);
+}
+
+// Email Service
+const emailService = require('./emailService');
+emailService.initEmail();
+// Wire Firestore into emailService for email logging
+if (dbAdmin && admin) emailService.setFirestore(dbAdmin, admin);
+
+const app = express();
+const PORT = 3000;
+
+// Webhook secret — change this to your own secret
+const WEBHOOK_SECRET = 'SA_WEBHOOK_SECRET_2026';
+
+// Stripe price mapping
+const STRIPE_PRICES = {
+  alpha: process.env.STRIPE_PRICE_ALPHA_MONTHLY,
+  pro:   process.env.STRIPE_PRICE_PRO_MONTHLY,
+  elite: process.env.STRIPE_PRICE_ELITE_MONTHLY
+};
+
+// Middleware — IMPORTANT: Stripe webhook needs raw body, must come BEFORE express.json()
+app.use(cors());
+
+// Stripe webhook endpoint (raw body for signature verification)
+app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  if (!stripe || !dbAdmin) return res.status(500).json({ error: 'Stripe or Firebase not initialized' });
+
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.error('[STRIPE-WEBHOOK] Signature verification failed:', err.message);
+    return res.status(400).json({ error: 'Webhook signature verification failed' });
+  }
+
+  console.log(`[STRIPE-WEBHOOK] Event: ${event.type}`);
+
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object;
+        const uid = session.metadata?.uid;
+        const plan = session.metadata?.plan;
+        if (uid && plan) {
+          await dbAdmin.collection('users').doc(uid).set({
+            plan: plan,
+            stripeCustomerId: session.customer,
+            stripeSubscriptionId: session.subscription,
+            subscriptionStatus: 'active',
+            subscribedAt: admin.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          console.log(`[STRIPE-WEBHOOK] User ${uid} subscribed to ${plan}`);
+        }
+        break;
+      }
+
+      case 'invoice.paid': {
+        const invoice = event.data.object;
+        const customerId = invoice.customer;
+        // Find user by stripeCustomerId
+        const usersSnap = await dbAdmin.collection('users')
+          .where('stripeCustomerId', '==', customerId).limit(1).get();
+        if (!usersSnap.empty) {
+          const payingUser = usersSnap.docs[0];
+          await payingUser.ref.update({ subscriptionStatus: 'active' });
+          console.log(`[STRIPE-WEBHOOK] Invoice paid for customer ${customerId}`);
+
+          // ── Send payment receipt email ──
+          const payingData = payingUser.data();
+          if (payingData.email) {
+            const amountDollars = (invoice.amount_paid || 0) / 100;
+            emailService.sendPaymentReceiptEmail(payingData.email, payingData.name || 'Trader', {
+              plan: payingData.plan || 'subscription', amount: amountDollars
+            });
+          }
+
+          // ── Affiliate commission: 25% recurring ──
+          if (payingData.referredBy) {
+            const amountPaid = (invoice.amount_paid || 0) / 100; // cents to dollars
+            const commission = parseFloat((amountPaid * 0.25).toFixed(2));
+            if (commission > 0) {
+              // Create commission record under referrer
+              await dbAdmin.collection('users').doc(payingData.referredBy)
+                .collection('commissions').add({
+                  fromUid: payingUser.id,
+                  fromName: payingData.name || payingData.email || 'Unknown',
+                  fromPlan: payingData.plan || 'unknown',
+                  amount: commission,
+                  invoiceAmount: amountPaid,
+                  invoiceId: invoice.id,
+                  status: 'pending',
+                  createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+              // Update referrer totals
+              await dbAdmin.collection('users').doc(payingData.referredBy).set({
+                affiliateTotalEarnings: admin.firestore.FieldValue.increment(commission),
+                affiliatePendingEarnings: admin.firestore.FieldValue.increment(commission),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+              }, { merge: true });
+              console.log(`[AFFILIATE] $${commission} commission for referrer ${payingData.referredBy} from ${payingUser.id}`);
+              // Email recurring commission to referrer
+              try {
+                const referrerDoc = await dbAdmin.collection('users').doc(payingData.referredBy).get();
+                if (referrerDoc.exists && referrerDoc.data().email) {
+                  emailService.sendAffiliateCommissionEmail(referrerDoc.data().email, referrerDoc.data().name || 'Trader', {
+                    fromName: payingData.name || payingData.email || 'A member',
+                    fromPlan: payingData.plan || 'unknown',
+                    amount: commission,
+                    invoiceAmount: amountPaid
+                  });
+                }
+              } catch (emailErr) { console.warn('[EMAIL] Recurring commission email error:', emailErr.message); }
+            }
+          }
+        }
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object;
+        const customerId = invoice.customer;
+        const usersSnap = await dbAdmin.collection('users')
+          .where('stripeCustomerId', '==', customerId).limit(1).get();
+        if (!usersSnap.empty) {
+          const failedData = usersSnap.docs[0].data();
+          await usersSnap.docs[0].ref.update({ subscriptionStatus: 'past_due' });
+          console.log(`[STRIPE-WEBHOOK] Payment failed for customer ${customerId}`);
+          // Admin alert
+          emailService.sendAdminAlert(ADMIN_EMAILS, 'payment_failed', { email: failedData.email || customerId, customerId });
+        }
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object;
+        const customerId = subscription.customer;
+        const usersSnap = await dbAdmin.collection('users')
+          .where('stripeCustomerId', '==', customerId).limit(1).get();
+        if (!usersSnap.empty) {
+          const canceledData = usersSnap.docs[0].data();
+          await usersSnap.docs[0].ref.update({
+            subscriptionStatus: 'canceled',
+            plan: null,
+            stripeSubscriptionId: null,
+            canceledAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+          // Admin alert
+          emailService.sendAdminAlert(ADMIN_EMAILS, 'subscription_canceled', { email: canceledData.email || customerId, customerId });
+          console.log(`[STRIPE-WEBHOOK] Subscription canceled for customer ${customerId}`);
+        }
+        break;
+      }
+
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object;
+        const customerId = subscription.customer;
+        const usersSnap = await dbAdmin.collection('users')
+          .where('stripeCustomerId', '==', customerId).limit(1).get();
+        if (!usersSnap.empty) {
+          const statusMap = {
+            'active': 'active',
+            'past_due': 'past_due',
+            'canceled': 'canceled',
+            'unpaid': 'past_due',
+            'trialing': 'active'
+          };
+          await usersSnap.docs[0].ref.update({
+            subscriptionStatus: statusMap[subscription.status] || subscription.status
+          });
+          console.log(`[STRIPE-WEBHOOK] Subscription updated: ${subscription.status}`);
+        }
+        break;
+      }
+    }
+
+    res.json({ received: true });
+  } catch (err) {
+    console.error('[STRIPE-WEBHOOK] Error handling event:', err);
+    res.status(500).json({ error: 'Webhook handler failed' });
+  }
+});
+
+// Now apply JSON body parser for all other routes
+app.use(express.json());
+
+// NQ point value: $20/point, MNQ: $2/point, ES: $50/point, MES: $5/point
+const TICK_VALUES = {
+  'NQ': 20, 'MNQ': 2, 'ES': 50, 'MES': 5
+};
+
+// ============================================
+// API Routes
+// ============================================
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', time: new Date().toISOString(), firebase: !!dbAdmin, stripe: !!stripe });
+});
+
+// ---- Notify: New Signup (called by frontend after Firebase Auth signup) ----
+app.post('/api/notify-signup', async (req, res) => {
+  const { email, name, referredBy, uid } = req.body;
+  if (!email) return res.status(400).json({ error: 'Missing email' });
+
+  // Send welcome email to user
+  emailService.sendWelcomeEmail(email, name || 'Trader');
+
+  // Send admin alert
+  emailService.sendAdminAlert(ADMIN_EMAILS, 'new_signup', { name: name || 'Unknown', email, referredBy });
+
+  // Store createdAt for re-engagement email scheduling
+  if (uid && dbAdmin) {
+    try {
+      await dbAdmin.collection('users').doc(uid).set({
+        email,
+        name: name || 'Trader',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        reengagementSent: {}
+      }, { merge: true });
+    } catch (e) {
+      console.warn('[SIGNUP] Failed to store signup metadata:', e.message);
+    }
+  }
+
+  res.json({ success: true });
+});
+
+// ============================================
+// Stripe Checkout & Billing
+// ============================================
+
+// ---- Create Checkout Session (Embedded Mode) ----
+app.post('/api/create-checkout-session', async (req, res) => {
+  if (!stripe) return res.status(500).json({ error: 'Stripe not initialized' });
+
+  const { plan, uid, email } = req.body;
+
+  if (!plan || !uid || !email) {
+    return res.status(400).json({ error: 'Missing required fields: plan, uid, email' });
+  }
+
+  const priceId = STRIPE_PRICES[plan];
+  if (!priceId || priceId === 'price_REPLACE_ME') {
+    return res.status(400).json({ error: `Invalid plan "${plan}" or price not configured` });
+  }
+
+  try {
+    // Check if user already has a Stripe customer ID
+    let customerId;
+    if (dbAdmin) {
+      const userDoc = await dbAdmin.collection('users').doc(uid).get();
+      if (userDoc.exists && userDoc.data().stripeCustomerId) {
+        customerId = userDoc.data().stripeCustomerId;
+      }
+    }
+
+    const sessionParams = {
+      ui_mode: 'embedded',
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
+      allow_promotion_codes: true,
+      return_url: `${req.protocol}://${req.get('host')}/dashboard?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`,
+      metadata: { uid, plan },
+      subscription_data: { metadata: { uid, plan } }
+    };
+
+    // Use existing customer or create by email
+    if (customerId) {
+      sessionParams.customer = customerId;
+    } else {
+      sessionParams.customer_email = email;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    console.log(`[STRIPE] Embedded checkout session created for ${email} — plan: ${plan}`);
+    res.json({ clientSecret: session.client_secret });
+  } catch (err) {
+    console.error('[STRIPE] Checkout error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Get Checkout Session Status (for embedded checkout completion) ----
+app.get('/api/checkout-session-status/:sessionId', async (req, res) => {
+  if (!stripe) return res.status(500).json({ error: 'Stripe not initialized' });
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(req.params.sessionId);
+    res.json({
+      status: session.status,
+      customer_email: session.customer_details?.email || null,
+      plan: session.metadata?.plan || null
+    });
+  } catch (err) {
+    console.error('[STRIPE] Session status error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Verify Checkout & Activate Plan (called right after payment completes) ----
+app.post('/api/verify-checkout', async (req, res) => {
+  if (!stripe) return res.status(500).json({ error: 'Stripe not initialized' });
+
+  const { sessionId, uid } = req.body;
+  if (!sessionId || !uid) return res.status(400).json({ error: 'Missing sessionId or uid' });
+
+  try {
+    // Retrieve the checkout session from Stripe to verify it's legit
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['subscription']
+    });
+
+    // Only activate if session is actually completed
+    if (session.status !== 'complete') {
+      return res.status(400).json({ error: 'Checkout session not complete', status: session.status });
+    }
+
+    const plan = session.metadata?.plan;
+    const customerId = session.customer;
+    const subscriptionId = session.subscription?.id || session.subscription;
+
+    // Get subscription end date for tracking expiry
+    let currentPeriodEnd = null;
+    if (session.subscription && typeof session.subscription === 'object') {
+      currentPeriodEnd = session.subscription.current_period_end
+        ? new Date(session.subscription.current_period_end * 1000).toISOString()
+        : null;
+    } else if (subscriptionId) {
+      // If subscription wasn't expanded, fetch it
+      const sub = await stripe.subscriptions.retrieve(subscriptionId);
+      currentPeriodEnd = sub.current_period_end
+        ? new Date(sub.current_period_end * 1000).toISOString()
+        : null;
+    }
+
+    // Save to Firestore
+    if (dbAdmin && plan) {
+      await dbAdmin.collection('users').doc(uid).set({
+        plan: plan,
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: subscriptionId,
+        subscriptionStatus: 'active',
+        currentPeriodEnd: currentPeriodEnd,
+        subscribedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      console.log(`[STRIPE] Plan activated: user=${uid}, plan=${plan}, customer=${customerId}, periodEnd=${currentPeriodEnd}`);
+
+      // ── Send subscription confirmation email ──
+      const userDoc = await dbAdmin.collection('users').doc(uid).get();
+      const userData = userDoc.exists ? userDoc.data() : {};
+      if (userData.email) {
+        const planPrices = { alpha: 99, pro: 189, elite: 250 };
+        emailService.sendSubscriptionEmail(userData.email, userData.name || 'Trader', plan);
+        emailService.sendAdminAlert(ADMIN_EMAILS, 'new_subscription', {
+          name: userData.name || 'Unknown', email: userData.email, plan, amount: planPrices[plan] || 0
+        });
+      }
+
+      // ── Affiliate: update referral status to 'subscribed' ──
+      if (userData.referredBy) {
+        try {
+          await dbAdmin.collection('users').doc(userData.referredBy)
+            .collection('referrals').doc(uid).set({
+              status: 'subscribed',
+              plan: plan,
+              subscribedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+          console.log(`[AFFILIATE] Referral ${uid} upgraded to subscribed (${plan}) for referrer ${userData.referredBy}`);
+
+          // Calculate and award first commission (25% of plan price)
+          const planPrices = { alpha: 99, pro: 189, elite: 250 };
+          const planPrice = planPrices[plan] || 0;
+          const commission = parseFloat((planPrice * 0.25).toFixed(2));
+          if (commission > 0) {
+            await dbAdmin.collection('users').doc(userData.referredBy)
+              .collection('commissions').add({
+                fromUid: uid,
+                fromName: userData.name || userData.email || 'Unknown',
+                fromPlan: plan,
+                amount: commission,
+                invoiceAmount: planPrice,
+                type: 'first_subscription',
+                status: 'pending',
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+              });
+            await dbAdmin.collection('users').doc(userData.referredBy).set({
+              affiliateTotalEarnings: admin.firestore.FieldValue.increment(commission),
+              affiliatePendingEarnings: admin.firestore.FieldValue.increment(commission),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+            console.log(`[AFFILIATE] First commission $${commission} awarded to ${userData.referredBy}`);
+            // Email the referrer about their commission
+            try {
+              const referrerDoc = await dbAdmin.collection('users').doc(userData.referredBy).get();
+              if (referrerDoc.exists && referrerDoc.data().email) {
+                emailService.sendAffiliateCommissionEmail(referrerDoc.data().email, referrerDoc.data().name || 'Trader', {
+                  fromName: userData.name || userData.email || 'A new member',
+                  fromPlan: plan,
+                  amount: commission,
+                  invoiceAmount: planPrice
+                });
+              }
+            } catch (emailErr) { console.warn('[EMAIL] Affiliate commission email error:', emailErr.message); }
+          }
+        } catch (affErr) {
+          console.warn('[AFFILIATE] Error updating referral on verify-checkout:', affErr.message);
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      plan: plan,
+      subscriptionStatus: 'active',
+      currentPeriodEnd: currentPeriodEnd,
+      stripeCustomerId: customerId
+    });
+  } catch (err) {
+    console.error('[STRIPE] Verify checkout error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Create Customer Portal Session ----
+app.post('/api/create-portal-session', async (req, res) => {
+  if (!stripe || !dbAdmin) return res.status(500).json({ error: 'Stripe or Firebase not initialized' });
+
+  const { uid } = req.body;
+  if (!uid) return res.status(400).json({ error: 'Missing uid' });
+
+  try {
+    const userDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!userDoc.exists || !userDoc.data().stripeCustomerId) {
+      return res.status(404).json({ error: 'No Stripe customer found for this user' });
+    }
+
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: userDoc.data().stripeCustomerId,
+      return_url: `${req.protocol}://${req.get('host')}/dashboard`
+    });
+
+    console.log(`[STRIPE] Portal session created for user ${uid}`);
+    res.json({ url: portalSession.url });
+  } catch (err) {
+    console.error('[STRIPE] Portal error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Get Subscription Status ----
+app.get('/api/subscription-status/:uid', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+
+  try {
+    const userDoc = await dbAdmin.collection('users').doc(req.params.uid).get();
+    if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
+
+    const data = userDoc.data();
+    res.json({
+      plan: data.plan || null,
+      subscriptionStatus: data.subscriptionStatus || null,
+      stripeCustomerId: data.stripeCustomerId || null,
+      subscribedAt: data.subscribedAt || null,
+      currentPeriodEnd: data.currentPeriodEnd || null,
+      canceledAt: data.canceledAt || null,
+      cancelAt: data.cancelAt || null
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Cancel Subscription (in-app) ----
+app.post('/api/cancel-subscription', async (req, res) => {
+  if (!stripe || !dbAdmin) return res.status(500).json({ error: 'Stripe or Firebase not initialized' });
+
+  const { uid } = req.body;
+  if (!uid) return res.status(400).json({ error: 'Missing uid' });
+
+  try {
+    const userDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
+
+    const userData = userDoc.data();
+    if (!userData.stripeSubscriptionId) return res.status(400).json({ error: 'No active subscription found' });
+
+    // Cancel at period end (user keeps access until billing cycle ends)
+    const subscription = await stripe.subscriptions.update(userData.stripeSubscriptionId, {
+      cancel_at_period_end: true
+    });
+
+    await dbAdmin.collection('users').doc(uid).update({
+      subscriptionStatus: 'canceling',
+      cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null
+    });
+
+    console.log(`[STRIPE] Subscription cancellation scheduled for user ${uid} at period end`);
+    res.json({
+      success: true,
+      cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
+      currentPeriodEnd: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null
+    });
+  } catch (err) {
+    console.error('[STRIPE] Cancel error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Reactivate Subscription (undo cancellation) ----
+app.post('/api/reactivate-subscription', async (req, res) => {
+  if (!stripe || !dbAdmin) return res.status(500).json({ error: 'Stripe or Firebase not initialized' });
+
+  const { uid } = req.body;
+  if (!uid) return res.status(400).json({ error: 'Missing uid' });
+
+  try {
+    const userDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
+
+    const userData = userDoc.data();
+    if (!userData.stripeSubscriptionId) return res.status(400).json({ error: 'No subscription found' });
+
+    // Remove the cancel_at_period_end flag
+    await stripe.subscriptions.update(userData.stripeSubscriptionId, {
+      cancel_at_period_end: false
+    });
+
+    await dbAdmin.collection('users').doc(uid).update({
+      subscriptionStatus: 'active',
+      cancelAt: null
+    });
+
+    console.log(`[STRIPE] Subscription reactivated for user ${uid}`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[STRIPE] Reactivate error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Change Plan (upgrade/downgrade) ----
+app.post('/api/change-plan', async (req, res) => {
+  if (!stripe || !dbAdmin) return res.status(500).json({ error: 'Stripe or Firebase not initialized' });
+
+  const { uid, newPlan } = req.body;
+  if (!uid || !newPlan) return res.status(400).json({ error: 'Missing uid or newPlan' });
+
+  const newPriceId = STRIPE_PRICES[newPlan];
+  if (!newPriceId) return res.status(400).json({ error: 'Invalid plan' });
+
+  try {
+    const userDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
+
+    const userData = userDoc.data();
+    if (!userData.stripeSubscriptionId) return res.status(400).json({ error: 'No active subscription found' });
+
+    // Get current subscription
+    const subscription = await stripe.subscriptions.retrieve(userData.stripeSubscriptionId);
+
+    // Update the subscription with the new price (prorate by default)
+    const updatedSubscription = await stripe.subscriptions.update(userData.stripeSubscriptionId, {
+      items: [{
+        id: subscription.items.data[0].id,
+        price: newPriceId
+      }],
+      proration_behavior: 'create_prorations',
+      cancel_at_period_end: false  // clear any pending cancellation
+    });
+
+    await dbAdmin.collection('users').doc(uid).update({
+      plan: newPlan,
+      subscriptionStatus: 'active',
+      cancelAt: null,
+      currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000).toISOString()
+    });
+
+    console.log(`[STRIPE] Plan changed to ${newPlan} for user ${uid}`);
+    res.json({ success: true, plan: newPlan });
+  } catch (err) {
+    console.error('[STRIPE] Change plan error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Get Subscription Details (full info for in-app management) ----
+app.get('/api/subscription-details/:uid', async (req, res) => {
+  if (!stripe || !dbAdmin) return res.status(500).json({ error: 'Stripe or Firebase not initialized' });
+
+  try {
+    const userDoc = await dbAdmin.collection('users').doc(req.params.uid).get();
+    if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
+
+    const data = userDoc.data();
+    let stripeData = null;
+
+    // If they have a subscription, get full details from Stripe
+    if (data.stripeSubscriptionId) {
+      try {
+        const subscription = await stripe.subscriptions.retrieve(data.stripeSubscriptionId, {
+          expand: ['default_payment_method', 'latest_invoice']
+        });
+        const cancelAtEnd = subscription.cancel_at_period_end;
+        stripeData = {
+          status: subscription.status,
+          cancelAtPeriodEnd: cancelAtEnd,
+          cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
+          currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+          currentPeriodStart: new Date(subscription.current_period_start * 1000).toISOString(),
+          created: new Date(subscription.created * 1000).toISOString(),
+          paymentMethod: subscription.default_payment_method ? {
+            brand: subscription.default_payment_method.card?.brand || 'card',
+            last4: subscription.default_payment_method.card?.last4 || '****',
+            expMonth: subscription.default_payment_method.card?.exp_month,
+            expYear: subscription.default_payment_method.card?.exp_year
+          } : null,
+          latestInvoiceAmount: subscription.latest_invoice?.amount_paid ? (subscription.latest_invoice.amount_paid / 100) : null,
+          latestInvoiceDate: subscription.latest_invoice?.created ? new Date(subscription.latest_invoice.created * 1000).toISOString() : null
+        };
+      } catch (stripeErr) {
+        console.warn('[STRIPE] Could not fetch subscription details:', stripeErr.message);
+      }
+    }
+
+    res.json({
+      plan: data.plan || null,
+      subscriptionStatus: data.subscriptionStatus || null,
+      stripeCustomerId: data.stripeCustomerId || null,
+      subscribedAt: data.subscribedAt || null,
+      currentPeriodEnd: data.currentPeriodEnd || null,
+      canceledAt: data.canceledAt || null,
+      cancelAt: data.cancelAt || null,
+      stripe: stripeData
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Affiliate Program
+// ============================================
+
+// ---- Record a referral (called when referred user signs up) ----
+app.post('/api/record-referral', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+
+  const { referrerUid, newUserUid, newUserName, newUserEmail } = req.body;
+  if (!referrerUid || !newUserUid) return res.status(400).json({ error: 'Missing referrerUid or newUserUid' });
+
+  try {
+    // Verify referrer exists
+    const referrerDoc = await dbAdmin.collection('users').doc(referrerUid).get();
+    if (!referrerDoc.exists) return res.status(404).json({ error: 'Referrer not found' });
+
+    // Mark new user as referred
+    await dbAdmin.collection('users').doc(newUserUid).set({
+      referredBy: referrerUid,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    // Add to referrer's referrals list
+    await dbAdmin.collection('users').doc(referrerUid)
+      .collection('referrals').doc(newUserUid).set({
+        uid: newUserUid,
+        name: newUserName || 'Unknown',
+        email: newUserEmail || '',
+        status: 'signed_up', // signed_up → subscribed → active
+        plan: null,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+    // Increment referral count
+    await dbAdmin.collection('users').doc(referrerUid).set({
+      affiliateReferralCount: admin.firestore.FieldValue.increment(1),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    console.log(`[AFFILIATE] Referral recorded: ${newUserUid} referred by ${referrerUid}`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[AFFILIATE] Record referral error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Get affiliate stats for a user ----
+app.get('/api/affiliate-stats/:uid', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+
+  try {
+    const userDoc = await dbAdmin.collection('users').doc(req.params.uid).get();
+    if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
+
+    const data = userDoc.data();
+
+    // Get recent referrals (last 20)
+    const referralsSnap = await dbAdmin.collection('users').doc(req.params.uid)
+      .collection('referrals').orderBy('createdAt', 'desc').limit(20).get();
+
+    const referrals = referralsSnap.docs.map(doc => {
+      const d = doc.data();
+      return {
+        uid: d.uid,
+        name: d.name,
+        status: d.status,
+        plan: d.plan,
+        createdAt: d.createdAt ? d.createdAt.toDate().toISOString() : null
+      };
+    });
+
+    // Get recent commissions (last 20)
+    const commissionsSnap = await dbAdmin.collection('users').doc(req.params.uid)
+      .collection('commissions').orderBy('createdAt', 'desc').limit(20).get();
+
+    const commissions = commissionsSnap.docs.map(doc => {
+      const d = doc.data();
+      return {
+        id: doc.id,
+        fromName: d.fromName,
+        fromPlan: d.fromPlan,
+        amount: d.amount,
+        invoiceAmount: d.invoiceAmount,
+        status: d.status,
+        createdAt: d.createdAt ? d.createdAt.toDate().toISOString() : null
+      };
+    });
+
+    res.json({
+      referralCount: data.affiliateReferralCount || 0,
+      totalEarnings: data.affiliateTotalEarnings || 0,
+      pendingEarnings: data.affiliatePendingEarnings || 0,
+      paidEarnings: data.affiliatePaidEarnings || 0,
+      referralCode: req.params.uid, // UID is the referral code
+      referrals,
+      commissions
+    });
+  } catch (err) {
+    console.error('[AFFILIATE] Stats error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Admin Panel
+// ============================================
+
+const ADMIN_EMAILS = ['stratfordacademyllc@gmail.com', 'juliomolina65@gmail.com'];
+
+// Middleware: check if request is from admin
+async function requireAdmin(req, res, next) {
+  const uid = req.body?.uid || req.query?.uid;
+  if (!uid || !dbAdmin) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const userDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!userDoc.exists) return res.status(401).json({ error: 'Unauthorized' });
+    const email = userDoc.data().email || '';
+    if (!ADMIN_EMAILS.includes(email.toLowerCase())) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    req.adminUser = userDoc.data();
+    next();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+// ---- Admin: Set permanent plan for admin account ----
+app.post('/api/admin/activate-admin', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const { uid } = req.body;
+  if (!uid) return res.status(400).json({ error: 'Missing uid' });
+
+  try {
+    const userDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
+    const email = (userDoc.data().email || '').toLowerCase();
+    if (!ADMIN_EMAILS.includes(email)) return res.status(403).json({ error: 'Not an admin' });
+
+    await dbAdmin.collection('users').doc(uid).set({
+      plan: 'elite',
+      subscriptionStatus: 'active',
+      isAdmin: true,
+      adminPlan: true, // flag: this plan never expires
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    console.log(`[ADMIN] Permanent Elite plan activated for ${email} (${uid})`);
+    res.json({ success: true, plan: 'elite', status: 'active' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Admin: Get all members ----
+app.get('/api/admin/members', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const uid = req.query.uid;
+  if (!uid) return res.status(401).json({ error: 'Missing uid' });
+
+  // Verify admin
+  try {
+    const adminDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!adminDoc.exists) return res.status(401).json({ error: 'Unauthorized' });
+    const email = (adminDoc.data().email || '').toLowerCase();
+    if (!ADMIN_EMAILS.includes(email)) return res.status(403).json({ error: 'Admin access required' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+
+  try {
+    const usersSnap = await dbAdmin.collection('users').get();
+    const members = [];
+
+    for (const doc of usersSnap.docs) {
+      const d = doc.data();
+      // Skip test users
+      if (doc.id.startsWith('test-user-')) continue;
+
+      // Get referral count for this user
+      let referralCount = 0;
+      let referrals = [];
+      try {
+        const refSnap = await dbAdmin.collection('users').doc(doc.id)
+          .collection('referrals').orderBy('createdAt', 'desc').limit(50).get();
+        referralCount = refSnap.size;
+        referrals = refSnap.docs.map(r => {
+          const rd = r.data();
+          return {
+            uid: rd.uid,
+            name: rd.name,
+            email: rd.email || '',
+            status: rd.status,
+            plan: rd.plan,
+            createdAt: rd.createdAt ? rd.createdAt.toDate().toISOString() : null
+          };
+        });
+      } catch (e) { /* no referrals */ }
+
+      members.push({
+        uid: doc.id,
+        name: d.name || 'Unknown',
+        email: d.email || '',
+        plan: d.plan || 'free',
+        subscriptionStatus: d.subscriptionStatus || 'none',
+        isAdmin: d.isAdmin || false,
+        referredBy: d.referredBy || null,
+        affiliateReferralCount: d.affiliateReferralCount || 0,
+        affiliateTotalEarnings: d.affiliateTotalEarnings || 0,
+        points: d.points || 0,
+        tradeCount: d.tradeCount || 0,
+        totalPnl: d.totalPnl || 0,
+        createdAt: d.createdAt ? (d.createdAt.toDate ? d.createdAt.toDate().toISOString() : d.createdAt) : null,
+        referrals: referrals
+      });
+    }
+
+    // Sort: admin first, then by createdAt desc
+    members.sort((a, b) => {
+      if (a.isAdmin && !b.isAdmin) return -1;
+      if (!a.isAdmin && b.isAdmin) return 1;
+      return 0;
+    });
+
+    console.log(`[ADMIN] Members list fetched: ${members.length} users`);
+    res.json({ members, total: members.length });
+  } catch (err) {
+    console.error('[ADMIN] Members error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Admin: Pause/Resume a member's account ----
+app.post('/api/admin/toggle-member', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const { uid, targetUid, action } = req.body; // action: 'pause' or 'resume'
+  if (!uid || !targetUid) return res.status(400).json({ error: 'Missing uid or targetUid' });
+
+  // Verify admin
+  try {
+    const adminDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!adminDoc.exists) return res.status(401).json({ error: 'Unauthorized' });
+    const email = (adminDoc.data().email || '').toLowerCase();
+    if (!ADMIN_EMAILS.includes(email)) return res.status(403).json({ error: 'Admin access required' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+
+  try {
+    const isPause = action === 'pause';
+    await dbAdmin.collection('users').doc(targetUid).set({
+      accountStatus: isPause ? 'paused' : 'active',
+      accountPausedAt: isPause ? admin.firestore.FieldValue.serverTimestamp() : null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    console.log(`[ADMIN] Account ${isPause ? 'paused' : 'resumed'}: ${targetUid}`);
+
+    // Email the member about their account status change
+    if (isPause) {
+      const memberDoc = await dbAdmin.collection('users').doc(targetUid).get();
+      if (memberDoc.exists && memberDoc.data().email) {
+        emailService.sendAccountPausedEmail(memberDoc.data().email, memberDoc.data().name || 'Trader');
+      }
+    }
+
+    res.json({ success: true, status: isPause ? 'paused' : 'active' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Admin: Get a member's trades & P&L ----
+app.get('/api/admin/member-trades/:targetUid', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const uid = req.query.uid;
+  if (!uid) return res.status(401).json({ error: 'Missing admin uid' });
+
+  // Verify admin
+  try {
+    const adminDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!adminDoc.exists) return res.status(401).json({ error: 'Unauthorized' });
+    const email = (adminDoc.data().email || '').toLowerCase();
+    if (!ADMIN_EMAILS.includes(email)) return res.status(403).json({ error: 'Admin access required' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+
+  try {
+    const targetUid = req.params.targetUid;
+    const userDoc = await dbAdmin.collection('users').doc(targetUid).get();
+    if (!userDoc.exists) return res.status(404).json({ error: 'Member not found' });
+
+    const userData = userDoc.data();
+
+    // Get recent trades (last 50)
+    const tradesSnap = await dbAdmin.collection('users').doc(targetUid)
+      .collection('trades').orderBy('timestamp', 'desc').limit(50).get();
+
+    const trades = tradesSnap.docs.map(doc => {
+      const t = doc.data();
+      return {
+        id: doc.id,
+        strategy: t.strategy,
+        action: t.action,
+        ticker: t.ticker,
+        qty: t.qty,
+        entryPrice: t.entryPrice,
+        exitPrice: t.exitPrice,
+        pnl: t.pnl,
+        status: t.status,
+        broker: t.broker || 'paper',
+        timestamp: t.timestamp ? (t.timestamp.toDate ? t.timestamp.toDate().toISOString() : t.timestamp) : null
+      };
+    });
+
+    // Get commissions earned (if they referred anyone)
+    const commissionsSnap = await dbAdmin.collection('users').doc(targetUid)
+      .collection('commissions').orderBy('createdAt', 'desc').limit(20).get();
+    const commissions = commissionsSnap.docs.map(doc => {
+      const c = doc.data();
+      return {
+        fromName: c.fromName,
+        fromPlan: c.fromPlan,
+        amount: c.amount,
+        status: c.status,
+        createdAt: c.createdAt ? c.createdAt.toDate().toISOString() : null
+      };
+    });
+
+    res.json({
+      member: {
+        uid: targetUid,
+        name: userData.name || 'Unknown',
+        email: userData.email || '',
+        plan: userData.plan || 'free',
+        subscriptionStatus: userData.subscriptionStatus || 'none',
+        accountStatus: userData.accountStatus || 'active',
+        totalPnl: userData.totalPnl || 0,
+        winCount: userData.winCount || 0,
+        lossCount: userData.lossCount || 0,
+        tradeCount: userData.tradeCount || 0,
+        activeBroker: userData.activeBroker || 'paper',
+        activeStrategies: userData.activeStrategies || [],
+        tier: userData.tier || null,
+        points: userData.points || 0,
+        referredBy: userData.referredBy || null,
+        affiliateReferralCount: userData.affiliateReferralCount || 0,
+        affiliateTotalEarnings: userData.affiliateTotalEarnings || 0
+      },
+      trades,
+      commissions
+    });
+  } catch (err) {
+    console.error('[ADMIN] Member trades error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// TradingView Webhook & Trades
+// ============================================
+
+// ---- Webhook: Open Trade (Entry) ----
+app.post('/api/webhook', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+
+  const { secret, strategy, action, ticker, price, qty, time } = req.body;
+
+  // Validate secret
+  if (secret !== WEBHOOK_SECRET) {
+    console.warn('Webhook rejected: invalid secret');
+    return res.status(401).json({ error: 'Invalid secret' });
+  }
+
+  // Validate required fields
+  if (!strategy || !action || !ticker) {
+    return res.status(400).json({ error: 'Missing required fields: strategy, action, ticker' });
+  }
+
+  const tradeAction = action.toUpperCase(); // BUY or SELL
+  const tradePrice = parseFloat(price) || 0;
+  const tradeQty = parseInt(qty) || 1;
+  const tradeTime = time || new Date().toISOString();
+
+  console.log(`[WEBHOOK] ${tradeAction} ${tradeQty}x ${ticker} @ ${tradePrice} — Strategy: ${strategy}`);
+
+  try {
+    // 1. Save signal to global signals collection
+    const signalRef = await dbAdmin.collection('signals').add({
+      strategy,
+      action: tradeAction,
+      ticker,
+      price: tradePrice,
+      qty: tradeQty,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      time: tradeTime,
+      status: 'dispatched'
+    });
+
+    // 2. Find all users subscribed to this strategy
+    const usersSnapshot = await dbAdmin.collection('users')
+      .where('activeStrategies', 'array-contains', strategy)
+      .get();
+
+    let subscriberCount = 0;
+    const batch = dbAdmin.batch();
+
+    for (const userDoc of usersSnapshot.docs) {
+      const userData = userDoc.data();
+      const uid = userDoc.id;
+      const userBroker = userData.activeBroker || 'paper';
+
+      // ── Per-user contract sizing based on their account tier ──
+      // Each user has qty (number of contracts) and ticker (MNQ/NQ/MES/ES)
+      // saved to their Firestore profile when they pick their account tier.
+      // Example: $50K Alpha user → qty:5, ticker:'MNQ'
+      //          $150K Alpha user → qty:1, ticker:'NQ'
+      const userQty = userData.qty || tradeQty;
+      const userTicker = userData.ticker || ticker;
+      const userMultiplier = TICK_VALUES[userTicker] || TICK_VALUES[ticker] || 20;
+
+      console.log(`  → User ${uid}: tier=${userData.tier||'?'}, ${userQty}x ${userTicker} (multiplier: $${userMultiplier}/pt)`);
+
+      // Check if user has an open trade for this strategy (for closing)
+      if (tradeAction === 'SELL' || tradeAction === 'CLOSE') {
+        // Try to close an open trade — match by strategy (ticker may differ per user tier)
+        const openTrades = await dbAdmin.collection('users').doc(uid)
+          .collection('trades')
+          .where('strategy', '==', strategy)
+          .where('status', '==', 'open')
+          .limit(1)
+          .get();
+
+        if (!openTrades.empty) {
+          const openTrade = openTrades.docs[0];
+          const openData = openTrade.data();
+          const pointDiff = tradePrice - openData.entryPrice;
+          const closeMultiplier = TICK_VALUES[openData.ticker] || userMultiplier;
+          // If original was BUY, profit = (exit - entry) * multiplier * qty
+          // If original was SELL (short), profit = (entry - exit) * multiplier * qty
+          const direction = openData.action === 'BUY' ? 1 : -1;
+          const pnl = parseFloat((pointDiff * direction * closeMultiplier * openData.qty).toFixed(2));
+
+          batch.update(openTrade.ref, {
+            exitPrice: tradePrice,
+            pnl: pnl,
+            status: 'closed',
+            closedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          // Update user stats
+          const isWin = pnl > 0;
+          batch.update(dbAdmin.collection('users').doc(uid), {
+            totalPnl: admin.firestore.FieldValue.increment(pnl),
+            tradeCount: admin.firestore.FieldValue.increment(1),
+            winCount: admin.firestore.FieldValue.increment(isWin ? 1 : 0),
+            lossCount: admin.firestore.FieldValue.increment(isWin ? 0 : 1),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          // Trade closed email — disabled (too frequent, would spam users)
+          // if (userData.email && userData.emailNotifications !== false) {
+          //   emailService.sendTradeClosedEmail(userData.email, userData.name || 'Trader', {
+          //     strategy, ticker: openData.ticker, entryPrice: openData.entryPrice, exitPrice: tradePrice, pnl
+          //   });
+          // }
+
+          subscriberCount++;
+          continue;
+        }
+      }
+
+      // Open a new trade with the USER's specific contract qty and ticker
+      const tradeRef = dbAdmin.collection('users').doc(uid).collection('trades').doc();
+      batch.set(tradeRef, {
+        strategy,
+        action: tradeAction,
+        ticker: userTicker,
+        qty: userQty,
+        entryPrice: tradePrice,
+        exitPrice: null,
+        pnl: null,
+        status: 'open',
+        broker: userBroker,
+        tier: userData.tier || null,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        time: tradeTime,
+        closedAt: null
+      });
+
+      // Trade signal email — disabled (too frequent, would spam users)
+      // if (userData.email && userData.emailNotifications !== false) {
+      //   emailService.sendTradeSignalEmail(userData.email, userData.name || 'Trader', {
+      //     strategy, action: tradeAction, ticker: userTicker, price: tradePrice, qty: userQty
+      //   });
+      // }
+
+      subscriberCount++;
+    }
+
+    // Commit all trades in batch
+    await batch.commit();
+
+    // Update signal with subscriber count
+    await signalRef.update({ subscriberCount });
+
+    console.log(`[WEBHOOK] Dispatched to ${subscriberCount} subscribers`);
+    res.json({
+      success: true,
+      signal: signalRef.id,
+      subscribers: subscriberCount,
+      action: tradeAction,
+      strategy,
+      ticker,
+      price: tradePrice
+    });
+
+  } catch (err) {
+    console.error('[WEBHOOK] Error:', err);
+    res.status(500).json({ error: 'Internal server error', message: err.message });
+  }
+});
+
+// ---- Admin: Generate Test Trade ----
+app.post('/api/test-trade', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+
+  const { secret, uid, strategy, action, ticker, price, qty } = req.body;
+  if (secret !== WEBHOOK_SECRET) return res.status(401).json({ error: 'Invalid secret' });
+  if (!uid) return res.status(400).json({ error: 'Missing uid' });
+
+  const tradeAction = (action || 'BUY').toUpperCase();
+  const tradePrice = parseFloat(price) || (ticker === 'ES' || ticker === 'MES' ? 5950 : 21500);
+  const tradeQty = parseInt(qty) || 1;
+
+  try {
+    // If closing, find open trade
+    if (tradeAction === 'SELL' || tradeAction === 'CLOSE') {
+      const openTrades = await dbAdmin.collection('users').doc(uid)
+        .collection('trades')
+        .where('strategy', '==', strategy || 'Stratford Alpha')
+        .where('status', '==', 'open')
+        .limit(1)
+        .get();
+
+      if (!openTrades.empty) {
+        const openTrade = openTrades.docs[0];
+        const openData = openTrade.data();
+        const tk = openData.ticker || 'NQ';
+        const multiplier = TICK_VALUES[tk] || 20;
+        const direction = openData.action === 'BUY' ? 1 : -1;
+        const pnl = parseFloat(((tradePrice - openData.entryPrice) * direction * multiplier * openData.qty).toFixed(2));
+
+        await openTrade.ref.update({
+          exitPrice: tradePrice,
+          pnl,
+          status: 'closed',
+          closedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        await dbAdmin.collection('users').doc(uid).update({
+          totalPnl: admin.firestore.FieldValue.increment(pnl),
+          tradeCount: admin.firestore.FieldValue.increment(1),
+          winCount: admin.firestore.FieldValue.increment(pnl > 0 ? 1 : 0),
+          lossCount: admin.firestore.FieldValue.increment(pnl > 0 ? 0 : 1)
+        });
+
+        return res.json({ success: true, action: 'closed', pnl, tradeId: openTrade.id });
+      }
+    }
+
+    // Open new test trade
+    const ref = await dbAdmin.collection('users').doc(uid).collection('trades').add({
+      strategy: strategy || 'Stratford Alpha',
+      action: tradeAction,
+      ticker: ticker || 'NQ',
+      qty: tradeQty,
+      entryPrice: tradePrice,
+      exitPrice: null,
+      pnl: null,
+      status: 'open',
+      broker: 'paper',
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      time: new Date().toISOString(),
+      closedAt: null
+    });
+
+    res.json({ success: true, action: 'opened', tradeId: ref.id });
+  } catch (err) {
+    console.error('[TEST-TRADE] Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Get user trade stats ----
+app.get('/api/stats/:uid', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+
+  try {
+    const userDoc = await dbAdmin.collection('users').doc(req.params.uid).get();
+    if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
+
+    const data = userDoc.data();
+    res.json({
+      totalPnl: data.totalPnl || 0,
+      winCount: data.winCount || 0,
+      lossCount: data.lossCount || 0,
+      tradeCount: data.tradeCount || 0,
+      activeStrategies: data.activeStrategies || [],
+      activeBroker: data.activeBroker || 'paper'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Test: Create N random test users across strategies/tiers ----
+app.post('/api/test-setup', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+
+  const { secret, count } = req.body;
+  if (secret !== WEBHOOK_SECRET) return res.status(401).json({ error: 'Invalid secret' });
+
+  // Strategy → tier → contract config (mirrors frontend demoTiers)
+  const STRATEGY_TIERS = {
+    'Stratford Alpha':    { '50k': { qty:5,  ticker:'MNQ' }, '100k': { qty:8,  ticker:'MNQ' }, '150k': { qty:1, ticker:'NQ'  } },
+    'Stratford Apex':     { '50k': { qty:5,  ticker:'MNQ' }, '100k': { qty:8,  ticker:'MNQ' }, '150k': { qty:1, ticker:'NQ'  } },
+    'Stratford Omega':    { '50k': { qty:8,  ticker:'MES' }, '100k': { qty:9,  ticker:'MES' }, '150k': { qty:14,ticker:'MES' } },
+    'Stratford Guardian': { '50k': { qty:6,  ticker:'MES' }, '100k': { qty:7,  ticker:'MES' }, '150k': { qty:11,ticker:'MES' } }
+  };
+  const strategies = Object.keys(STRATEGY_TIERS);
+  const tiers = ['50k','100k','150k'];
+  const names = ['Alice','Bob','Charlie','Diana','Ethan','Fiona','George','Hannah','Ivan','Julia',
+                 'Kevin','Laura','Marcus','Nina','Oscar','Priya','Quinn','Rosa','Sam','Tina'];
+
+  const numUsers = count || 20;
+  const testUsers = [];
+
+  try {
+    for (let i = 0; i < numUsers; i++) {
+      const strat = strategies[i % strategies.length];
+      const tier = tiers[Math.floor(Math.random() * tiers.length)];
+      const config = STRATEGY_TIERS[strat][tier];
+      const name = names[i] || ('User' + (i+1));
+      const id = 'test-user-' + (i+1);
+
+      const user = { id, name: `${name} (${tier.toUpperCase()} ${strat.split(' ')[1]})`, strategy: strat, tier, ...config };
+      testUsers.push(user);
+
+      await dbAdmin.collection('users').doc(id).set({
+        name: user.name,
+        activeStrategies: [strat],
+        activeBroker: 'paper',
+        tier: tier,
+        qty: config.qty,
+        ticker: config.ticker,
+        totalPnl: 0, winCount: 0, lossCount: 0, tradeCount: 0,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      console.log(`[TEST-SETUP] #${i+1} ${user.name} → ${config.qty}x ${config.ticker}`);
+    }
+
+    res.json({
+      success: true,
+      message: numUsers + ' test users created',
+      users: testUsers.map(u => ({ id: u.id, name: u.name, strategy: u.strategy, tier: u.tier, qty: u.qty, ticker: u.ticker }))
+    });
+  } catch (err) {
+    console.error('[TEST-SETUP] Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Test: Clean up test users ----
+app.post('/api/test-cleanup', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+
+  const { secret, count } = req.body;
+  if (secret !== WEBHOOK_SECRET) return res.status(401).json({ error: 'Invalid secret' });
+
+  const numUsers = count || 20;
+  try {
+    let deleted = 0;
+    for (let i = 1; i <= numUsers; i++) {
+      const id = 'test-user-' + i;
+      const doc = await dbAdmin.collection('users').doc(id).get();
+      if (!doc.exists) continue;
+      // Delete their trades first
+      const trades = await dbAdmin.collection('users').doc(id).collection('trades').get();
+      if (!trades.empty) {
+        const batch = dbAdmin.batch();
+        trades.docs.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+      await dbAdmin.collection('users').doc(id).delete();
+      console.log(`[TEST-CLEANUP] Deleted ${id}`);
+      deleted++;
+    }
+    res.json({ success: true, message: deleted + ' test users deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Static File Serving (same as before)
+// ============================================
+
+// Route shortcuts
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
+// ============================================
+// Admin: Test email templates
+// ============================================
+app.post('/api/admin/test-email-template', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'DB not available' });
+  const { uid, template, email, name } = req.body;
+  if (!uid || !template || !email) return res.status(400).json({ error: 'Missing params' });
+
+  // Verify admin
+  try {
+    const doc = await dbAdmin.collection('users').doc(uid).get();
+    if (!doc.exists) return res.status(401).json({ error: 'Unauthorized' });
+    const e = (doc.data().email || '').toLowerCase();
+    if (!ADMIN_EMAILS.includes(e)) return res.status(403).json({ error: 'Admin only' });
+  } catch (err) { return res.status(500).json({ error: err.message }); }
+
+  const n = name || 'Trader';
+  try {
+    if (template === 'welcome') {
+      await emailService.sendWelcomeEmail(email, n);
+    } else if (template === 'week1' || template === 'month1' || template === 'month2' || template === 'month3' || template === 'month6') {
+      await emailService.sendReengagementEmail(email, n, template, {
+        totalPnl: 4832, totalTrades: 47, winRate: 72.3, wins: 34, losses: 13
+      });
+    } else if (template === 'trade_signal') {
+      await emailService.sendTradeSignalEmail(email, n, {
+        action: 'BUY', strategy: 'Stratford Alpha', ticker: 'MNQ', price: '21,458.50', qty: 5
+      });
+    } else if (template === 'trade_closed') {
+      await emailService.sendTradeClosedEmail(email, n, {
+        strategy: 'Stratford Alpha', ticker: 'MNQ', entryPrice: '21,458.50', exitPrice: '21,512.75', pnl: 542
+      });
+    } else if (template === 'subscription') {
+      await emailService.sendSubscriptionEmail(email, n, 'alpha');
+    } else if (template === 'weekly') {
+      await emailService.sendWeeklySummaryEmail(email, n, {
+        weeklyPnl: 1247, totalPnl: 4832, weeklyTrades: 12, wins: 9, losses: 3, winRate: 75, totalTrades: 47, weekStart: 'Mar 10', weekEnd: 'Mar 14'
+      });
+    } else {
+      return res.json({ error: 'Unknown template: ' + template });
+    }
+    res.json({ success: true, template, sentTo: email });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Admin Email Center API
+// ============================================
+
+// GET /api/admin/email-log — fetch recent email log
+app.get('/api/admin/email-log', async (req, res) => {
+  if (!dbAdmin) return res.json({ emails: [] });
+  const { uid } = req.query;
+  if (!uid) return res.status(400).json({ error: 'Missing uid' });
+
+  // Verify admin
+  try {
+    const adminDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!adminDoc.exists) return res.status(401).json({ error: 'Unauthorized' });
+    const email = (adminDoc.data().email || '').toLowerCase();
+    if (!ADMIN_EMAILS.includes(email)) return res.status(403).json({ error: 'Admin access required' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+
+  try {
+    const snap = await dbAdmin.collection('emailLog').orderBy('sentAt', 'desc').limit(100).get();
+    const emails = snap.docs.map(doc => {
+      const d = doc.data();
+      return {
+        id: doc.id,
+        to: d.to,
+        subject: d.subject,
+        type: d.type || 'unknown',
+        status: d.status || 'sent',
+        sentAt: d.sentAt ? d.sentAt.toDate().toISOString() : null
+      };
+    });
+    res.json({ emails });
+  } catch (err) {
+    res.json({ emails: [] });
+  }
+});
+
+// POST /api/admin/send-email — send custom email from admin
+app.post('/api/admin/send-email', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Database not available' });
+  const { uid, subject, body, audience, toEmail } = req.body;
+  if (!uid || !subject || !body) return res.status(400).json({ error: 'Missing uid, subject, or body' });
+
+  // Verify admin
+  try {
+    const adminDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!adminDoc.exists) return res.status(401).json({ error: 'Unauthorized' });
+    const email = (adminDoc.data().email || '').toLowerCase();
+    if (!ADMIN_EMAILS.includes(email)) return res.status(403).json({ error: 'Admin access required' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+
+  try {
+    let recipients = [];
+
+    if (toEmail) {
+      // Single specific email
+      recipients = [{ email: toEmail, name: toEmail.split('@')[0] }];
+    } else if (audience === 'all' || audience === 'free' || audience === 'paid') {
+      // Bulk send to user group
+      const usersSnap = await dbAdmin.collection('users').get();
+      usersSnap.docs.forEach(doc => {
+        const d = doc.data();
+        if (!d.email) return;
+        if (audience === 'free' && d.plan && d.plan !== 'free') return;
+        if (audience === 'paid' && (!d.plan || d.plan === 'free')) return;
+        recipients.push({ email: d.email, name: d.name || 'Trader' });
+      });
+    }
+
+    let sent = 0;
+    let failed = 0;
+    for (const r of recipients) {
+      const ok = await emailService.sendCustomEmail(r.email, r.name, subject, body);
+      if (ok) sent++; else failed++;
+    }
+
+    res.json({ success: true, sent, failed, total: recipients.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Serve static files
+app.use(express.static(__dirname));
+
+// Fallback to index.html (MUST be after all API routes)
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// ============================================
+// Scheduled Re-engagement Emails (node-cron)
+// ============================================
+if (dbAdmin) {
+  // Runs every day at 9:00 AM Eastern (14:00 UTC)
+  cron.schedule('0 9 * * *', async () => {
+    console.log('[CRON] Running re-engagement email check...');
+    try {
+      const allUsersSnap = await dbAdmin.collection('users').get();
+      const now = new Date();
+      let emailsSent = 0;
+
+      for (const doc of allUsersSnap.docs) {
+        const userData = doc.data();
+
+        // Skip users with active paid plans
+        if (userData.plan && userData.plan !== 'free' &&
+            (userData.subscriptionStatus === 'active' || userData.subscriptionStatus === 'canceling')) {
+          continue;
+        }
+
+        // Skip users without email or who opted out
+        if (!userData.email) continue;
+        if (userData.emailOptOut) continue;
+
+        // Calculate days since signup
+        const signupDate = userData.createdAt && userData.createdAt.toDate ? userData.createdAt.toDate() :
+                          (userData.createdAt ? new Date(userData.createdAt) : null);
+        if (!signupDate) continue;
+
+        const daysSinceSignup = Math.floor((now - signupDate) / (1000 * 60 * 60 * 24));
+
+        // Determine which milestone to send (check largest first)
+        const sent = userData.reengagementSent || {};
+        let milestone = null;
+
+        if (daysSinceSignup >= 180 && !sent.month6) milestone = 'month6';
+        else if (daysSinceSignup >= 90 && !sent.month3) milestone = 'month3';
+        else if (daysSinceSignup >= 60 && !sent.month2) milestone = 'month2';
+        else if (daysSinceSignup >= 30 && !sent.month1) milestone = 'month1';
+        else if (daysSinceSignup >= 7 && !sent.week1) milestone = 'week1';
+
+        if (!milestone) continue;
+
+        // Gather paper trading stats
+        let stats = { totalPnl: 0, totalTrades: 0, wins: 0, losses: 0, winRate: 0 };
+        try {
+          const tradesSnap = await dbAdmin.collection('users').doc(doc.id)
+            .collection('trades').where('status', '==', 'closed').get();
+
+          if (!tradesSnap.empty) {
+            let totalPnl = 0, wins = 0, losses = 0;
+            tradesSnap.docs.forEach(t => {
+              const trade = t.data();
+              const pnl = trade.pnl || trade.profit || 0;
+              totalPnl += pnl;
+              if (pnl > 0) wins++;
+              else if (pnl < 0) losses++;
+            });
+            stats.totalPnl = Math.round(totalPnl * 100) / 100;
+            stats.totalTrades = tradesSnap.size;
+            stats.wins = wins;
+            stats.losses = losses;
+            stats.winRate = stats.totalTrades > 0 ? Math.round((wins / stats.totalTrades) * 100) : 0;
+          }
+        } catch (e) {
+          console.warn(`[CRON] Failed to fetch trades for ${doc.id}:`, e.message);
+        }
+
+        // Send the milestone email
+        const name = userData.name || 'Trader';
+        const result = emailService.sendReengagementEmail(userData.email, name, milestone, stats);
+
+        if (result !== false) {
+          // Record that this milestone was sent
+          await doc.ref.update({
+            [`reengagementSent.${milestone}`]: admin.firestore.FieldValue.serverTimestamp()
+          });
+          emailsSent++;
+          console.log(`[CRON] Sent ${milestone} re-engagement email to ${userData.email}`);
+        }
+      }
+
+      console.log(`[CRON] Re-engagement check complete. ${emailsSent} emails sent.`);
+    } catch (err) {
+      console.error('[CRON] Re-engagement email error:', err);
+    }
+  }, {
+    timezone: 'America/New_York'
+  });
+
+  console.log('[CRON] Re-engagement email scheduler active (daily at 9 AM ET)');
+
+  // ── Weekly P&L Summary — every Monday at 9 AM ET ──
+  cron.schedule('0 9 * * 1', async () => {
+    console.log('[CRON] Running weekly P&L summary emails...');
+    try {
+      const usersSnap = await dbAdmin.collection('users').get();
+      let sent = 0;
+
+      for (const userDoc of usersSnap.docs) {
+        const userData = userDoc.data();
+        if (!userData.email) continue;
+        // Only send to users with active paper demo or paid plan
+        if (!userData.paperDemo && (!userData.plan || userData.plan === 'free')) continue;
+
+        // Get trades from the last 7 days
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const tradesSnap = await dbAdmin.collection('users').doc(userDoc.id)
+          .collection('trades').where('timestamp', '>=', oneWeekAgo.toISOString()).get();
+
+        if (tradesSnap.empty) continue; // No trades this week, skip
+
+        let weeklyPnl = 0, totalPnl = 0, wins = 0, losses = 0;
+        tradesSnap.docs.forEach(t => {
+          const trade = t.data();
+          if (trade.pnl !== undefined && trade.pnl !== null) {
+            weeklyPnl += trade.pnl;
+            if (trade.pnl >= 0) wins++; else losses++;
+          }
+        });
+
+        // Get all-time stats
+        const allTradesSnap = await dbAdmin.collection('users').doc(userDoc.id)
+          .collection('trades').get();
+        allTradesSnap.docs.forEach(t => {
+          const trade = t.data();
+          if (trade.pnl !== undefined && trade.pnl !== null) totalPnl += trade.pnl;
+        });
+
+        const weeklyTrades = tradesSnap.size;
+        const totalTrades = allTradesSnap.size;
+        const winRate = weeklyTrades > 0 ? Math.round((wins / weeklyTrades) * 100) : 0;
+
+        // Calculate week range
+        const weekEnd = new Date();
+        const weekStart = new Date();
+        weekStart.setDate(weekStart.getDate() - 7);
+        const fmtOpts = { month: 'short', day: 'numeric' };
+
+        await emailService.sendWeeklySummaryEmail(userData.email, userData.name || 'Trader', {
+          weeklyPnl: Math.round(weeklyPnl),
+          totalPnl: Math.round(totalPnl),
+          weeklyTrades,
+          wins,
+          losses,
+          winRate,
+          totalTrades,
+          weekStart: weekStart.toLocaleDateString('en-US', fmtOpts),
+          weekEnd: weekEnd.toLocaleDateString('en-US', fmtOpts)
+        });
+        sent++;
+      }
+
+      console.log(`[CRON] Weekly summary: sent ${sent} emails`);
+    } catch (err) {
+      console.error('[CRON] Weekly summary error:', err.message);
+    }
+  }, {
+    timezone: 'America/New_York'
+  });
+
+  console.log('[CRON] Weekly P&L summary active (every Monday at 9 AM ET)');
+}
+
+// ============================================
+// Start Server
+// ============================================
+app.listen(PORT, () => {
+  console.log(`Stratford Academy server running at http://localhost:${PORT}`);
+  console.log(`Webhook endpoint: POST http://localhost:${PORT}/api/webhook`);
+  console.log(`Stripe checkout: POST http://localhost:${PORT}/api/create-checkout-session`);
+  console.log(`Stripe webhook: POST http://localhost:${PORT}/api/stripe-webhook`);
+  console.log(`Health check: GET http://localhost:${PORT}/api/health`);
+  console.log(`Re-engagement emails: Daily at 9 AM ET`);
+});

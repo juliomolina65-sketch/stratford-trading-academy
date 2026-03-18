@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Ad 4 — Prop Firm Angle</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:-apple-system,'Segoe UI','Inter',sans-serif}
+
+.ad{width:1080px;height:1080px;background:#080d19;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:80px}
+
+.ad::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#00c8f0,#8b6fff,#00d97e)}
+
+.glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(0,200,240,.06) 0%,transparent 60%);pointer-events:none}
+
+.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(139,111,255,.1);border:1px solid rgba(139,111,255,.25);border-radius:20px;padding:6px 18px;font-size:14px;color:#8b6fff;font-weight:600;margin-bottom:32px;width:fit-content;position:relative;z-index:1}
+
+.headline{font-size:64px;font-weight:800;color:#fff;line-height:1.08;margin-bottom:20px;letter-spacing:-.02em;position:relative;z-index:1}
+.headline .green{color:#00d97e}
+
+.sub{font-size:22px;color:rgba(148,163,184,.8);line-height:1.55;margin-bottom:44px;max-width:700px;position:relative;z-index:1}
+
+.firms{display:flex;gap:12px;margin-bottom:44px;position:relative;z-index:1;flex-wrap:wrap}
+.firm{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px 24px;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500;color:#f1f5f9}
+.firm .check{color:#00d97e;font-size:16px}
+
+.bottom-row{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;margin-top:auto;padding-top:40px;border-top:1px solid rgba(255,255,255,.06)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#00c8f0,#8b6fff);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff}
+.logo-text{font-size:17px;font-weight:700;color:#f1f5f9}
+.cta{background:#00c8f0;color:#000;font-size:18px;font-weight:700;padding:16px 36px;border-radius:10px}
+
+.stat-strip{display:flex;gap:32px;position:relative;z-index:1;margin-bottom:36px}
+.ss{display:flex;align-items:baseline;gap:6px}
+.ss-val{font-size:22px;font-weight:700;font-family:'SF Mono','Fira Code',monospace}
+.ss-lbl{font-size:12px;color:rgba(148,163,184,.5);text-transform:uppercase;letter-spacing:.08em}
+</style>
+</head>
+<body>
+<div class="ad">
+  <div class="glow"></div>
+
+  <div class="badge">🏢 Built for Prop Firm Traders</div>
+
+  <div class="headline">Pass Your Prop Firm<br>Eval on <span class="green">Autopilot</span></div>
+
+  <div class="sub">Our MNQ strategy stays within drawdown limits automatically. Traders have passed evaluations with these firms:</div>
+
+  <div class="firms">
+    <div class="firm"><span class="check">✓</span> Apex Trader Funding</div>
+    <div class="firm"><span class="check">✓</span> TopStep</div>
+    <div class="firm"><span class="check">✓</span> My Funded Futures</div>
+    <div class="firm"><span class="check">✓</span> Earn2Trade</div>
+  </div>
+
+  <div class="stat-strip">
+    <div class="ss"><div class="ss-val" style="color:#00d97e">71.95%</div><div class="ss-lbl">Win Rate</div></div>
+    <div class="ss"><div class="ss-val" style="color:#f59e0b">~$1,678</div><div class="ss-lbl">Max DD (5 MNQ)</div></div>
+    <div class="ss"><div class="ss-val" style="color:#00c8f0">5x MNQ</div><div class="ss-lbl">Contract Setup</div></div>
+  </div>
+
+  <div class="bottom-row">
+    <div class="logo"><div class="logo-icon">ST</div><div class="logo-text">Stratford Academy</div></div>
+    <div class="cta">Start Free Demo &rarr;</div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head><style>
+  * { margin:0; padding:0; }
+  body { width:512px; height:512px; background:#0a0e17; display:flex; align-items:center; justify-content:center; }
+  .icon {
+    width:512px; height:512px; border-radius:64px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    position:relative; overflow:hidden;
+    background: linear-gradient(145deg, #0d1520, #1a1a10);
+    border: 2px solid rgba(240,176,64,0.3);
+  }
+  .icon::before { content:''; position:absolute; inset:0; opacity:0.15; background:radial-gradient(circle at 30% 30%, #f0b040, transparent 60%); }
+  .shield { width:140px; height:168px; margin-bottom:28px; position:relative; z-index:1; }
+  .shield svg { width:100%; height:100%; }
+  .label { font-family:-apple-system,sans-serif; font-size:20px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#f0b040; position:relative; z-index:1; }
+  .name { font-family:-apple-system,sans-serif; font-size:48px; font-weight:800; color:#fcf0d8; position:relative; z-index:1; margin-top:4px; }
+  .price { font-family:'SF Mono',monospace; font-size:22px; font-weight:600; color:#f0b040; opacity:0.6; position:relative; z-index:1; margin-top:12px; }
+</style></head>
+<body>
+<div class="icon">
+  <div class="shield"><svg viewBox="0 0 140 168" fill="none">
+    <path d="M70 8L12 32v52c0 40 24 68 58 80 34-12 58-40 58-80V32L70 8z" stroke="url(#g)" stroke-width="3" fill="rgba(240,176,64,0.06)"/>
+    <path d="M70 20L22 40v44c0 34 20 58 48 68 28-10 48-34 48-68V40L70 20z" stroke="url(#g)" stroke-width="2" fill="none"/>
+    <text x="70" y="98" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="42" font-weight="800" fill="url(#g)">SA</text>
+    <path d="M48 50 L56 38 L64 48 L70 34 L76 48 L84 38 L92 50" stroke="#f0b040" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <defs><linearGradient id="g" x1="0" y1="0" x2="140" y2="168"><stop stop-color="#f0b040"/><stop offset="1" stop-color="#fcd34d"/></linearGradient></defs>
+  </svg></div>
+  <div class="label">STRATFORD</div>
+  <div class="name">Elite</div>
+  <div class="price">$250 / month</div>
+</div>
+</body></html>

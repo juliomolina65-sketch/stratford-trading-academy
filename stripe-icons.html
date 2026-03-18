@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { margin: 0; padding: 40px; background: #0a0e17; display: flex; gap: 40px; justify-content: center; align-items: flex-start; }
+  .icon {
+    width: 512px; height: 512px;
+    border-radius: 64px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .icon::before {
+    content: ''; position: absolute; inset: 0;
+    opacity: 0.15;
+  }
+  .alpha { background: linear-gradient(145deg, #0d1520, #111b2e); border: 2px solid rgba(0,184,230,0.3); }
+  .alpha::before { background: radial-gradient(circle at 30% 30%, #00b8e6, transparent 60%); }
+  .pro { background: linear-gradient(145deg, #0d1520, #1a1130); border: 2px solid rgba(139,111,255,0.3); }
+  .pro::before { background: radial-gradient(circle at 30% 30%, #8b6fff, transparent 60%); }
+  .elite { background: linear-gradient(145deg, #0d1520, #1a1a10); border: 2px solid rgba(240,176,64,0.3); }
+  .elite::before { background: radial-gradient(circle at 30% 30%, #f0b040, transparent 60%); }
+
+  .shield {
+    width: 140px; height: 168px; position: relative; margin-bottom: 28px;
+  }
+  .shield svg { width: 100%; height: 100%; }
+
+  .icon-label {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 20px; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; position: relative; z-index: 1;
+  }
+  .icon-name {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 48px; font-weight: 800; position: relative; z-index: 1;
+    margin-top: 4px;
+  }
+  .icon-price {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 22px; font-weight: 600; position: relative; z-index: 1;
+    margin-top: 12px; opacity: 0.6;
+  }
+
+  .alpha .icon-label, .alpha .icon-price { color: #00b8e6; }
+  .alpha .icon-name { color: #e0f4fc; }
+  .pro .icon-label, .pro .icon-price { color: #8b6fff; }
+  .pro .icon-name { color: #ede0fc; }
+  .elite .icon-label, .elite .icon-price { color: #f0b040; }
+  .elite .icon-name { color: #fcf0d8; }
+</style>
+</head>
+<body>
+
+<!-- ALPHA -->
+<div class="icon alpha" id="icon-alpha">
+  <div class="shield">
+    <svg viewBox="0 0 140 168" fill="none">
+      <path d="M70 8L12 32v52c0 40 24 68 58 80 34-12 58-40 58-80V32L70 8z" stroke="url(#ga)" stroke-width="3" fill="rgba(0,184,230,0.06)"/>
+      <path d="M70 20L22 40v44c0 34 20 58 48 68 28-10 48-34 48-68V40L70 20z" stroke="url(#ga)" stroke-width="2" fill="none"/>
+      <text x="70" y="98" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="42" font-weight="800" fill="url(#ga)">SA</text>
+      <defs><linearGradient id="ga" x1="0" y1="0" x2="140" y2="168"><stop stop-color="#00b8e6"/><stop offset="1" stop-color="#00d4ff"/></linearGradient></defs>
+    </svg>
+  </div>
+  <div class="icon-label">STRATFORD</div>
+  <div class="icon-name">Alpha</div>
+  <div class="icon-price">$99 / month</div>
+</div>
+
+<!-- PRO -->
+<div class="icon pro" id="icon-pro">
+  <div class="shield">
+    <svg viewBox="0 0 140 168" fill="none">
+      <path d="M70 8L12 32v52c0 40 24 68 58 80 34-12 58-40 58-80V32L70 8z" stroke="url(#gp)" stroke-width="3" fill="rgba(139,111,255,0.06)"/>
+      <path d="M70 20L22 40v44c0 34 20 58 48 68 28-10 48-34 48-68V40L70 20z" stroke="url(#gp)" stroke-width="2" fill="none"/>
+      <text x="70" y="98" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="42" font-weight="800" fill="url(#gp)">SA</text>
+      <!-- Lightning bolt accent -->
+      <path d="M62 55 L55 82 L66 78 L58 108" stroke="#f0b040" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <defs><linearGradient id="gp" x1="0" y1="0" x2="140" y2="168"><stop stop-color="#8b6fff"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs>
+    </svg>
+  </div>
+  <div class="icon-label">STRATFORD</div>
+  <div class="icon-name">Pro</div>
+  <div class="icon-price">$189 / month</div>
+</div>
+
+<!-- ELITE -->
+<div class="icon elite" id="icon-elite">
+  <div class="shield">
+    <svg viewBox="0 0 140 168" fill="none">
+      <path d="M70 8L12 32v52c0 40 24 68 58 80 34-12 58-40 58-80V32L70 8z" stroke="url(#ge)" stroke-width="3" fill="rgba(240,176,64,0.06)"/>
+      <path d="M70 20L22 40v44c0 34 20 58 48 68 28-10 48-34 48-68V40L70 20z" stroke="url(#ge)" stroke-width="2" fill="none"/>
+      <text x="70" y="98" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="42" font-weight="800" fill="url(#ge)">SA</text>
+      <!-- Crown accent -->
+      <path d="M48 50 L56 38 L64 48 L70 34 L76 48 L84 38 L92 50" stroke="#f0b040" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <defs><linearGradient id="ge" x1="0" y1="0" x2="140" y2="168"><stop stop-color="#f0b040"/><stop offset="1" stop-color="#fcd34d"/></linearGradient></defs>
+    </svg>
+  </div>
+  <div class="icon-label">STRATFORD</div>
+  <div class="icon-name">Elite</div>
+  <div class="icon-price">$250 / month</div>
+</div>
+
+</body>
+</html>
