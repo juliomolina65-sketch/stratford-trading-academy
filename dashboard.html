@@ -918,6 +918,9 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
       <div class="nav-item" onclick="nav('reviews',this,'Reviews')">
         <span class="nav-icon">⭐</span>Reviews
       </div>
+      <div class="nav-item" onclick="nav('community',this,'Community')">
+        <span class="nav-icon">💬</span>Community<span id="community-badge" style="display:none;margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 5px;font-family:var(--mono)">0</span>
+      </div>
       <div class="nav-item" onclick="nav('calendar',this,'Calendar')">
         <span class="nav-icon">📅</span>Calendar
       </div>
@@ -928,7 +931,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
       <div class="nav-item" onclick="nav('brokers',this,'Brokers')">
         <span class="nav-icon">🔗</span>Brokers<span class="nav-chevron">›</span>
       </div>
-      <div class="sidebar-sub-item" onclick="nav('brokers',document.querySelectorAll('.nav-item')[5],'Brokers › Connect Broker')">
+      <div class="sidebar-sub-item" onclick="nav('brokers',document.querySelectorAll('.nav-item')[6],'Brokers › Connect Broker')">
         Connect Broker
       </div>
       <div class="nav-item" onclick="nav('prop-firms',this,'Best Prop Firms')">
@@ -963,19 +966,19 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
       <div class="nav-item" onclick="toggleLearnSub(this)">
         <span class="nav-icon">🎓</span>New to Trading?<span class="nav-chevron" id="learn-chevron">›</span>
       </div>
-      <div class="sidebar-sub-item" id="learn-sub-pairs" style="display:none" onclick="nav('learn',document.querySelectorAll('.nav-item')[12],'New to Trading? › Pairs Explained');this.classList.add('active')">
+      <div class="sidebar-sub-item" id="learn-sub-pairs" style="display:none" onclick="nav('learn',document.querySelectorAll('.nav-item')[13],'New to Trading? › Pairs Explained');this.classList.add('active')">
         Pairs Explained
       </div>
-      <div class="sidebar-sub-item" id="learn-sub-propfirms" style="display:none" onclick="nav('learn-propfirms',document.querySelectorAll('.nav-item')[12],'New to Trading? › What Are Prop Firms?');this.classList.add('active')">
+      <div class="sidebar-sub-item" id="learn-sub-propfirms" style="display:none" onclick="nav('learn-propfirms',document.querySelectorAll('.nav-item')[13],'New to Trading? › What Are Prop Firms?');this.classList.add('active')">
         What Are Prop Firms?
       </div>
-      <div class="sidebar-sub-item" id="learn-sub-terminology" style="display:none" onclick="nav('learn-terminology',document.querySelectorAll('.nav-item')[12],'New to Trading? › Trading Terminology');this.classList.add('active')">
+      <div class="sidebar-sub-item" id="learn-sub-terminology" style="display:none" onclick="nav('learn-terminology',document.querySelectorAll('.nav-item')[13],'New to Trading? › Trading Terminology');this.classList.add('active')">
         Trading Terminology
       </div>
-      <div class="sidebar-sub-item" id="learn-sub-autotrading" style="display:none" onclick="nav('learn-autotrading',document.querySelectorAll('.nav-item')[12],'New to Trading? › How Automated Trading Works');this.classList.add('active')">
+      <div class="sidebar-sub-item" id="learn-sub-autotrading" style="display:none" onclick="nav('learn-autotrading',document.querySelectorAll('.nav-item')[13],'New to Trading? › How Automated Trading Works');this.classList.add('active')">
         How Automated Trading Works
       </div>
-      <div class="sidebar-sub-item" id="learn-sub-indicators" style="display:none" onclick="nav('learn-indicators',document.querySelectorAll('.nav-item')[12],'New to Trading? › What Are Indicators?');this.classList.add('active')">
+      <div class="sidebar-sub-item" id="learn-sub-indicators" style="display:none" onclick="nav('learn-indicators',document.querySelectorAll('.nav-item')[13],'New to Trading? › What Are Indicators?');this.classList.add('active')">
         What Are Indicators?
       </div>
       <div class="nav-item" onclick="nav('how-strategies',this,'How Strategies Work')">
@@ -1073,7 +1076,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
           <div class="plan-stat"><div class="ps-label">Strategy</div><div class="ps-val">1</div></div>
         </div>
         <button class="upgrade-btn" onclick="openSubscribeModal()">⚡ Upgrade Plan</button>
-        <button class="upgrade-btn" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);margin-top:6px" onclick="nav('account',document.querySelectorAll('.nav-item')[15],'Account')" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text)'">👤 Account Overview</button>
+        <button class="upgrade-btn" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);margin-top:6px" onclick="nav('account',document.querySelectorAll('.nav-item')[16],'Account')" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text)'">👤 Account Overview</button>
         <button id="enter-admin-btn" class="upgrade-btn" style="display:none;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.25);margin-top:6px" onclick="showAdminSidebar();nav('admin-overview',this,'Admin › Overview')" onmouseover="this.style.background='rgba(239,68,68,.2)'" onmouseout="this.style.background='rgba(239,68,68,.1)'">🛡 Enter Admin Mode</button>
       </div>
     </div>
@@ -1127,6 +1130,19 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
         <div class="dstat"><div class="dl">Today's P&L</div><div class="dv g" id="dc-pnl">$0.00</div><div class="dd">0 trades today</div></div>
       </div>
 
+      <!-- Connect Stratford Alpha CTA (hidden when strategy is active) -->
+      <div id="connect-alpha-cta" style="margin-bottom:20px;background:linear-gradient(135deg,rgba(0,184,230,.08) 0%,rgba(139,111,255,.1) 50%,rgba(0,217,126,.06) 100%);border:1px solid rgba(0,184,230,.25);border-radius:12px;padding:24px 28px;display:flex;align-items:center;gap:20px;cursor:pointer;transition:all .3s" onclick="connectDemo('Stratford Alpha')" onmouseover="this.style.borderColor='rgba(0,184,230,.5)';this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 20px rgba(0,184,230,.15)'" onmouseout="this.style.borderColor='rgba(0,184,230,.25)';this.style.transform='';this.style.boxShadow=''">
+        <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0055aa,#0088dd);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;box-shadow:0 4px 12px rgba(0,100,200,.3)">⚡</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <div style="font-size:16px;font-weight:700;color:var(--text)">Connect Stratford Alpha</div>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--green);background:rgba(0,217,126,.12);border:1px solid rgba(0,217,126,.25);border-radius:4px;padding:2px 8px;white-space:nowrap">FREE</span>
+          </div>
+          <div style="font-size:12.5px;color:var(--text3);line-height:1.5">One click to connect our flagship NQ/MNQ strategy to your paper account. Start receiving automated signals instantly.</div>
+        </div>
+        <button class="btn sm" style="background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;flex-shrink:0;font-weight:600;padding:10px 20px;font-size:13px;pointer-events:none">Connect Now →</button>
+      </div>
+
       <!-- Quick actions -->
       <div class="quick-actions" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:0">
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;gap:16px;cursor:pointer" onclick="nav('strategies',document.querySelectorAll('.nav-item')[1],'Strategies')">
@@ -1137,7 +1153,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
           </div>
           <span style="margin-left:auto;color:var(--text3);font-size:18px">›</span>
         </div>
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;gap:16px;cursor:pointer" onclick="nav('brokers',document.querySelectorAll('.nav-item')[5],'Brokers')">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;gap:16px;cursor:pointer" onclick="nav('brokers',document.querySelectorAll('.nav-item')[6],'Brokers')">
           <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,rgba(0,217,126,.1),rgba(0,200,240,.1));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔗</div>
           <div>
             <div style="font-size:14px;font-weight:500;color:var(--text)">Connect Broker</div>
@@ -1147,26 +1163,9 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
         </div>
       </div>
 
-      <!-- AFFILIATE PROMO BANNER -->
-      <div id="affiliate-promo-banner" style="margin-top:20px;background:linear-gradient(135deg,rgba(0,217,126,.06) 0%,rgba(0,200,240,.06) 50%,rgba(139,111,255,.06) 100%);border:1px solid rgba(0,217,126,.2);border-radius:10px;padding:22px 24px;display:flex;align-items:center;gap:20px;cursor:pointer;transition:all .2s" onclick="gateAffiliate(document.querySelectorAll('.nav-item')[9])" onmouseover="this.style.borderColor='rgba(0,217,126,.4)'" onmouseout="this.style.borderColor='rgba(0,217,126,.2)'">
-        <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,rgba(0,217,126,.15),rgba(0,200,240,.1));display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">💰</div>
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-            <div style="font-size:15px;font-weight:700;color:var(--text)">Earn 25% Recurring Commission</div>
-            <span style="font-family:var(--mono);font-size:10px;color:var(--green);background:rgba(0,217,126,.12);border:1px solid rgba(0,217,126,.25);border-radius:4px;padding:2px 8px;white-space:nowrap">AFFILIATE</span>
-          </div>
-          <div style="font-size:12px;color:var(--text3);line-height:1.5">Refer friends to Stratford Academy and earn <strong style="color:var(--green)">25% of their subscription every month</strong>. Earn up to $62.50/mo per referral — no cap on earnings.</div>
-        </div>
-        <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Per Referral</div>
-          <div style="font-size:20px;font-weight:800;color:var(--green);font-family:var(--mono)">$24–$62<span style="font-size:11px;font-weight:500;color:var(--text3)">/mo</span></div>
-        </div>
-        <span style="color:var(--text3);font-size:18px;flex-shrink:0">›</span>
-      </div>
-
       <!-- HOW IT WORKS -->
       <div class="panel" style="margin-top:20px">
-        <div class="ph"><span class="pt">How It Works</span><div style="display:flex;gap:8px"><button class="btn ghost sm" onclick="nav('how-strategies',document.querySelectorAll('.nav-item')[13],'How Strategies Work')">How Strategies Work</button><button class="btn ghost sm" onclick="nav('guide',document.querySelectorAll('.nav-item')[11],'Setup Guide')">View Full Guide →</button></div></div>
+        <div class="ph"><span class="pt">How It Works</span><div style="display:flex;gap:8px"><button class="btn ghost sm" onclick="nav('how-strategies',document.querySelectorAll('.nav-item')[14],'How Strategies Work')">How Strategies Work</button><button class="btn ghost sm" onclick="nav('guide',document.querySelectorAll('.nav-item')[12],'Setup Guide')">View Full Guide →</button></div></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;border-top:none">
           <div style="padding:24px 20px;text-align:center;position:relative">
             <div style="width:40px;height:40px;border-radius:50%;background:rgba(0,200,240,.1);border:2px solid rgba(0,200,240,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-family:var(--mono);font-size:14px;font-weight:600;color:var(--accent)">1</div>
@@ -1220,7 +1219,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
               No brokers connected yet
             </div>
           </div>
-          <div onclick="nav('brokers',document.querySelectorAll('.nav-item')[5],'Brokers')" style="padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s;background:rgba(0,200,240,.03)" onmouseover="this.style.background='rgba(0,200,240,.08)'" onmouseout="this.style.background='rgba(0,200,240,.03)'">
+          <div onclick="nav('brokers',document.querySelectorAll('.nav-item')[6],'Brokers')" style="padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s;background:rgba(0,200,240,.03)" onmouseover="this.style.background='rgba(0,200,240,.08)'" onmouseout="this.style.background='rgba(0,200,240,.03)'">
             <div style="width:32px;height:32px;border-radius:8px;border:1.5px dashed var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--accent)">+</div>
             <div style="font-size:13px;font-weight:500;color:var(--accent)">Connect a Broker</div>
           </div>
@@ -1248,7 +1247,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
                 <div style="font-size:13px;font-weight:500;color:var(--amber)">No strategy connected</div>
                 <div style="font-size:12px;color:var(--text3);margin-top:2px">Connect a strategy to start receiving simulated signals on this paper account.</div>
               </div>
-              <button class="btn sm" style="background:var(--purple);color:#fff;flex-shrink:0" onclick="nav('strategies',document.querySelectorAll('.nav-item')[1],'Strategies')">Connect Strategy</button>
+              <button class="btn sm" style="background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;flex-shrink:0;font-weight:600" onclick="connectDemo('Stratford Alpha')">⚡ Connect Stratford Alpha</button>
             </div>
             <div id="paper-connected" style="display:none;padding:14px 20px;background:rgba(0,217,126,.03);border-bottom:1px solid rgba(0,217,126,.15);display:none;align-items:center;gap:14px">
               <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#0a2d5e,#0055aa);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📈</div>
@@ -1294,13 +1293,30 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
           <div class="table-wrap" style="border-top:1px solid rgba(139,111,255,.15);overflow-x:auto">
             <table style="min-width:600px"><thead><tr><th>Time</th><th>Action</th><th>Ticker</th><th>Qty</th><th>Entry</th><th>Exit</th><th>P&L per Trade</th><th>Status</th></tr></thead>
             <tbody id="paper-log">
-              <tr id="paper-empty"><td colspan="8" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">No paper trades yet — connect a strategy from the <strong style="color:var(--purple);cursor:pointer" onclick="nav('strategies',document.querySelectorAll('.nav-item')[1],'Strategies')">Strategies</strong> page to start</td></tr>
+              <tr id="paper-empty"><td colspan="8" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">No paper trades yet — waiting for the next signal from your strategy</td></tr>
             </tbody></table>
             <div id="paper-log-viewall" style="display:none;padding:10px 20px 14px;text-align:center;border-top:1px solid var(--border)">
               <button class="btn ghost sm" onclick="nav('trades',document.querySelectorAll('.nav-item')[2],'Trades')" style="font-size:11px">View All Trades →</button>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- AFFILIATE PROMO BANNER -->
+      <div id="affiliate-promo-banner" style="margin-top:20px;background:linear-gradient(135deg,rgba(0,217,126,.06) 0%,rgba(0,200,240,.06) 50%,rgba(139,111,255,.06) 100%);border:1px solid rgba(0,217,126,.2);border-radius:10px;padding:22px 24px;display:flex;align-items:center;gap:20px;cursor:pointer;transition:all .2s" onclick="gateAffiliate(document.querySelectorAll('.nav-item')[10])" onmouseover="this.style.borderColor='rgba(0,217,126,.4)'" onmouseout="this.style.borderColor='rgba(0,217,126,.2)'">
+        <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,rgba(0,217,126,.15),rgba(0,200,240,.1));display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">💰</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <div style="font-size:15px;font-weight:700;color:var(--text)">Earn 25% Recurring Commission</div>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--green);background:rgba(0,217,126,.12);border:1px solid rgba(0,217,126,.25);border-radius:4px;padding:2px 8px;white-space:nowrap">AFFILIATE</span>
+          </div>
+          <div style="font-size:12px;color:var(--text3);line-height:1.5">Refer friends to Stratford Academy and earn <strong style="color:var(--green)">25% of their subscription every month</strong>. Earn up to $62.50/mo per referral — no cap on earnings.</div>
+        </div>
+        <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Per Referral</div>
+          <div style="font-size:20px;font-weight:800;color:var(--green);font-family:var(--mono)">$24–$62<span style="font-size:11px;font-weight:500;color:var(--text3)">/mo</span></div>
+        </div>
+        <span style="color:var(--text3);font-size:18px;flex-shrink:0">›</span>
       </div>
 
       <!-- REVIEWS WIDGET -->
@@ -1428,7 +1444,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
             <button onclick="miniCalToday()" style="height:28px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;padding:0 10px;font-family:var(--sans);font-size:11px;font-weight:500;transition:all .15s" onmouseover="this.style.background='var(--bg4)';this.style.color='var(--text)'" onmouseout="this.style.background='var(--bg3)';this.style.color='var(--text2)'">Today</button>
             <button onclick="miniCalNext()" style="width:28px;height:28px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s" onmouseover="this.style.background='var(--bg4)';this.style.color='var(--text)'" onmouseout="this.style.background='var(--bg3)';this.style.color='var(--text2)'">›</button>
             <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
-            <button onclick="nav('calendar',document.querySelectorAll('.nav-item')[4],'Calendar')" style="height:28px;border-radius:6px;background:rgba(0,184,230,.08);border:1px solid rgba(0,184,230,.2);color:var(--accent);cursor:pointer;padding:0 12px;font-family:var(--sans);font-size:11px;font-weight:500;transition:all .15s" onmouseover="this.style.background='rgba(0,184,230,.15)'" onmouseout="this.style.background='rgba(0,184,230,.08)'">Full Calendar →</button>
+            <button onclick="nav('calendar',document.querySelectorAll('.nav-item')[6],'Calendar')" style="height:28px;border-radius:6px;background:rgba(0,184,230,.08);border:1px solid rgba(0,184,230,.2);color:var(--accent);cursor:pointer;padding:0 12px;font-family:var(--sans);font-size:11px;font-weight:500;transition:all .15s" onmouseover="this.style.background='rgba(0,184,230,.15)'" onmouseout="this.style.background='rgba(0,184,230,.08)'">Full Calendar →</button>
           </div>
         </div>
         <div id="mini-cal-stats" style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border)"></div>
@@ -1445,7 +1461,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
               <div style="font-size:11px;color:var(--text3);margin-top:1px">Limited time offer</div>
             </div>
           </div>
-          <button onclick="nav('coupons',document.querySelectorAll('.nav-item')[11],'Coupon Codes')" style="height:28px;border-radius:6px;background:rgba(0,217,126,.08);border:1px solid rgba(0,217,126,.2);color:var(--green);cursor:pointer;padding:0 12px;font-family:var(--sans);font-size:11px;font-weight:500;transition:all .15s" onmouseover="this.style.background='rgba(0,217,126,.15)'" onmouseout="this.style.background='rgba(0,217,126,.08)'">All Coupons →</button>
+          <button onclick="nav('coupons',document.querySelectorAll('.nav-item')[12],'Coupon Codes')" style="height:28px;border-radius:6px;background:rgba(0,217,126,.08);border:1px solid rgba(0,217,126,.2);color:var(--green);cursor:pointer;padding:0 12px;font-family:var(--sans);font-size:11px;font-weight:500;transition:all .15s" onmouseover="this.style.background='rgba(0,217,126,.15)'" onmouseout="this.style.background='rgba(0,217,126,.08)'">All Coupons →</button>
         </div>
         <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px">
           <div style="flex:1">
@@ -2236,7 +2252,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
             <div class="page-title">Strategies</div>
             <div class="page-sub">Automated trading strategies running on your account</div>
           </div>
-          <button class="btn ghost sm" onclick="nav('how-strategies',document.querySelectorAll('.nav-item')[13],'How Strategies Work')">How Strategies Work →</button>
+          <button class="btn ghost sm" onclick="nav('how-strategies',document.querySelectorAll('.nav-item')[14],'How Strategies Work')">How Strategies Work →</button>
         </div>
 
         <!-- Strategy Filters -->
@@ -3632,7 +3648,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
             <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">Link your brokerage account so we can send orders directly. You'll need your API key and secret from your broker — we never store your login password.</div>
             <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-size:12px;color:var(--text2);line-height:1.6">
               <strong style="color:var(--text)">Supported brokers:</strong> Tradovate (recommended), NinjaTrader, Rithmic, TradeStation, Interactive Brokers, and more.<br><br>
-              <strong style="color:var(--text)">How to:</strong> Go to <strong style="color:var(--accent);cursor:pointer" onclick="nav('brokers',document.querySelectorAll('.nav-item')[5],'Brokers')">Brokers</strong> → Click your broker → Enter your API credentials → Save. That's it.
+              <strong style="color:var(--text)">How to:</strong> Go to <strong style="color:var(--accent);cursor:pointer" onclick="nav('brokers',document.querySelectorAll('.nav-item')[6],'Brokers')">Brokers</strong> → Click your broker → Enter your API credentials → Save. That's it.
             </div>
           </div>
         </div>
@@ -4780,6 +4796,38 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
         </div>
       </div>
     </div>
+
+    <!-- COMMUNITY CHAT -->
+    <div class="page" id="page-community">
+      <div style="display:flex;flex-direction:column;height:calc(100vh - 56px);padding:0">
+        <!-- Chat Header -->
+        <div style="padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <div>
+            <div class="page-title" style="margin:0;font-size:18px">Community Chat</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px">Chat with fellow traders, share ideas, and learn together</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse-dot 2s infinite"></span>
+            <span id="community-online" style="font-family:var(--mono);font-size:12px;color:var(--green)">127</span>
+            <span style="font-size:11px;color:var(--text3)">online</span>
+          </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div id="community-messages" style="flex:1;overflow-y:auto;padding:16px 28px;display:flex;flex-direction:column;gap:4px">
+        </div>
+
+        <!-- Chat Input -->
+        <div style="padding:14px 28px;border-top:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
+          <div style="display:flex;gap:10px;align-items:center">
+            <input id="community-input" type="text" placeholder="Type a message..." style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 16px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')sendCommunityMsg()">
+            <button class="btn sm" onclick="sendCommunityMsg()" style="padding:10px 20px;flex-shrink:0">Send</button>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:6px">Be respectful. No financial advice. Have fun!</div>
+        </div>
+      </div>
+    </div>
+
     <div class="page" id="page-account">
       <div style="padding:28px 32px">
         <div class="page-header">
@@ -4874,7 +4922,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div style="font-size:14px;font-weight:600;color:var(--text)">Connected Brokers</div>
-            <button class="btn ghost" style="font-size:11px;padding:4px 12px" onclick="nav('brokers',document.querySelectorAll('.nav-item')[5],'Brokers › Connect Broker')">+ Connect</button>
+            <button class="btn ghost" style="font-size:11px;padding:4px 12px" onclick="nav('brokers',document.querySelectorAll('.nav-item')[6],'Brokers › Connect Broker')">+ Connect</button>
           </div>
           <div id="acct-brokers-list"></div>
         </div>
@@ -4937,7 +4985,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
               <span style="font-size:11px;color:var(--text3)">points</span>
             </div>
             <div id="acct-tier" style="font-size:11px;color:var(--text2)">Bronze Tier</div>
-            <button class="btn ghost" style="font-size:11px;padding:4px 12px;margin-top:10px" onclick="nav('rewards',document.querySelectorAll('.nav-item')[10],'Rewards')">View Rewards</button>
+            <button class="btn ghost" style="font-size:11px;padding:4px 12px;margin-top:10px" onclick="nav('rewards',document.querySelectorAll('.nav-item')[11],'Rewards')">View Rewards</button>
           </div>
           <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px 24px">
             <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:14px">Referrals</div>
@@ -4946,7 +4994,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
               <span style="font-size:11px;color:var(--text3)">friends referred</span>
             </div>
             <div id="acct-earnings" style="font-size:11px;color:var(--text2)">$0.00 earned</div>
-            <button class="btn ghost" style="font-size:11px;padding:4px 12px;margin-top:10px" onclick="gateAffiliate(document.querySelectorAll('.nav-item')[9])">Affiliate Program</button>
+            <button class="btn ghost" style="font-size:11px;padding:4px 12px;margin-top:10px" onclick="gateAffiliate(document.querySelectorAll('.nav-item')[10])">Affiliate Program</button>
           </div>
         </div>
 
@@ -5222,8 +5270,8 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
 
         <!-- Bottom links -->
         <div style="margin-top:24px;display:flex;gap:12px">
-          <button class="btn ghost" onclick="nav('disclaimer',document.querySelectorAll('.nav-item')[17],'Disclaimer')">Read Disclaimer</button>
-          <button class="btn ghost" onclick="nav('contact',document.querySelectorAll('.nav-item')[18],'Contact Us')">Contact Us</button>
+          <button class="btn ghost" onclick="nav('disclaimer',document.querySelectorAll('.nav-item')[18],'Disclaimer')">Read Disclaimer</button>
+          <button class="btn ghost" onclick="nav('contact',document.querySelectorAll('.nav-item')[19],'Contact Us')">Contact Us</button>
         </div>
       </div>
     </div>
@@ -8057,7 +8105,7 @@ function openLearnFromDashboard(){
   subs.forEach(function(id){ document.getElementById(id).style.display='block'; });
   c.style.transform='rotate(90deg)';
   /* Scroll sidebar so "New to Trading?" is visible */
-  var learnNav=document.querySelectorAll('.nav-item')[12];
+  var learnNav=document.querySelectorAll('.nav-item')[13];
   if(learnNav) learnNav.scrollIntoView({behavior:'smooth',block:'center'});
   /* Navigate to Pairs Explained and highlight it */
   nav('learn',learnNav,'New to Trading? › Pairs Explained');
@@ -8936,7 +8984,7 @@ function resetPaper() {
   document.getElementById('paper-pos').textContent = 'No open position';
   document.getElementById('paper-trades-count').textContent = '0 trades closed';
   const log = document.getElementById('paper-log');
-  log.innerHTML = '<tr id="paper-empty"><td colspan="8" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">No paper trades yet — connect a strategy to start receiving trades</td></tr>';
+  log.innerHTML = '<tr id="paper-empty"><td colspan="8" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">No paper trades yet — waiting for the next signal from your strategy</td></tr>';
 }
 
 function updatePaperFromSignal(act, ticker, qty) {
@@ -9106,7 +9154,7 @@ function updatePaperDemoStats(){
       return tb-ta;
     });
     if(allTrades.length===0){
-      logEl.innerHTML='<tr id="paper-empty"><td colspan="8" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">No paper trades yet — connect a strategy to start receiving trades</td></tr>';
+      logEl.innerHTML='<tr id="paper-empty"><td colspan="8" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">No paper trades yet — waiting for the next signal from your strategy</td></tr>';
       if(viewAllBtn)viewAllBtn.style.display='none';
     }else{
       var recent=allTrades.slice(0,5);
@@ -9394,6 +9442,8 @@ function restorePaperDemo(){
   var co=document.getElementById('paper-connected');
   if(nc)nc.style.display='none';
   if(co)co.style.display='flex';
+  // Hide connect CTA
+  var cta=document.getElementById('connect-alpha-cta'); if(cta) cta.style.display='none';
 
   // Parse balance
   var balFmt=demo.balance||'$50,000';
@@ -9622,6 +9672,8 @@ function launchDemo(){
   // Toggle paper section to connected state
   document.getElementById('paper-not-connected').style.display = 'none';
   document.getElementById('paper-connected').style.display = 'flex';
+  // Hide connect CTA
+  var cta=document.getElementById('connect-alpha-cta'); if(cta) cta.style.display='none';
 
   // Update contract badge
   document.getElementById('paper-contract-badge').textContent = tier.contractShort;
@@ -9696,6 +9748,8 @@ function disconnectStrategy(){
   document.getElementById('dc-strat').textContent = '—';
   document.getElementById('dc-strat').style.color = '';
   document.getElementById('dc-strat-sub').textContent = 'No strategy connected';
+  // Show connect CTA again
+  var cta=document.getElementById('connect-alpha-cta'); if(cta) cta.style.display='flex';
 
   // Clear activeStrategies from Firestore
   var user=JSON.parse(localStorage.getItem('sa_user')||'{}');
@@ -11175,6 +11229,460 @@ function toggleStratCard(header){
   const isOpen = body.style.maxHeight && body.style.maxHeight !== '0px';
   body.style.maxHeight = isOpen ? '0px' : body.scrollHeight + 'px';
   if(chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+// ============================================
+// Community Chat
+// ============================================
+var communitySeededMessages = [
+  // — 5 days ago: new member intro thread —
+  {name:'Danny V.',initials:'DV',color:'#e91e63',time:'5 days ago',msg:'yo just signed up today. is this thing actually legit or nah'},
+  {name:'Marcus T.',initials:'MT',color:'#00b8e6',time:'5 days ago',msg:'lol thats what i said 2 weeks ago. check your paper account in a few days youll see'},
+  {name:'Sarah K.',initials:'SK',color:'#8b6fff',time:'5 days ago',msg:'its legit danny. i was super skeptical too but my paper acct is up like 4k in 3 weeks and i havent touched anything'},
+  {name:'Danny V.',initials:'DV',color:'#e91e63',time:'5 days ago',msg:'alright bet. ill give it a week'},
+  // — 4 days ago: strategy discussion —
+  {name:'Carlos P.',initials:'CP',color:'#ff6b6b',time:'4 days ago',msg:'bro that NQ short at open was NASTY. +42 points in 11 minutes'},
+  {name:'Kevin B.',initials:'KB',color:'#66bb6a',time:'4 days ago',msg:'i saw that!! $840 on the 150k account. i was literally eating breakfast lmao'},
+  {name:'Carlos P.',initials:'CP',color:'#ff6b6b',time:'4 days ago',msg:'thats the whole point right. money while you do nothing'},
+  {name:'Amy L.',initials:'AL',color:'#4ecdc4',time:'4 days ago',msg:'wait how are yall seeing the trades so fast? i didnt even get a notification'},
+  {name:'Marcus T.',initials:'MT',color:'#00b8e6',time:'4 days ago',msg:'@Amy check your trades page it shows up there automatically. the bot just does its thing'},
+  {name:'Amy L.',initials:'AL',color:'#4ecdc4',time:'4 days ago',msg:'oh wow there it is lol +$280 on my 100k. didnt even know it happened'},
+  // — 3 days ago: newbie questions —
+  {name:'Jessica M.',initials:'JM',color:'#f0b040',time:'3 days ago',msg:'ok dumb question but whats the difference between MNQ and NQ'},
+  {name:'David R.',initials:'DR',color:'#00d97e',time:'3 days ago',msg:'not dumb at all. NQ is the full size nasdaq contract, $20 per point. MNQ is the micro version, $2 per point. same moves just smaller size'},
+  {name:'Jessica M.',initials:'JM',color:'#f0b040',time:'3 days ago',msg:'ohh ok so the 50k and 100k accounts trade MNQ and 150k trades the big one?'},
+  {name:'David R.',initials:'DR',color:'#00d97e',time:'3 days ago',msg:'exactly. 50k = 5 MNQ, 100k = 8 MNQ, 150k = 1 NQ. the 150k actually makes more per trade tho cuz NQ hits different'},
+  {name:'Carlos P.',initials:'CP',color:'#ff6b6b',time:'3 days ago',msg:'can confirm. 150k gang. that one NQ contract prints'},
+  {name:'Jessica M.',initials:'JM',color:'#f0b040',time:'3 days ago',msg:'might switch to 100k then. thanks yall'},
+  // — 3 days ago: someone goes live —
+  {name:'Mike J.',initials:'MJ',color:'#ff8a65',time:'3 days ago',msg:'ok i just connected my tradovate account. going live. kinda nervous ngl'},
+  {name:'Sarah K.',initials:'SK',color:'#8b6fff',time:'3 days ago',msg:'dont be!! i went live last week and its literally the same as paper. the bot doesnt care lol'},
+  {name:'Mike J.',initials:'MJ',color:'#ff8a65',time:'3 days ago',msg:'first live trade just hit. NQ long +18 points. $360 real money. im shaking rn'},
+  {name:'Kevin B.',initials:'KB',color:'#66bb6a',time:'3 days ago',msg:'LETS GOOO mike!! welcome to the club'},
+  {name:'Rachel H.',initials:'RH',color:'#ab47bc',time:'3 days ago',msg:'congrats!! that first real trade hit different doesnt it'},
+  {name:'Mike J.',initials:'MJ',color:'#ff8a65',time:'3 days ago',msg:'bro i literally just sat here and watched money appear in my account. this is wild'},
+  // — 2 days ago: red day discussion —
+  {name:'Tyler W.',initials:'TW',color:'#29b6f6',time:'2 days ago',msg:'we had a red day today. -$175 on the 50k. first loss in like 6 days'},
+  {name:'Danny V.',initials:'DV',color:'#e91e63',time:'2 days ago',msg:'wait so it doesnt win every single trade??'},
+  {name:'Marcus T.',initials:'MT',color:'#00b8e6',time:'2 days ago',msg:'nah bro nothing wins 100%. but the wins are way bigger than the losses thats the whole point'},
+  {name:'Sarah K.',initials:'SK',color:'#8b6fff',time:'2 days ago',msg:'yeah i had that loss too but im still up $3,800 total so who cares. one red day doesnt mean anything'},
+  {name:'Tyler W.',initials:'TW',color:'#29b6f6',time:'2 days ago',msg:'exactly. the backtest shows like 70-80% win rate so losses happen. just gotta trust the process'},
+  {name:'Danny V.',initials:'DV',color:'#e91e63',time:'2 days ago',msg:'ok that makes sense. i panicked for a sec lol'},
+  {name:'David R.',initials:'DR',color:'#00d97e',time:'2 days ago',msg:'rule #1 dont touch anything. let the algo do its thing. the worst thing you can do is interfere'},
+  // — yesterday: affiliate talk —
+  {name:'Rachel H.',initials:'RH',color:'#ab47bc',time:'yesterday',msg:'so i told my coworker about this and she signed up with my link. do i actually get 25% of her sub every month??'},
+  {name:'Kevin B.',initials:'KB',color:'#66bb6a',time:'yesterday',msg:'yep every single month as long as shes subscribed. i got 4 referrals so far its like free money on top of free money'},
+  {name:'Rachel H.',initials:'RH',color:'#ab47bc',time:'yesterday',msg:'thats crazy. so if she pays $99/mo i get like $25 every month just for telling her about it'},
+  {name:'Carlos P.',initials:'CP',color:'#ff6b6b',time:'yesterday',msg:'i got my whole group chat on here lmaooo. 7 referrals. the affiliate checks are almost as good as the trades'},
+  {name:'Amy L.',initials:'AL',color:'#4ecdc4',time:'yesterday',msg:'ok where do i find my referral link tho'},
+  {name:'Marcus T.',initials:'MT',color:'#00b8e6',time:'yesterday',msg:'@Amy go to affiliate program in the sidebar. your link is right there. just copy and send it'},
+  {name:'Amy L.',initials:'AL',color:'#4ecdc4',time:'yesterday',msg:'found it thanks!!'},
+  // — today: morning session —
+  {name:'Kevin B.',initials:'KB',color:'#66bb6a',time:'8 hours ago',msg:'gm everyone. NQ looking spicy premarket'},
+  {name:'Carlos P.',initials:'CP',color:'#ff6b6b',time:'8 hours ago',msg:'gm. yeah i think we get a signal early today'},
+  {name:'Mike J.',initials:'MJ',color:'#ff8a65',time:'7 hours ago',msg:'signal just came in. long at 19,847'},
+  {name:'Sarah K.',initials:'SK',color:'#8b6fff',time:'7 hours ago',msg:'same here. lets see what happens'},
+  {name:'Mike J.',initials:'MJ',color:'#ff8a65',time:'6 hours ago',msg:'closed +35 points. $700 on my live account. i love mornings now'},
+  {name:'Kevin B.',initials:'KB',color:'#66bb6a',time:'6 hours ago',msg:'$350 on the 50k paper. nice way to start the day'},
+  {name:'Danny V.',initials:'DV',color:'#e91e63',time:'6 hours ago',msg:'yooo $350?? i got the same thing. this is day 5 for me and im up $1,400 total'},
+  {name:'Marcus T.',initials:'MT',color:'#00b8e6',time:'6 hours ago',msg:'told you to give it a week danny lol'},
+  {name:'Danny V.',initials:'DV',color:'#e91e63',time:'6 hours ago',msg:'yeah yeah you were right. this is actually insane'},
+  // — today: afternoon vibes —
+  {name:'Jessica M.',initials:'JM',color:'#f0b040',time:'4 hours ago',msg:'second trade of the day just closed. another W. 100k account looking healthy'},
+  {name:'Tyler W.',initials:'TW',color:'#29b6f6',time:'4 hours ago',msg:'2 for 2 today. love days like this'},
+  {name:'Rachel H.',initials:'RH',color:'#ab47bc',time:'3 hours ago',msg:'is it weird that i check my trades page like 50 times a day even tho its automated lol'},
+  {name:'Amy L.',initials:'AL',color:'#4ecdc4',time:'3 hours ago',msg:'literally me. i keep refreshing even tho theres nothing to do'},
+  {name:'David R.',initials:'DR',color:'#00d97e',time:'3 hours ago',msg:'lmao we all do that. the hardest part of automated trading is not doing anything'},
+  {name:'Carlos P.',initials:'CP',color:'#ff6b6b',time:'2 hours ago',msg:'facts. just let the bot cook'},
+  {name:'Sarah K.',initials:'SK',color:'#8b6fff',time:'1 hour ago',msg:'solid day today. 2 trades 2 wins. see yall tomorrow'},
+  {name:'Kevin B.',initials:'KB',color:'#66bb6a',time:'45 min ago',msg:'gg everyone. another green day in the books'},
+  {name:'Mike J.',initials:'MJ',color:'#ff8a65',time:'30 min ago',msg:'this community is actually so chill. way better than those toxic discord groups i used to be in'},
+  {name:'Danny V.',initials:'DV',color:'#e91e63',time:'15 min ago',msg:'fr tho. everyone here is actually helpful and not trying to sell you some $500 course'},
+  {name:'Marcus T.',initials:'MT',color:'#00b8e6',time:'5 min ago',msg:'thats the vibe. we all eating together'},
+];
+
+function renderCommunityMessages(){
+  var container=document.getElementById('community-messages');
+  if(!container) return;
+  var html='';
+  // Seeded messages
+  communitySeededMessages.forEach(function(m){
+    html+='<div style="display:flex;gap:12px;padding:10px 0">';
+    html+='<div style="width:36px;height:36px;border-radius:50%;background:'+m.color+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">'+m.initials+'</div>';
+    html+='<div style="flex:1;min-width:0">';
+    html+='<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--text)">'+m.name+'</span><span style="font-size:10px;color:var(--text3)">'+m.time+'</span></div>';
+    html+='<div style="font-size:13px;color:var(--text2);line-height:1.5;margin-top:2px">'+m.msg+'</div>';
+    html+='</div></div>';
+  });
+  // User messages from localStorage
+  var userMsgs=JSON.parse(localStorage.getItem('sa_community_msgs')||'[]');
+  userMsgs.forEach(function(m){
+    html+='<div style="display:flex;gap:12px;padding:10px 0">';
+    html+='<div style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">'+m.initials+'</div>';
+    html+='<div style="flex:1;min-width:0">';
+    html+='<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--accent)">'+m.name+'</span><span style="font-size:10px;color:var(--text3)">'+m.time+'</span></div>';
+    html+='<div style="font-size:13px;color:var(--text2);line-height:1.5;margin-top:2px">'+m.msg+'</div>';
+    html+='</div></div>';
+  });
+  container.innerHTML=html;
+  container.scrollTop=container.scrollHeight;
+}
+
+// Rotating incoming messages pool
+var communityRotatingPool=[
+  {name:'Nate F.',initials:'NF',color:'#ff7043',msg:'just got my first signal today. short at 19,920. fingers crossed'},
+  {name:'Brianna S.',initials:'BS',color:'#ec407a',msg:'that short just closed +22 points!! i screamed at my desk lol'},
+  {name:'Nate F.',initials:'NF',color:'#ff7043',msg:'@Brianna same omg $440 on the 100k account'},
+  {name:'Omar K.',initials:'OK',color:'#26a69a',msg:'been running this for a month now. best decision i ever made honestly'},
+  {name:'Priya D.',initials:'PD',color:'#7e57c2',msg:'anyone else on the 50k account? how are your results so far'},
+  {name:'Jasmine W.',initials:'JW',color:'#ffa726',msg:'50k here! up $2,100 in 2 weeks. the MNQ trades are consistent'},
+  {name:'Priya D.',initials:'PD',color:'#7e57c2',msg:'nice! im up about $1,800. thinking about upgrading to 100k'},
+  {name:'Leo R.',initials:'LR',color:'#42a5f5',msg:'just connected my prop firm account. apex trader funding. lets see how this goes'},
+  {name:'Omar K.',initials:'OK',color:'#26a69a',msg:'@Leo nice which challenge are you on'},
+  {name:'Leo R.',initials:'LR',color:'#42a5f5',msg:'50k eval. hoping the bot passes it for me lol'},
+  {name:'Omar K.',initials:'OK',color:'#26a69a',msg:'it probably will tbh. the drawdown management is really good'},
+  {name:'Tasha M.',initials:'TM',color:'#ef5350',msg:'ok random but does anyone else just stare at the P&L number going up'},
+  {name:'Brianna S.',initials:'BS',color:'#ec407a',msg:'literally me at work rn pretending to be productive'},
+  {name:'Tasha M.',initials:'TM',color:'#ef5350',msg:'LMAO same. my boss would lose it if he knew'},
+  {name:'Chris G.',initials:'CG',color:'#66bb6a',msg:'2 trades today both winners. +$490 on the 100k. easy money'},
+  {name:'Alexis P.',initials:'AP',color:'#ab47bc',msg:'how long did yall paper trade before going live?'},
+  {name:'Chris G.',initials:'CG',color:'#66bb6a',msg:'like 2 weeks. wanted to see at least 10-15 trades first'},
+  {name:'Jasmine W.',initials:'JW',color:'#ffa726',msg:'i did 3 weeks to be safe. but honestly after the first week i was already convinced'},
+  {name:'Alexis P.',initials:'AP',color:'#ab47bc',msg:'ok cool ill give it 2 weeks then. day 3 so far and 5 for 5'},
+  {name:'Ryan T.',initials:'RT',color:'#29b6f6',msg:'whats up everyone. new here. just connected alpha on the 150k'},
+  {name:'Nate F.',initials:'NF',color:'#ff7043',msg:'welcome bro. youre gonna love it. that NQ contract hits hard'},
+  {name:'Ryan T.',initials:'RT',color:'#29b6f6',msg:'yeah $20/point sounds crazy. one good trade and thats rent money'},
+  {name:'Leo R.',initials:'LR',color:'#42a5f5',msg:'update: first trade on the prop account. +27 points. $54 profit. small but its honest work lol'},
+  {name:'Tasha M.',initials:'TM',color:'#ef5350',msg:'$54 is $54 bro. that adds up fast on micro contracts'},
+  {name:'Omar K.',initials:'OK',color:'#26a69a',msg:'facts. i made like $800 last week just on MNQ. all automated'},
+  {name:'Priya D.',initials:'PD',color:'#7e57c2',msg:'the craziest part is i literally dont do anything. i just check my phone and theres money'},
+  {name:'Chris G.',initials:'CG',color:'#66bb6a',msg:'thats the dream right there. passive income that actually works'},
+  {name:'Brianna S.',initials:'BS',color:'#ec407a',msg:'told my bf about this and he thought it was a scam until i showed him my account lol'},
+  {name:'Nate F.',initials:'NF',color:'#ff7043',msg:'haha same with my roommate. then he signed up the next day'},
+  {name:'Jasmine W.',initials:'JW',color:'#ffa726',msg:'the referral program is nice too. i got $25/mo coming in from one friend'},
+  {name:'Ryan T.',initials:'RT',color:'#29b6f6',msg:'first trade just closed. +31 points on NQ. thats $620. on day ONE. im speechless'},
+  {name:'Alexis P.',initials:'AP',color:'#ab47bc',msg:'lets gooo!! welcome to the fam'},
+  {name:'Tasha M.',initials:'TM',color:'#ef5350',msg:'gm yall. hoping for another green day'},
+  {name:'Leo R.',initials:'LR',color:'#42a5f5',msg:'every day is a good day when the bot is working for you'},
+  {name:'Omar K.',initials:'OK',color:'#26a69a',msg:'real talk. even red days arent that bad. the losses are always smaller than the wins'},
+  {name:'Priya D.',initials:'PD',color:'#7e57c2',msg:'yeah i had one -$150 day but then the next day was +$400 so it evens out fast'},
+  {name:'Chris G.',initials:'CG',color:'#66bb6a',msg:'thats what good risk management looks like. small losses big wins'},
+  {name:'Brianna S.',initials:'BS',color:'#ec407a',msg:'anyone know when new strategies are coming? id love to run alpha and something else at the same time'},
+  {name:'Nate F.',initials:'NF',color:'#ff7043',msg:'i think theres like 4 strategies total. check the strategies page'},
+  {name:'Jasmine W.',initials:'JW',color:'#ffa726',msg:'yeah alpha is NQ, apex is MNQ for prop firms, omega is ES, and guardian is MES'},
+  {name:'Ryan T.',initials:'RT',color:'#29b6f6',msg:'end of day update: 2 trades, both green. +$980. this is unreal'},
+  {name:'Tasha M.',initials:'TM',color:'#ef5350',msg:'insane. congrats ryan'},
+  {name:'Alexis P.',initials:'AP',color:'#ab47bc',msg:'gg everyone. see yall tomorrow'},
+  {name:'Leo R.',initials:'LR',color:'#42a5f5',msg:'night yall. another good one in the books'},
+  {name:'Omar K.',initials:'OK',color:'#26a69a',msg:'peace. lets run it back tomorrow'},
+  // — wave 2: more people joining —
+  {name:'Zach H.',initials:'ZH',color:'#5c6bc0',msg:'ayy just found this. been looking for something automated for months'},
+  {name:'Mia C.',initials:'MC',color:'#f06292',msg:'welcome zach! youre gonna love it here'},
+  {name:'Zach H.',initials:'ZH',color:'#5c6bc0',msg:'how fast do signals usually come in after you connect?'},
+  {name:'Mia C.',initials:'MC',color:'#f06292',msg:'depends on the market. sometimes within an hour, sometimes next day. the algo waits for the right setup'},
+  {name:'Jordan E.',initials:'JE',color:'#4db6ac',msg:'just hit my first $1000 day on the 150k account. NQ went crazy at open'},
+  {name:'Tasha M.',initials:'TM',color:'#ef5350',msg:'$1000 in one day?? thats insane congrats'},
+  {name:'Jordan E.',initials:'JE',color:'#4db6ac',msg:'thanks! 2 trades, both longs. the algo caught the bounce perfectly'},
+  {name:'Derek L.',initials:'DL',color:'#ff8a65',msg:'been lurking for a while. finally signed up yesterday. 50k paper account'},
+  {name:'Brianna S.',initials:'BS',color:'#ec407a',msg:'welcome derek! the 50k is a great starting point'},
+  {name:'Derek L.',initials:'DL',color:'#ff8a65',msg:'thanks! already got my first trade. +$175. not bad for doing nothing lol'},
+  {name:'Sam W.',initials:'SW',color:'#81c784',msg:'anyone running this on a prop firm? thinking about topstep'},
+  {name:'Leo R.',initials:'LR',color:'#42a5f5',msg:'im on apex. passed the eval in 8 days. the bot just did its thing'},
+  {name:'Sam W.',initials:'SW',color:'#81c784',msg:'8 days?? thats crazy fast. what account size'},
+  {name:'Leo R.',initials:'LR',color:'#42a5f5',msg:'50k eval. the drawdown management kept me safe the whole time'},
+  {name:'Priya D.',initials:'PD',color:'#7e57c2',msg:'just upgraded from 50k to 100k. ready for bigger trades'},
+  {name:'Chris G.',initials:'CG',color:'#66bb6a',msg:'nice! the 100k with 8 MNQ is a sweet spot honestly'},
+  {name:'Priya D.',initials:'PD',color:'#7e57c2',msg:'thats what i figured. more contracts = more profit per trade'},
+  // — wave 3: trade reactions —
+  {name:'Mia C.',initials:'MC',color:'#f06292',msg:'signal just came in!! NQ short at 19,955'},
+  {name:'Jordan E.',initials:'JE',color:'#4db6ac',msg:'same. lets ride'},
+  {name:'Zach H.',initials:'ZH',color:'#5c6bc0',msg:'my first live signal omg im so nervous'},
+  {name:'Derek L.',initials:'DL',color:'#ff8a65',msg:'dont be nervous the stop loss protects you. just let it play out'},
+  {name:'Mia C.',initials:'MC',color:'#f06292',msg:'closed +18 points. $360 on 100k. clean trade'},
+  {name:'Jordan E.',initials:'JE',color:'#4db6ac',msg:'+$360 on NQ. love it when the algo catches these reversals'},
+  {name:'Zach H.',initials:'ZH',color:'#5c6bc0',msg:'$180 on my paper account!! this is real omg'},
+  {name:'Sam W.',initials:'SW',color:'#81c784',msg:'another day another W. this thing is consistent'},
+  {name:'Brianna S.',initials:'BS',color:'#ec407a',msg:'3 green days in a row. my paper account looking beautiful rn'},
+  {name:'Nate F.',initials:'NF',color:'#ff7043',msg:'same. honestly forgot what a red day even looks like'},
+  {name:'Tasha M.',initials:'TM',color:'#ef5350',msg:'dont jinx it lol. but yeah its been a great week'},
+  // — wave 4: casual chat —
+  {name:'Derek L.',initials:'DL',color:'#ff8a65',msg:'what do yall do while the bot trades? i feel like i should be doing something'},
+  {name:'Alexis P.',initials:'AP',color:'#ab47bc',msg:'literally nothing thats the whole point lmao. go live your life'},
+  {name:'Derek L.',initials:'DL',color:'#ff8a65',msg:'fair enough. guess ill go touch grass'},
+  {name:'Jordan E.',initials:'JE',color:'#4db6ac',msg:'i just check the app like twice a day. morning and evening. thats it'},
+  {name:'Mia C.',initials:'MC',color:'#f06292',msg:'i check it way more than that but thats a me problem lol'},
+  {name:'Sam W.',initials:'SW',color:'#81c784',msg:'does anyone know if you can run two strategies at the same time?'},
+  {name:'Ryan T.',initials:'RT',color:'#29b6f6',msg:'i think you can only have one active per account right now'},
+  {name:'Sam W.',initials:'SW',color:'#81c784',msg:'gotcha. alpha is working great so ill stick with it'},
+  {name:'Zach H.',initials:'ZH',color:'#5c6bc0',msg:'day 3 update: 4 trades, 3 wins, 1 small loss. net +$620 on paper'},
+  {name:'Nate F.',initials:'NF',color:'#ff7043',msg:'thats solid for 3 days. told you itd work out'},
+  {name:'Zach H.',initials:'ZH',color:'#5c6bc0',msg:'yeah you were right. wish i found this earlier'},
+  // — wave 5: more convos —
+  {name:'Priya D.',initials:'PD',color:'#7e57c2',msg:'anyone else notice the bot trades mostly in the morning? like 9:30-11am'},
+  {name:'Chris G.',initials:'CG',color:'#66bb6a',msg:'yeah thats when NQ has the most volume. makes sense the algo targets that window'},
+  {name:'Priya D.',initials:'PD',color:'#7e57c2',msg:'cool. so i basically just check after lunch and see what happened'},
+  {name:'Jordan E.',initials:'JE',color:'#4db6ac',msg:'thats the move. check once, smile, move on with your day'},
+  {name:'Tasha M.',initials:'TM',color:'#ef5350',msg:'my friend asked me what i do for extra income and i was like... nothing. literally nothing. a bot does it'},
+  {name:'Brianna S.',initials:'BS',color:'#ec407a',msg:'lmaooo the future is now'},
+  {name:'Derek L.',initials:'DL',color:'#ff8a65',msg:'week 1 done. 8 trades, 6 wins. paper account up $1,750. im convinced'},
+  {name:'Leo R.',initials:'LR',color:'#42a5f5',msg:'nice! are you gonna go live?'},
+  {name:'Derek L.',initials:'DL',color:'#ff8a65',msg:'yeah probably next week. gonna connect my tradovate account'},
+  {name:'Mia C.',initials:'MC',color:'#f06292',msg:'do it! going live was the best decision. same results as paper honestly'},
+  {name:'Sam W.',initials:'SW',color:'#81c784',msg:'just referred my cousin. thats another $25/mo for me lol'},
+  {name:'Alexis P.',initials:'AP',color:'#ab47bc',msg:'the affiliate program is lowkey amazing. i got 5 referrals now'},
+  {name:'Sam W.',initials:'SW',color:'#81c784',msg:'5?? thats like $125/mo just from referrals. on top of the trading profits'},
+  {name:'Alexis P.',initials:'AP',color:'#ab47bc',msg:'yep. honestly between the trades and referrals this has been life changing'},
+  // — wave 6: evening vibes —
+  {name:'Ryan T.',initials:'RT',color:'#29b6f6',msg:'another solid day. +$540 on the 150k. this week is fire'},
+  {name:'Jasmine W.',initials:'JW',color:'#ffa726',msg:'+$280 here on the 50k. small but steady wins'},
+  {name:'Omar K.',initials:'OK',color:'#26a69a',msg:'$280 every day adds up to like $5,600/month. thats not small at all'},
+  {name:'Jasmine W.',initials:'JW',color:'#ffa726',msg:'when you put it that way... yeah thats pretty crazy actually'},
+  {name:'Jordan E.',initials:'JE',color:'#4db6ac',msg:'exactly. people underestimate compound gains. just stay consistent'},
+  {name:'Zach H.',initials:'ZH',color:'#5c6bc0',msg:'this community is honestly the best part. everyone is so chill and helpful'},
+  {name:'Mia C.',initials:'MC',color:'#f06292',msg:'fr. no toxicity, no flexing, just people helping each other make money'},
+  {name:'Derek L.',initials:'DL',color:'#ff8a65',msg:'agreed. best trading community ive been in and ive been in a LOT'},
+  {name:'Tasha M.',initials:'TM',color:'#ef5350',msg:'alright yall im out for the night. see everyone tomorrow morning'},
+  {name:'Chris G.',initials:'CG',color:'#66bb6a',msg:'night tasha! gg today'},
+  {name:'Nate F.',initials:'NF',color:'#ff7043',msg:'peace everyone. another green day done. lets keep the streak going'},
+  {name:'Brianna S.',initials:'BS',color:'#ec407a',msg:'goodnight yall. tomorrow we eat again'},
+  {name:'Leo R.',initials:'LR',color:'#42a5f5',msg:'night fam. bot never sleeps tho lol'},
+  {name:'Priya D.',initials:'PD',color:'#7e57c2',msg:'lmao true. see everyone tomorrow'},
+  // — wave 7: next morning —
+  {name:'Omar K.',initials:'OK',color:'#26a69a',msg:'gm! NQ futures looking bullish premarket. could be a big day'},
+  {name:'Jordan E.',initials:'JE',color:'#4db6ac',msg:'gm. yeah i see that. algo might fire early today'},
+  {name:'Sam W.',initials:'SW',color:'#81c784',msg:'morning everyone. coffee and checking the dashboard. my morning routine now'},
+  {name:'Mia C.',initials:'MC',color:'#f06292',msg:'same lol. wake up, check P&L, smile, start my day'},
+  {name:'Zach H.',initials:'ZH',color:'#5c6bc0',msg:'signal! short at 20,015. here we go'},
+  {name:'Derek L.',initials:'DL',color:'#ff8a65',msg:'got it too. lets see what happens'},
+  {name:'Zach H.',initials:'ZH',color:'#5c6bc0',msg:'closed +29 points!! $290 on the 50k. great start to the day'},
+  {name:'Derek L.',initials:'DL',color:'#ff8a65',msg:'same. $290 before 10am. i could get used to this'},
+  {name:'Ryan T.',initials:'RT',color:'#29b6f6',msg:'+$580 on NQ. the 150k account just hits different in the morning'},
+  {name:'Alexis P.',initials:'AP',color:'#ab47bc',msg:'love waking up to free money. this is the life'},
+  {name:'Jasmine W.',initials:'JW',color:'#ffa726',msg:'2 weeks in and i still cant believe this is real. automated trading is the future'},
+  {name:'Chris G.',initials:'CG',color:'#66bb6a',msg:'been saying that for months. glad more people are catching on'},
+  {name:'Tasha M.',initials:'TM',color:'#ef5350',msg:'told 3 more people at work today. they all think im crazy until i show them the account'},
+  {name:'Nate F.',initials:'NF',color:'#ff7043',msg:'show em the trades page. that usually shuts them up real quick'},
+  {name:'Brianna S.',initials:'BS',color:'#ec407a',msg:'lol thats exactly what i did. pulled up my phone and they were like wait what'},
+  {name:'Leo R.',initials:'LR',color:'#42a5f5',msg:'proof is in the P&L. cant argue with numbers'},
+];
+// Generate 1000+ rotating messages from templates
+(function(){
+  var names=[
+    {name:'Nate F.',initials:'NF',color:'#ff7043'},{name:'Brianna S.',initials:'BS',color:'#ec407a'},
+    {name:'Omar K.',initials:'OK',color:'#26a69a'},{name:'Priya D.',initials:'PD',color:'#7e57c2'},
+    {name:'Jasmine W.',initials:'JW',color:'#ffa726'},{name:'Leo R.',initials:'LR',color:'#42a5f5'},
+    {name:'Tasha M.',initials:'TM',color:'#ef5350'},{name:'Chris G.',initials:'CG',color:'#66bb6a'},
+    {name:'Alexis P.',initials:'AP',color:'#ab47bc'},{name:'Ryan T.',initials:'RT',color:'#29b6f6'},
+    {name:'Mia C.',initials:'MC',color:'#f06292'},{name:'Jordan E.',initials:'JE',color:'#4db6ac'},
+    {name:'Derek L.',initials:'DL',color:'#ff8a65'},{name:'Sam W.',initials:'SW',color:'#81c784'},
+    {name:'Zach H.',initials:'ZH',color:'#5c6bc0'},{name:'Kayla T.',initials:'KT',color:'#e57373'},
+    {name:'Andre M.',initials:'AM',color:'#4fc3f7'},{name:'Lily Z.',initials:'LZ',color:'#ba68c8'},
+    {name:'Travis B.',initials:'TB',color:'#aed581'},{name:'Nina R.',initials:'NR',color:'#ffb74d'},
+    {name:'Ethan K.',initials:'EK',color:'#4dd0e1'},{name:'Sofia L.',initials:'SL',color:'#f48fb1'},
+    {name:'Brandon P.',initials:'BP',color:'#a1887f'},{name:'Maya H.',initials:'MH',color:'#90a4ae'},
+    {name:'Jalen D.',initials:'JD',color:'#7986cb'},{name:'Chloe N.',initials:'CN',color:'#80cbc4'},
+    {name:'Kai W.',initials:'KW',color:'#fff176'},{name:'Elena V.',initials:'EV',color:'#ce93d8'},
+    {name:'Diego S.',initials:'DS',color:'#80deea'},{name:'Hailey J.',initials:'HJ',color:'#ef9a9a'},
+  ];
+  var msgs=[
+    'just got a signal. lets see how this plays out','another W today. this algo is something else',
+    'paper account looking healthy. up like $XXX this week','anyone else get that NQ long at open? clean entry',
+    'closed +YY points. easy money','gm everyone. hoping for a good day',
+    'gg yall. another green day','night everyone. see you tomorrow morning',
+    'this community is so chill i love it','just referred another friend. affiliate money is nice',
+    'the bot literally makes money while i sleep','i keep checking my trades page even tho i know its automated lol',
+    'anyone know if theres a mobile app coming?','just upgraded to the 100k account. lets go',
+    'first week done and im already up over $1k on paper','the stop losses on this thing are tight. love the risk management',
+    'my coworker just signed up after i showed him my dashboard','2 trades today both winners. consistent as always',
+    'thinking about connecting my prop firm next','how long yall been on here? im on week 2',
+    'been here about a month. best trading decision ever','the backtest results are legit. 87% win rate is no joke',
+    'just had my biggest day so far. +$XXX','morning routine: coffee, check stratford, go to work',
+    'anyone else trade the 150k? that NQ contract is wild','$20 per point moves fast. love it and hate it lol',
+    'small loss today but still green for the week','red days happen. the important thing is the weekly/monthly P&L',
+    'exactly. one loss doesnt matter when you have 4 wins before it','just told my sister about this. she thinks im crazy',
+    'show her the trades page. that usually convinces people','facts. numbers dont lie',
+    'who else is watching NQ premarket rn','premarket looking interesting. might get an early signal',
+    'signal just came in! here we go','closed in profit again. this thing is consistent',
+    'how do yall handle the urge to manually trade? i keep wanting to do something','thats the hardest part. just trust the algo and do nothing',
+    'literally. the bot is smarter than all of us combined lol','true. every time i manually traded before i lost money',
+    'same. thats why i switched to automated. no emotions involved','the algo doesnt panic sell. thats the difference',
+    'been running this on my topstep account. passed the eval in 11 days','thats crazy. what account size?',
+    '100k eval. the drawdown was tight but the bot managed it perfectly','nice. im thinking about topstep too. or maybe apex',
+    'apex has better pricing imo. but both work with stratford','good to know thanks',
+    'just crossed $5k total profit on paper. feels surreal','congrats!! thats huge. going live soon?',
+    'yeah probably this week. kinda nervous but excited','dont be nervous. live trades exactly like paper. no difference',
+    'can confirm. went live 3 weeks ago. same results','the hardest part about going live is clicking the connect button lol',
+    'fr once its connected you forget about it','thats the beauty of it. set and forget',
+    'my paper account just hit $55k from $50k start. in 2 weeks','$5k in 2 weeks on micro contracts is solid','imagine that compounding over months. the math is crazy',
+    'this is literally what passive income should be','agreed. not some dropshipping course or print on demand bs',
+    'lmaooo right. actual real trading with real results','the transparency is what got me. you can see every single trade',
+    'and the backtest data going back years. not just cherry picked screenshots','exactly. thats how you know its legit',
+    'anyone in here from the west coast? these morning trades hit at 6:30am for me','east coast here. 9:30am is perfect. right when market opens',
+    'i set my alarm just to watch the first trade even tho i dont need to','we all do that lol. its addicting to watch','the first trade of the day always hits different',
+    'facts. especially when its a winner right at open','todays P&L: +$XXX. not bad for a tuesday','every day is payday when the bot is running',
+    'just showed my dad this platform. hes 60 and wants to sign up','thats awesome! tell him to start with the 50k paper account',
+    'he already did lol. hes refreshing the page every 5 minutes','haha like father like son','runs in the family',
+    'ok real talk who else quit their side hustle after finding this','i used to do uber eats. this pays way more for zero effort',
+    'i was doing freelance design on the side. now i just let the bot work','smart. time is money and this saves both',
+    'whats everyones monthly return been looking like?','im averaging about $2-3k/month on the 100k paper',
+    'around $1,500/month on 50k. pretty consistent','150k account here. $4-5k/month. NQ is a beast',
+    'thats insane. even the 50k at $1,500/month is life changing for most people','exactly. $18k/year on the side doing literally nothing',
+    'and thats conservative. some months are way better','love this community. everyone keeps it real',
+    'no cap. best group ive been in','alright im out. bot is cooking and i got things to do. peace yall',
+    'later! see you tomorrow','gg everyone. green across the board today',
+    'another one in the books. consistency is key','this platform really changed my life no cap',
+    'same here. financial freedom one trade at a time','lets gooo. see everyone bright and early',
+  ];
+  // Generate ~900 more by mixing names with message templates
+  var extra=[];
+  for(var i=0;i<900;i++){
+    var n=names[i%names.length];
+    var m=msgs[i%msgs.length];
+    // Replace XXX/YY with random values
+    m=m.replace('$XXX','$'+(Math.floor(Math.random()*800)+150));
+    m=m.replace('+YY','+'+(Math.floor(Math.random()*40)+12));
+    extra.push({name:n.name,initials:n.initials,color:n.color,msg:m});
+  }
+  // Shuffle the extra messages
+  for(var j=extra.length-1;j>0;j--){
+    var k=Math.floor(Math.random()*(j+1));
+    var tmp=extra[j];extra[j]=extra[k];extra[k]=tmp;
+  }
+  communityRotatingPool=communityRotatingPool.concat(extra);
+})();
+var communityRotateIndex=0;
+var communityRotateRunning=false;
+var communityUnreadCount=0;
+
+// Variable delays: mix of fast (20-40s), medium (60-90s), slow (2-5min)
+var communityDelays=[
+  25000,35000,20000,60000,30000,45000,120000,25000,40000,90000,
+  30000,20000,180000,35000,55000,25000,300000,40000,30000,70000,
+  20000,45000,25000,150000,35000,60000,30000,40000,240000,25000,
+  50000,20000,35000,80000,30000,45000,25000,120000,40000,30000,
+  20000,60000,35000,25000,90000
+];
+
+function addCommunityMessage(){
+  var pool=communityRotatingPool;
+  if(pool.length===0) return;
+  var m=pool[communityRotateIndex % pool.length];
+  communityRotateIndex++;
+  var container=document.getElementById('community-messages');
+  var isOnCommunity=document.getElementById('page-community') && document.getElementById('page-community').classList.contains('active');
+
+  if(isOnCommunity && container){
+    var div=document.createElement('div');
+    div.style.cssText='display:flex;gap:12px;padding:10px 0;opacity:0;transition:opacity .3s';
+    div.innerHTML='<div style="width:36px;height:36px;border-radius:50%;background:'+m.color+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">'+m.initials+'</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--text)">'+m.name+'</span><span style="font-size:10px;color:var(--text3)">Just now</span></div><div style="font-size:13px;color:var(--text2);line-height:1.5;margin-top:2px">'+m.msg+'</div></div>';
+    container.appendChild(div);
+    setTimeout(function(){div.style.opacity='1';},50);
+    container.scrollTop=container.scrollHeight;
+  } else {
+    // Not on community page — increment badge
+    communityUnreadCount++;
+    var badge=document.getElementById('community-badge');
+    if(badge){
+      badge.textContent=communityUnreadCount;
+      badge.style.display='flex';
+    }
+  }
+  // Schedule next message with variable delay
+  scheduleNextCommunityMsg();
+}
+
+function scheduleNextCommunityMsg(){
+  var delay=communityDelays[communityRotateIndex % communityDelays.length];
+  // Add some randomness: +/- 30%
+  delay=Math.floor(delay * (0.7 + Math.random() * 0.6));
+  setTimeout(addCommunityMessage, delay);
+}
+
+function startCommunityRotation(){
+  if(communityRotateRunning) return;
+  communityRotateRunning=true;
+  // First message after 20-40 seconds
+  setTimeout(addCommunityMessage, 20000+Math.floor(Math.random()*20000));
+}
+
+function clearCommunityBadge(){
+  communityUnreadCount=0;
+  var badge=document.getElementById('community-badge');
+  if(badge) badge.style.display='none';
+}
+
+function checkCommunityAccess(){
+  var u=JSON.parse(localStorage.getItem('sa_user')||'{}');
+  var hasPaid=u.plan && u.plan!=='free' && (u.subscriptionStatus==='active'||u.subscriptionStatus==='canceling');
+  var isAdmin=u.isAdmin===true;
+  return hasPaid||isAdmin;
+}
+
+function updateCommunityInputState(){
+  var input=document.getElementById('community-input');
+  var sendBtn=document.querySelector('#page-community .btn[onclick*="sendCommunityMsg"]');
+  var upgradeBar=document.getElementById('community-upgrade-bar');
+  if(!checkCommunityAccess()){
+    // Show upgrade bar, disable input
+    if(input){input.disabled=true;input.placeholder='Subscribe to join the conversation...';}
+    if(sendBtn)sendBtn.style.display='none';
+    if(!upgradeBar){
+      var inputArea=input?input.parentElement.parentElement:null;
+      if(inputArea){
+        var bar=document.createElement('div');
+        bar.id='community-upgrade-bar';
+        bar.style.cssText='padding:14px 28px;background:linear-gradient(135deg,rgba(139,111,255,.08),rgba(0,184,230,.08));border-top:1px solid rgba(139,111,255,.2);display:flex;align-items:center;justify-content:space-between;gap:12px';
+        bar.innerHTML='<div style="display:flex;align-items:center;gap:10px"><span style="font-size:18px">🔒</span><div><div style="font-size:13px;font-weight:600;color:var(--text)">Subscribe to chat</div><div style="font-size:11px;color:var(--text3)">Upgrade to Alpha ($99/mo) or higher to join the conversation</div></div></div><button class="btn sm" onclick="nav(\'strategies\',document.querySelectorAll(\'.nav-item\')[1],\'Strategies\')" style="flex-shrink:0">Upgrade →</button>';
+        inputArea.parentElement.insertBefore(bar,inputArea);
+        inputArea.style.display='none';
+      }
+    }
+  } else {
+    if(input){input.disabled=false;input.placeholder='Type a message...';}
+    if(sendBtn)sendBtn.style.display='';
+    if(upgradeBar){upgradeBar.nextElementSibling.style.display='';upgradeBar.remove();}
+  }
+}
+
+function sendCommunityMsg(){
+  if(!requireSignup()) return;
+  if(!checkCommunityAccess()){return;}
+  var input=document.getElementById('community-input');
+  var msg=input.value.trim();
+  if(!msg) return;
+  var user=JSON.parse(localStorage.getItem('sa_user')||'{}');
+  var name=user.name||'You';
+  var initials=name.split(' ').map(function(w){return w[0]}).join('').toUpperCase().substring(0,2);
+  var entry={name:name,initials:initials,time:'Just now',msg:msg};
+  var userMsgs=JSON.parse(localStorage.getItem('sa_community_msgs')||'[]');
+  userMsgs.push(entry);
+  localStorage.setItem('sa_community_msgs',JSON.stringify(userMsgs));
+  input.value='';
+  renderCommunityMessages();
+}
+
+// Render community on page load
+document.addEventListener('DOMContentLoaded',function(){ renderCommunityMessages(); startCommunityRotation(); });
+// Also render when navigating to community
+var origNav=window._origNavForCommunity;
+if(!origNav){
+  var _realNav=nav;
+  nav=function(id,el,crumb){
+    _realNav(id,el,crumb);
+    if(id==='community'){
+      clearCommunityBadge();
+      setTimeout(function(){
+        renderCommunityMessages();
+        startCommunityRotation();
+        updateCommunityInputState();
+        // Randomize online count
+        var online=Math.floor(Math.random()*80)+90;
+        var el2=document.getElementById('community-online');
+        if(el2) el2.textContent=online;
+      },50);
+    }
+  };
+  window._origNavForCommunity=true;
 }
 
 function toggleTheme(){
