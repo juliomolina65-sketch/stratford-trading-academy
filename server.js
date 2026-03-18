@@ -1277,6 +1277,61 @@ app.post('/api/admin/clear-trades', async (req, res) => {
   }
 });
 
+// ---- Admin: Set user tier (updates qty/ticker for contract sizing) ----
+app.post('/api/admin/set-tier', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const { secret, uid, tier } = req.body;
+  if (secret !== WEBHOOK_SECRET) return res.status(401).json({ error: 'Invalid secret' });
+  if (!uid || !tier) return res.status(400).json({ error: 'Missing uid or tier' });
+
+  const TIER_CONFIG = {
+    'Stratford Alpha':    { '50k': { qty:5, ticker:'MNQ' }, '100k': { qty:8, ticker:'MNQ' }, '150k': { qty:1, ticker:'NQ' } },
+    'Stratford Apex':     { '50k': { qty:5, ticker:'MNQ' }, '100k': { qty:8, ticker:'MNQ' }, '150k': { qty:1, ticker:'NQ' } },
+    'Stratford Omega':    { '50k': { qty:8, ticker:'MES' }, '100k': { qty:9, ticker:'MES' }, '150k': { qty:14,ticker:'MES' } },
+    'Stratford Guardian': { '50k': { qty:6, ticker:'MES' }, '100k': { qty:7, ticker:'MES' }, '150k': { qty:11,ticker:'MES' } }
+  };
+
+  try {
+    const userDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
+    const userData = userDoc.data();
+    const strategy = (userData.activeStrategies || [])[0] || 'Stratford Alpha';
+    const config = (TIER_CONFIG[strategy] || {})[tier];
+    if (!config) return res.status(400).json({ error: 'Invalid tier: ' + tier + ' for strategy: ' + strategy });
+
+    await dbAdmin.collection('users').doc(uid).update({
+      tier: tier,
+      qty: config.qty,
+      ticker: config.ticker,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log(`[ADMIN] Set tier for ${uid}: ${tier} → ${config.qty}x ${config.ticker} (${strategy})`);
+    res.json({ success: true, uid, tier, qty: config.qty, ticker: config.ticker, strategy });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Admin: List all subscribers (for tier assignment) ----
+app.get('/api/admin/subscribers', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const { secret } = req.query;
+  if (secret !== WEBHOOK_SECRET) return res.status(401).json({ error: 'Invalid secret' });
+
+  try {
+    const usersSnap = await dbAdmin.collection('users')
+      .where('activeStrategies', 'array-contains', 'Stratford Alpha').get();
+    const subs = usersSnap.docs.map(doc => {
+      const d = doc.data();
+      return { uid: doc.id, name: d.name || 'Unknown', email: d.email || '', tier: d.tier || null, qty: d.qty || null, ticker: d.ticker || null };
+    });
+    res.json({ subscribers: subs });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ---- Admin: Generate Test Trade ----
 app.post('/api/test-trade', async (req, res) => {
   if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
