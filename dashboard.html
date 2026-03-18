@@ -404,7 +404,11 @@ select option{background:var(--bg3);}
 }
 
 @media(max-width:480px){
-  .dash-stats{grid-template-columns:1fr !important;}
+  .dash-stats{grid-template-columns:1fr 1fr !important;gap:8px !important;}
+  .dstat{padding:12px 14px !important;}
+  .dv{font-size:18px !important;}
+  .dl{font-size:9px !important;}
+  .dd{font-size:10px !important;}
   .broker-grid{grid-template-columns:1fr !important;}
   [style*="grid-template-columns:1fr 1fr 1fr 1fr"]{grid-template-columns:1fr !important;}
   [style*="grid-template-columns:repeat(3,1fr)"]{grid-template-columns:1fr !important;}
