@@ -409,6 +409,94 @@ select option{background:var(--bg3);}
   [style*="grid-template-columns:1fr 1fr 1fr 1fr"]{grid-template-columns:1fr !important;}
   [style*="grid-template-columns:repeat(3,1fr)"]{grid-template-columns:1fr !important;}
   .plan-stats{grid-template-columns:1fr 1fr !important;}
+
+  /* Affiliate banner - stack layout on small screens */
+  #page-dashboard [style*="background:linear-gradient"][style*="display:flex"]{
+    flex-direction:column !important;gap:12px !important;padding:16px !important;
+  }
+  #page-dashboard [style*="background:linear-gradient"] [style*="font-size:14px;font-weight:700"]{
+    font-size:13px !important;
+  }
+  #page-dashboard [style*="background:linear-gradient"] [style*="display:flex;align-items:center;gap:8px"]{
+    flex-wrap:wrap !important;
+  }
+
+  /* Paper demo strategy info - wrap badges */
+  #paper-section [style*="display:flex;align-items:center;gap:8px"]{
+    flex-wrap:wrap !important;gap:6px !important;
+  }
+  #paper-section .bb, #paper-section [style*="font-family:var(--mono)"]{
+    font-size:9px !important;padding:2px 6px !important;
+  }
+
+  /* Trades table - enable horizontal scroll */
+  #paper-section table, #page-trades table{
+    display:block !important;overflow-x:auto !important;white-space:nowrap !important;
+  }
+  #paper-section thead, #paper-section tbody, #paper-section tr,
+  #page-trades thead, #page-trades tbody, #page-trades tr{
+    min-width:500px;
+  }
+
+  /* Leaderboard top cards - stack vertically */
+  #page-dashboard [style*="display:flex;gap:16px;margin-bottom:16px"]{
+    flex-direction:column !important;gap:12px !important;
+  }
+  #page-dashboard [style*="display:flex;gap:16px;margin-bottom:16px"] > div{
+    width:100% !important;min-height:auto !important;
+  }
+
+  /* Review scroll cards - ensure proper sizing */
+  #dash-reviews-scroll > div{
+    min-width:260px !important;max-width:280px !important;
+  }
+
+  /* Paper demo stats grid - 2 columns on mobile */
+  #paper-section [style*="grid-template-columns:repeat(5,1fr)"]{
+    grid-template-columns:1fr 1fr !important;
+  }
+  #paper-section [style*="grid-template-columns:repeat(2,1fr)"]{
+    gap:1px !important;
+  }
+  #paper-section [style*="font-size:20px;font-weight:500"]{
+    font-size:15px !important;
+  }
+  #paper-section [style*="padding:16px 20px"]{
+    padding:10px 12px !important;
+  }
+
+  /* Paper demo connected bar - stack on mobile */
+  #paper-connected{
+    flex-direction:column !important;align-items:flex-start !important;gap:10px !important;
+  }
+  #paper-connected > div:last-child{
+    flex-wrap:wrap !important;gap:6px !important;width:100%;
+  }
+  #paper-not-connected{
+    flex-direction:column !important;align-items:flex-start !important;gap:10px !important;
+  }
+  #paper-not-connected button{
+    width:100%;justify-content:center;
+  }
+
+  /* Paper demo strategy info row */
+  #paper-connected [style*="display:flex;gap:6px;flex-shrink:0"]{
+    flex-wrap:wrap !important;gap:6px !important;width:100%;
+  }
+
+  /* Trades table scroll */
+  #paper-section [style*="overflow-x:auto"], #paper-section table{
+    font-size:11px !important;
+  }
+  #paper-section th, #paper-section td{
+    padding:8px 6px !important;font-size:11px !important;
+  }
+
+  /* Hero banner on dashboard - tighter padding */
+  .dash-banner{padding:16px !important;}
+  .dash-banner [style*="font-size:20px"]{font-size:16px !important;}
+  .dash-banner [style*="font-size:13px"]{font-size:12px !important;}
+  .dash-banner [style*="display:flex;gap:10px"]{flex-wrap:wrap !important;gap:8px !important;}
 }
 
 /* Settings toggle dots */
