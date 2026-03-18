@@ -2,12 +2,26 @@
 // Stratford Academy — Email Notification Service
 // ============================================
 const nodemailer = require('nodemailer');
+let Resend;
+try { Resend = require('resend').Resend; } catch(e) {}
 
-// Configure transporter from env vars
+// Configure email transport — uses Resend API if available, falls back to Gmail SMTP
 let transporter;
+let resendClient;
+let useResend = false;
+
 function initEmail() {
+  // Try Resend first (works on Railway/cloud — no SMTP port blocking)
+  if (process.env.RESEND_API_KEY && Resend) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+    useResend = true;
+    console.log('[EMAIL] Email service initialized with Resend API');
+    return true;
+  }
+
+  // Fall back to Gmail SMTP (works locally)
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('[EMAIL] Email not configured — set EMAIL_USER and EMAIL_PASS in .env');
+    console.warn('[EMAIL] Email not configured — set RESEND_API_KEY or EMAIL_USER/EMAIL_PASS');
     return false;
   }
   transporter = nodemailer.createTransport({
@@ -16,10 +30,10 @@ function initEmail() {
     secure: false,
     auth: {
       user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS  // Use Gmail App Password (not regular password)
+      pass: process.env.EMAIL_PASS
     }
   });
-  console.log('[EMAIL] Email service initialized with', process.env.EMAIL_USER);
+  console.log('[EMAIL] Email service initialized with Gmail SMTP:', process.env.EMAIL_USER);
   return true;
 }
 
@@ -100,12 +114,21 @@ async function sendEmail(to, subject, html) {
     return false;
   }
   try {
-    await transporter.sendMail({
-      from: `"Stratford Academy" <${process.env.EMAIL_USER}>`,
-      to: to,
-      subject: subject,
-      html: html
-    });
+    if (useResend && resendClient) {
+      await resendClient.emails.send({
+        from: 'Stratford Academy <onboarding@resend.dev>',
+        to: to,
+        subject: subject,
+        html: html
+      });
+    } else {
+      await transporter.sendMail({
+        from: `"Stratford Academy" <${process.env.EMAIL_USER}>`,
+        to: to,
+        subject: subject,
+        html: html
+      });
+    }
     console.log(`[EMAIL] Sent "${subject}" to ${to}`);
     logEmail(to, subject, _currentEmailType, 'sent');
     _currentEmailType = 'unknown';
