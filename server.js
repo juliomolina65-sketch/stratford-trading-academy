@@ -1229,6 +1229,48 @@ app.post('/api/webhook', async (req, res) => {
   }
 });
 
+// ---- Admin: Clear ALL trades & signals (full reset) ----
+app.post('/api/admin/clear-trades', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const { secret } = req.body;
+  if (secret !== WEBHOOK_SECRET) return res.status(401).json({ error: 'Invalid secret' });
+
+  try {
+    let tradesDeleted = 0;
+    let signalsDeleted = 0;
+
+    // 1. Delete all trades for every user
+    const usersSnap = await dbAdmin.collection('users').get();
+    for (const userDoc of usersSnap.docs) {
+      const tradesSnap = await dbAdmin.collection('users').doc(userDoc.id).collection('trades').get();
+      const batch = dbAdmin.batch();
+      tradesSnap.docs.forEach(doc => { batch.delete(doc.ref); tradesDeleted++; });
+      if (!tradesSnap.empty) await batch.commit();
+
+      // Reset user stats
+      await dbAdmin.collection('users').doc(userDoc.id).update({
+        totalPnl: 0,
+        tradeCount: 0,
+        winCount: 0,
+        lossCount: 0,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    // 2. Delete all signals
+    const signalsSnap = await dbAdmin.collection('signals').get();
+    const sigBatch = dbAdmin.batch();
+    signalsSnap.docs.forEach(doc => { sigBatch.delete(doc.ref); signalsDeleted++; });
+    if (!signalsSnap.empty) await sigBatch.commit();
+
+    console.log(`[ADMIN] Cleared ${tradesDeleted} trades + ${signalsDeleted} signals for ${usersSnap.size} users`);
+    res.json({ success: true, tradesDeleted, signalsDeleted, usersReset: usersSnap.size });
+  } catch (err) {
+    console.error('[ADMIN] Clear trades error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ---- Admin: Generate Test Trade ----
 app.post('/api/test-trade', async (req, res) => {
   if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
