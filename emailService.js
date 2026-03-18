@@ -2,8 +2,7 @@
 // Stratford Academy — Email Notification Service
 // ============================================
 const nodemailer = require('nodemailer');
-let Resend;
-try { Resend = require('resend').Resend; } catch(e) {}
+let Resend = null;
 
 // Configure email transport — uses Resend API if available, falls back to Gmail SMTP
 let transporter;
@@ -12,6 +11,9 @@ let useResend = false;
 
 function initEmail() {
   // Try Resend first (works on Railway/cloud — no SMTP port blocking)
+  if (process.env.RESEND_API_KEY) {
+    try { Resend = require('resend').Resend; } catch(e) { console.warn('[EMAIL] Resend package not found'); }
+  }
   if (process.env.RESEND_API_KEY && Resend) {
     resendClient = new Resend(process.env.RESEND_API_KEY);
     useResend = true;
