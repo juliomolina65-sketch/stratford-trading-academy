@@ -801,6 +801,9 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
               if(data.points!==undefined)localStorage.setItem('sa_points',String(data.points));
               if(data.pointsHistory)localStorage.setItem('sa_points_history',JSON.stringify(data.pointsHistory));
               if(data.paperDemo)localStorage.setItem('sa_paper_demo',JSON.stringify(data.paperDemo));
+              if(data.settings)localStorage.setItem('sa_settings',JSON.stringify(data.settings));
+              if(data.connectedBrokers)localStorage.setItem('sa_connected_brokers',JSON.stringify(data.connectedBrokers));
+              if(data.communityMessages)localStorage.setItem('sa_community_msgs',JSON.stringify(data.communityMessages));
             }
           }catch(e){console.warn('Firestore profile load failed, using cache:',e);}
 
@@ -6732,6 +6735,7 @@ function getSettings(){
 function saveSetting(key,val){
   var s=getSettings();s[key]=val;
   localStorage.setItem('sa_settings',JSON.stringify(s));
+  if(auth.currentUser&&db){db.collection('users').doc(auth.currentUser.uid).set({settings:s,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(e){console.warn('Settings sync failed:',e);});}
   applySettings();
   // Flash save indicator
   var toast=document.createElement('div');
@@ -11919,6 +11923,7 @@ function sendCommunityMsg(){
   var userMsgs=JSON.parse(localStorage.getItem('sa_community_msgs')||'[]');
   userMsgs.push(entry);
   localStorage.setItem('sa_community_msgs',JSON.stringify(userMsgs));
+  if(auth.currentUser&&db){db.collection('users').doc(auth.currentUser.uid).set({communityMessages:userMsgs,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(e){console.warn('Community msg sync failed:',e);});}
   input.value='';
   renderCommunityMessages();
 }
