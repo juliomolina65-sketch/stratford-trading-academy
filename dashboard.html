@@ -9157,9 +9157,39 @@ async function emergencySync(){
   if(!auth.currentUser){ showToast('Sign in first','warning'); return; }
   showToast('Syncing...','info');
   try{
+    var uid=auth.currentUser.uid;
+
+    // Force-close any open trades at $0 P&L
+    var openSnap=await db.collection('users').doc(uid).collection('trades')
+      .where('status','==','open').get();
+    if(!openSnap.empty){
+      var batch=db.batch();
+      openSnap.forEach(function(doc){
+        batch.update(doc.ref,{
+          status:'closed',
+          pnl:0,
+          exitPrice:0,
+          closedAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+      await batch.commit();
+      showToast('Force-closed '+openSnap.size+' open trade(s)','warning');
+    }
+
+    // Now reload all trades fresh
     var trades=await loadUserTrades(200);
     renderTradesTable(trades);
     if(typeof updateDashboardStats==='function') updateDashboardStats(trades);
+
+    // Also reset paper UI to match
+    paper.side=null; paper.entry=0; paper.qty=0; paper.upnl=0;
+    document.getElementById('paper-side').textContent='FLAT';
+    document.getElementById('paper-side').style.color='var(--text)';
+    document.getElementById('paper-entry').textContent='No entry price';
+    document.getElementById('paper-pos').textContent='No open position';
+    document.getElementById('paper-upnl').textContent='+$0.00';
+    document.getElementById('paper-upnl').style.color='var(--green)';
+
     showToast('Synced — '+trades.length+' trades loaded','success');
   }catch(e){
     console.error('Sync failed:',e);
