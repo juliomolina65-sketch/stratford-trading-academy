@@ -12753,44 +12753,54 @@ function showSupportChatBtn(){
   if(btn) btn.style.display=user.signedUp?'flex':'none';
 }
 
+function renderSupportMsg(m){
+  var time=m.createdAt?new Date(m.createdAt).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):(m.time?new Date(m.time).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'');
+  var statusColor=m.status==='resolved'?'var(--green)':m.status==='replied'?'var(--accent)':'var(--amber)';
+  var html='<div style="margin-bottom:12px">';
+  html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;color:var(--text3)">You</span><span style="font-size:10px;color:var(--text3)">'+time+'</span>';
+  html+='<span style="font-size:9px;color:'+statusColor+';background:'+statusColor+'15;border:1px solid '+statusColor+'40;border-radius:3px;padding:1px 6px;margin-left:auto">'+(m.status||'open').toUpperCase()+'</span></div>';
+  html+='<div style="background:rgba(0,184,230,.1);border:1px solid rgba(0,184,230,.2);border-radius:10px;border-top-right-radius:2px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5">'+escapeHtml(m.message)+'</div>';
+  html+='</div>';
+  if(m.replies&&m.replies.length){
+    m.replies.forEach(function(r){
+      var rTime=r.timestamp?new Date(r.timestamp).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+      html+='<div style="margin-bottom:12px;padding-left:12px">';
+      html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;color:var(--accent);font-weight:600">Support</span><span style="font-size:10px;color:var(--text3)">'+rTime+'</span></div>';
+      html+='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;border-top-left-radius:2px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5">'+escapeHtml(r.message)+'</div></div>';
+    });
+  }
+  return html;
+}
+
 async function loadSupportMessages(){
   if(!auth.currentUser)return;
   var container=document.getElementById('support-chat-messages');
   try{
     var resp=await fetch('/api/support/my-messages?uid='+auth.currentUser.uid);
     var data=await resp.json();
-    if(!data.messages||!data.messages.length){
-      container.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">No messages yet. Send one and our team will get back to you!</div>';
+    if(data.messages&&data.messages.length){
+      // Server messages — show them (oldest first)
+      var msgs=data.messages.reverse();
+      var html='';
+      msgs.forEach(function(m){ html+=renderSupportMsg(m); });
+      container.innerHTML=html;
+      container.scrollTop=container.scrollHeight;
+      // Clear local cache since server has everything
+      localStorage.removeItem('sa_support_msgs');
       return;
     }
+  }catch(e){
+    console.warn('Server load failed, using local cache:',e);
+  }
+  // Fallback: show locally saved messages
+  var localMsgs=JSON.parse(localStorage.getItem('sa_support_msgs')||'[]');
+  if(localMsgs.length){
     var html='';
-    // Show in chronological order (oldest first)
-    var msgs=data.messages.reverse();
-    msgs.forEach(function(m){
-      var time=m.createdAt?new Date(m.createdAt).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-      var statusColor=m.status==='resolved'?'var(--green)':m.status==='replied'?'var(--accent)':'var(--amber)';
-      // User message
-      html+='<div style="margin-bottom:12px">';
-      html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;color:var(--text3)">You</span><span style="font-size:10px;color:var(--text3)">'+time+'</span>';
-      html+='<span style="font-size:9px;color:'+statusColor+';background:'+statusColor+'15;border:1px solid '+statusColor+'40;border-radius:3px;padding:1px 6px;margin-left:auto">'+m.status.toUpperCase()+'</span></div>';
-      html+='<div style="background:rgba(0,184,230,.1);border:1px solid rgba(0,184,230,.2);border-radius:10px;border-top-right-radius:2px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5">'+escapeHtml(m.message)+'</div>';
-      html+='</div>';
-      // Admin replies
-      if(m.replies&&m.replies.length){
-        m.replies.forEach(function(r){
-          var rTime=r.timestamp?new Date(r.timestamp).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-          html+='<div style="margin-bottom:12px;padding-left:12px">';
-          html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;color:var(--accent);font-weight:600">Support</span><span style="font-size:10px;color:var(--text3)">'+rTime+'</span></div>';
-          html+='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;border-top-left-radius:2px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5">'+escapeHtml(r.message)+'</div>';
-          html+='</div>';
-        });
-      }
-    });
+    localMsgs.forEach(function(m){ html+=renderSupportMsg(m); });
     container.innerHTML=html;
     container.scrollTop=container.scrollHeight;
-  }catch(e){
-    console.error('Load support msgs failed:',e);
-    container.innerHTML='<div style="text-align:center;color:var(--red);font-size:12px;padding:20px">Failed to load messages</div>';
+  }else{
+    container.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">Pick a question above or type your own below!</div>';
   }
 }
 
@@ -12804,18 +12814,24 @@ async function sendSupportMsg(){
   input.value='';
   input.disabled=true;
 
-  // Immediately show the message in the chat (optimistic UI)
+  // Show message in chat immediately
   var container=document.getElementById('support-chat-messages');
   var now=new Date().toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  // Clear empty state
+  if(container.querySelector('[style*="text-align:center"]')&&container.children.length===1) container.innerHTML='';
   var msgDiv=document.createElement('div');
   msgDiv.style.marginBottom='12px';
-  msgDiv.innerHTML='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;color:var(--text3)">You</span><span style="font-size:10px;color:var(--text3)">'+now+'</span><span style="font-size:9px;color:var(--amber);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:3px;padding:1px 6px;margin-left:auto">SENDING...</span></div>'
+  msgDiv.innerHTML='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;color:var(--text3)">You</span><span style="font-size:10px;color:var(--text3)">'+now+'</span><span style="font-size:9px;color:var(--green);background:rgba(0,217,126,.1);border:1px solid rgba(0,217,126,.3);border-radius:3px;padding:1px 6px;margin-left:auto">OPEN</span></div>'
     +'<div style="background:rgba(0,184,230,.1);border:1px solid rgba(0,184,230,.2);border-radius:10px;border-top-right-radius:2px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5">'+escapeHtml(msgText)+'</div>';
-  // Remove the empty state if present
-  if(container.querySelector('[style*="text-align:center"]')&&container.children.length===1) container.innerHTML='';
   container.appendChild(msgDiv);
   container.scrollTop=container.scrollHeight;
 
+  // Also save locally so messages persist in the session
+  var localMsgs=JSON.parse(localStorage.getItem('sa_support_msgs')||'[]');
+  localMsgs.push({message:msgText,time:new Date().toISOString(),status:'open',replies:[]});
+  localStorage.setItem('sa_support_msgs',JSON.stringify(localMsgs));
+
+  // Send to server (fire and forget — don't reload)
   try{
     var resp=await fetch('/api/support/send',{
       method:'POST',
@@ -12823,16 +12839,8 @@ async function sendSupportMsg(){
       body:JSON.stringify({uid:auth.currentUser.uid,name:user.name||'User',email:user.email||'',message:msgText})
     });
     var data=await resp.json();
-    if(data.success){
-      showToast('Message sent!','success');
-      // Reload to get proper timestamps
-      setTimeout(function(){ loadSupportMessages(); },1000);
-    }else{
-      showToast('Failed: '+(data.error||'Unknown'),'error');
-      console.error('Support send failed:',data);
-    }
+    if(!data.success) console.error('Support send failed:',data);
   }catch(e){
-    showToast('Failed to send: '+e.message,'error');
     console.error('Support send error:',e);
   }
   input.disabled=false;
