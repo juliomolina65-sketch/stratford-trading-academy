@@ -1147,6 +1147,7 @@ app.post('/api/webhook', async (req, res) => {
       .get();
 
     let subscriberCount = 0;
+    let desyncEvents = [];
     const batch = dbAdmin.batch();
 
     for (const userDoc of usersSnapshot.docs) {
@@ -1165,70 +1166,64 @@ app.post('/api/webhook', async (req, res) => {
 
       console.log(`  → User ${uid}: tier=${userData.tier||'?'}, ${userQty}x ${userTicker} (multiplier: $${userMultiplier}/pt)`);
 
-      // Check if user has an open trade for this strategy (for closing)
-      if (tradeAction === 'SELL' || tradeAction === 'CLOSE') {
-        // Try to close an open trade — match by strategy (ticker may differ per user tier)
-        // Retry up to 3 times with delay to handle Firestore index propagation
-        let openTrades = null;
-        for (let attempt = 0; attempt < 3; attempt++) {
-          openTrades = await dbAdmin.collection('users').doc(uid)
-            .collection('trades')
-            .where('strategy', '==', strategy)
-            .where('status', '==', 'open')
-            .limit(1)
-            .get();
-          if (!openTrades.empty) break;
-          if (attempt < 2) {
-            console.log(`  → User ${uid}: no open trade found, retrying in 1s (attempt ${attempt + 1}/3)...`);
-            await new Promise(r => setTimeout(r, 1000));
-          }
-        }
-
-        if (openTrades && !openTrades.empty) {
-          const openTrade = openTrades.docs[0];
-          const openData = openTrade.data();
-          const pointDiff = tradePrice - openData.entryPrice;
-          const closeMultiplier = TICK_VALUES[openData.ticker] || userMultiplier;
-          // If original was BUY, profit = (exit - entry) * multiplier * qty
-          // If original was SELL (short), profit = (entry - exit) * multiplier * qty
-          const direction = openData.action === 'BUY' ? 1 : -1;
-          const pnl = parseFloat((pointDiff * direction * closeMultiplier * openData.qty).toFixed(2));
-
-          batch.update(openTrade.ref, {
-            exitPrice: tradePrice,
-            pnl: pnl,
-            status: 'closed',
-            closedAt: admin.firestore.FieldValue.serverTimestamp()
-          });
-
-          // Update user stats
-          const isWin = pnl > 0;
-          batch.update(dbAdmin.collection('users').doc(uid), {
-            totalPnl: admin.firestore.FieldValue.increment(pnl),
-            tradeCount: admin.firestore.FieldValue.increment(1),
-            winCount: admin.firestore.FieldValue.increment(isWin ? 1 : 0),
-            lossCount: admin.firestore.FieldValue.increment(isWin ? 0 : 1),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-          });
-
-          // Trade closed email — disabled (too frequent, would spam users)
-          // if (userData.email && userData.emailNotifications !== false) {
-          //   emailService.sendTradeClosedEmail(userData.email, userData.name || 'Trader', {
-          //     strategy, ticker: openData.ticker, entryPrice: openData.entryPrice, exitPrice: tradePrice, pnl
-          //   });
-          // }
-
-          subscriberCount++;
-          continue;
-        } else {
-          // No open trade found after retries — skip this user, don't open a phantom SELL
-          console.warn(`  → User ${uid}: SELL signal but no open trade found after retries — skipping`);
-          subscriberCount++;
-          continue;
+      // Check if user has an open trade for this strategy (BUY closes a SHORT, SELL closes a LONG)
+      let openTrades = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        openTrades = await dbAdmin.collection('users').doc(uid)
+          .collection('trades')
+          .where('strategy', '==', strategy)
+          .where('status', '==', 'open')
+          .limit(1)
+          .get();
+        if (!openTrades.empty) break;
+        if (attempt < 2) {
+          console.log(`  → User ${uid}: no open trade found, retrying in 1s (attempt ${attempt + 1}/3)...`);
+          await new Promise(r => setTimeout(r, 1000));
         }
       }
 
-      // Open a new trade with the USER's specific contract qty and ticker
+      if (openTrades && !openTrades.empty) {
+        // Close the open trade
+        const openTrade = openTrades.docs[0];
+        const openData = openTrade.data();
+        const pointDiff = tradePrice - openData.entryPrice;
+        const closeMultiplier = TICK_VALUES[openData.ticker] || userMultiplier;
+        // If original was BUY (long), profit = (exit - entry)
+        // If original was SELL (short), profit = (entry - exit)
+        const direction = openData.action === 'BUY' ? 1 : -1;
+        const pnl = parseFloat((pointDiff * direction * closeMultiplier * openData.qty).toFixed(2));
+
+        batch.update(openTrade.ref, {
+          exitPrice: tradePrice,
+          pnl: pnl,
+          status: 'closed',
+          closedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Update user stats
+        const isWin = pnl > 0;
+        batch.update(dbAdmin.collection('users').doc(uid), {
+          totalPnl: admin.firestore.FieldValue.increment(pnl),
+          tradeCount: admin.firestore.FieldValue.increment(1),
+          winCount: admin.firestore.FieldValue.increment(isWin ? 1 : 0),
+          lossCount: admin.firestore.FieldValue.increment(isWin ? 0 : 1),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        subscriberCount++;
+        continue;
+      }
+
+      // No open trade — open a new one (BUY = long entry, SELL = short entry)
+      if (tradeAction === 'CLOSE') {
+        // CLOSE signal but no open trade — desync!
+        const desyncMsg = `CLOSE signal but no open trade for ${strategy}`;
+        console.warn(`  → User ${uid}: ${desyncMsg}`);
+        desyncEvents.push({ uid, email: userData.email || uid, type: 'no_open_trade', message: desyncMsg });
+        subscriberCount++;
+        continue;
+      }
+
       const tradeRef = dbAdmin.collection('users').doc(uid).collection('trades').doc();
       batch.set(tradeRef, {
         strategy,
@@ -1259,14 +1254,21 @@ app.post('/api/webhook', async (req, res) => {
     // Commit all trades in batch
     await batch.commit();
 
-    // Update signal with subscriber count
-    await signalRef.update({ subscriberCount });
+    // Update signal with subscriber count and desync info
+    const signalUpdate = { subscriberCount };
+    if (desyncEvents.length > 0) {
+      signalUpdate.desyncs = desyncEvents;
+      signalUpdate.hasDesyncs = true;
+      console.warn(`[WEBHOOK] ${desyncEvents.length} desync event(s) detected`);
+    }
+    await signalRef.update(signalUpdate);
 
     console.log(`[WEBHOOK] Dispatched to ${subscriberCount} subscribers`);
     res.json({
       success: true,
       signal: signalRef.id,
       subscribers: subscriberCount,
+      desyncs: desyncEvents.length,
       action: tradeAction,
       strategy,
       ticker,
@@ -1276,6 +1278,73 @@ app.post('/api/webhook', async (req, res) => {
   } catch (err) {
     console.error('[WEBHOOK] Error:', err);
     res.status(500).json({ error: 'Internal server error', message: err.message });
+  }
+});
+
+// ---- Admin: Recent signals log ----
+app.get('/api/admin/signals', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const authHeader = req.headers['x-admin-secret'];
+  if (authHeader !== WEBHOOK_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const snap = await dbAdmin.collection('signals')
+      .orderBy('timestamp', 'desc')
+      .limit(limit)
+      .get();
+
+    const signals = snap.docs.map(doc => {
+      const d = doc.data();
+      return {
+        id: doc.id,
+        strategy: d.strategy,
+        action: d.action,
+        ticker: d.ticker,
+        price: d.price,
+        qty: d.qty,
+        subscribers: d.subscriberCount || 0,
+        hasDesyncs: d.hasDesyncs || false,
+        desyncs: d.desyncs || [],
+        time: d.time || null,
+        timestamp: d.timestamp ? d.timestamp.toDate().toISOString() : null
+      };
+    });
+
+    res.json({ signals });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Admin: Desync events only ----
+app.get('/api/admin/desyncs', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const authHeader = req.headers['x-admin-secret'];
+  if (authHeader !== WEBHOOK_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const snap = await dbAdmin.collection('signals')
+      .where('hasDesyncs', '==', true)
+      .orderBy('timestamp', 'desc')
+      .limit(20)
+      .get();
+
+    const desyncs = snap.docs.map(doc => {
+      const d = doc.data();
+      return {
+        signalId: doc.id,
+        strategy: d.strategy,
+        action: d.action,
+        price: d.price,
+        desyncs: d.desyncs || [],
+        timestamp: d.timestamp ? d.timestamp.toDate().toISOString() : null
+      };
+    });
+
+    res.json({ desyncs });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

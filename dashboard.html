@@ -5763,13 +5763,24 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
                   <th style="text-align:left;padding:12px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-family:var(--mono);border-bottom:1px solid var(--border)">Strategy</th>
                   <th style="text-align:left;padding:12px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-family:var(--mono);border-bottom:1px solid var(--border)">Action</th>
                   <th style="text-align:left;padding:12px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-family:var(--mono);border-bottom:1px solid var(--border)">Ticker</th>
-                  <th style="text-align:left;padding:12px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-family:var(--mono);border-bottom:1px solid var(--border)">Qty</th>
+                  <th style="text-align:left;padding:12px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-family:var(--mono);border-bottom:1px solid var(--border)">Price</th>
                   <th style="text-align:left;padding:12px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-family:var(--mono);border-bottom:1px solid var(--border)">Subscribers</th>
-                  <th style="text-align:left;padding:12px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-family:var(--mono);border-bottom:1px solid var(--border)">Status</th>
+                  <th style="text-align:left;padding:12px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-family:var(--mono);border-bottom:1px solid var(--border)">Sync</th>
                 </tr>
               </thead>
               <tbody id="admin-signals-tbody"></tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Desync Warnings -->
+        <div style="margin-top:20px">
+          <div class="page-header" style="margin-bottom:12px">
+            <div><div class="page-title" style="font-size:16px">⚠️ Desync Warnings</div><div class="page-sub">Signals where users were out of sync</div></div>
+            <button class="btn sm ghost" onclick="loadAdminDesyncs()">Refresh</button>
+          </div>
+          <div class="panel">
+            <div id="admin-desyncs-container" style="padding:16px;color:var(--text3);font-size:13px">Loading...</div>
           </div>
         </div>
 
@@ -8220,7 +8231,7 @@ function nav(id,el,crumb){
   if(id==='admin-members') renderAdminMembers();
   if(id==='admin-coupons') renderAdminCoupons();
   if(id==='admin-strategies') renderAdminStrategies();
-  if(id==='admin-signals') renderAdminSignals();
+  if(id==='admin-signals'){ renderAdminSignals(); loadAdminDesyncs(); }
   if(id==='admin-emails') loadEmailLog();
   if(id==='coupons') renderUserCouponsFromData();
   if(id==='backtest') setTimeout(function(){ initBacktestCharts(); }, 50);
@@ -8818,40 +8829,69 @@ function toggleStrategy(id){
   renderAdminStrategies();}
 }
 
-function renderAdminSignals(){
-  const signals=JSON.parse(localStorage.getItem('sa_admin_signals')||'[]');
+async function renderAdminSignals(){
   const tbody=document.getElementById('admin-signals-tbody');
-  if(!signals.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">No signals recorded</td></tr>';return;}
-  tbody.innerHTML=signals.map(s=>{
-    const t=new Date(s.timestamp);
-    const time=t.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-    const actColor=s.action==='BUY'?'var(--green)':'var(--red)';
-    const stColor=s.status==='sent'?'var(--green)':'var(--red)';
-    return `<tr>
-      <td style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);font-family:var(--mono)">${time}</td>
-      <td style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text)">${s.strategy}</td>
-      <td style="padding:10px 16px;border-bottom:1px solid var(--border)"><span class="badge" style="background:${s.action==='BUY'?'rgba(0,217,126,.1)':'rgba(239,68,68,.1)'};color:${actColor};border:1px solid ${s.action==='BUY'?'rgba(0,217,126,.25)':'rgba(239,68,68,.25)'}">${s.action}</span></td>
-      <td style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;font-family:var(--mono);color:var(--text)">${s.ticker}</td>
-      <td style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;font-family:var(--mono);color:var(--text)">${s.qty}</td>
-      <td style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)">${s.subscribers} users</td>
-      <td style="padding:10px 16px;border-bottom:1px solid var(--border)"><span class="badge" style="background:${s.status==='sent'?'rgba(0,217,126,.1)':'rgba(239,68,68,.1)'};color:${stColor};border:1px solid ${s.status==='sent'?'rgba(0,217,126,.25)':'rgba(239,68,68,.25)'}">${s.status.toUpperCase()}</span></td>
-    </tr>`;
-  }).join('');
-}
-function generateDemoSignals(){
-  const signals=JSON.parse(localStorage.getItem('sa_admin_signals')||'[]');
-  const stratNames=['Stratford Alpha','Stratford Apex','Stratford Omega','Stratford Guardian'];
-  const tickers=[['NQ','MNQ'],['NQ','MNQ'],['ES','MES'],['ES','MES']];
-  for(let i=0;i<10;i++){
-    const si=Math.floor(Math.random()*4);const act=Math.random()>.5?'BUY':'SELL';
-    const tk=tickers[si][Math.random()>.5?0:1];const qty=Math.floor(Math.random()*8)+1;
-    const d=new Date();d.setMinutes(d.getMinutes()-i*15);
-    signals.unshift({id:signals.length+i+1,timestamp:d.toISOString(),strategy:stratNames[si],action:act,ticker:tk,qty:qty,
-      price:(tk==='NQ'||tk==='MNQ'?21500+Math.random()*200:5900+Math.random()*50).toFixed(2),
-      subscribers:Math.floor(Math.random()*40)+5,status:Math.random()>.95?'failed':'sent'});
+  if(!tbody)return;
+  tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">Loading signals from Firestore...</td></tr>';
+  try{
+    const snap=await db.collection('signals').orderBy('timestamp','desc').limit(50).get();
+    if(snap.empty){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">No signals recorded yet</td></tr>';return;}
+    tbody.innerHTML=snap.docs.map(function(doc){
+      var s=doc.data();
+      var t=s.timestamp?s.timestamp.toDate():new Date(s.time||Date.now());
+      var time=t.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      var actColor=s.action==='BUY'?'var(--green)':'var(--red)';
+      var hasDesync=s.hasDesyncs?true:false;
+      var syncBadge=hasDesync
+        ?'<span class="badge" style="background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid rgba(245,158,11,.25)">⚠️ DESYNC</span>'
+        :'<span class="badge" style="background:rgba(0,217,126,.1);color:var(--green);border:1px solid rgba(0,217,126,.25)">✅ OK</span>';
+      return '<tr>'+
+        '<td style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);font-family:var(--mono)">'+time+'</td>'+
+        '<td style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text)">'+s.strategy+'</td>'+
+        '<td style="padding:10px 16px;border-bottom:1px solid var(--border)"><span class="badge" style="background:'+(s.action==='BUY'?'rgba(0,217,126,.1)':'rgba(239,68,68,.1)')+';color:'+actColor+';border:1px solid '+(s.action==='BUY'?'rgba(0,217,126,.25)':'rgba(239,68,68,.25)')+'">'+s.action+'</span></td>'+
+        '<td style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;font-family:var(--mono);color:var(--text)">'+s.ticker+'</td>'+
+        '<td style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;font-family:var(--mono);color:var(--text)">$'+(s.price||0).toLocaleString(undefined,{minimumFractionDigits:2})+'</td>'+
+        '<td style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)">'+(s.subscriberCount||0)+' users</td>'+
+        '<td style="padding:10px 16px;border-bottom:1px solid var(--border)">'+syncBadge+'</td>'+
+      '</tr>';
+    }).join('');
+  }catch(e){
+    console.error('Load signals failed:',e);
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--red);font-size:13px;padding:24px">Failed to load: '+e.message+'</td></tr>';
   }
-  localStorage.setItem('sa_admin_signals',JSON.stringify(signals));
-  try{db.collection('admin').doc('signals').set({items:signals,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){}
+}
+
+async function loadAdminDesyncs(){
+  var container=document.getElementById('admin-desyncs-container');
+  if(!container)return;
+  container.innerHTML='Loading...';
+  try{
+    var snap=await db.collection('signals').where('hasDesyncs','==',true).orderBy('timestamp','desc').limit(20).get();
+    if(snap.empty){container.innerHTML='<div style="text-align:center;padding:20px;color:var(--green)">✅ No desync events — all signals in sync!</div>';return;}
+    var html='';
+    snap.docs.forEach(function(doc){
+      var s=doc.data();
+      var t=s.timestamp?s.timestamp.toDate():new Date();
+      var time=t.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      var desyncs=s.desyncs||[];
+      html+='<div style="background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin-bottom:10px">';
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+      html+='<span style="font-size:13px;font-weight:600;color:var(--text)">⚠️ '+s.action+' '+s.strategy+' @ $'+(s.price||0).toFixed(2)+'</span>';
+      html+='<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">'+time+'</span></div>';
+      desyncs.forEach(function(d){
+        html+='<div style="font-size:12px;color:var(--red);padding:4px 0;padding-left:12px;border-left:2px solid var(--red)">'+
+          '<strong>'+(d.email||d.uid)+'</strong> — '+d.message+'</div>';
+      });
+      html+='</div>';
+    });
+    container.innerHTML=html;
+  }catch(e){
+    console.error('Load desyncs failed:',e);
+    container.innerHTML='<div style="color:var(--red)">Failed to load: '+e.message+'</div>';
+  }
+}
+
+function generateDemoSignals(){
   renderAdminSignals();
 }
 
