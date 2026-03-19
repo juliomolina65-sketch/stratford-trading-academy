@@ -1944,6 +1944,175 @@ if (dbAdmin) {
 }
 
 // ============================================
+// Support Chat API
+// ============================================
+
+// User sends a support message
+app.post('/api/support/send', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const { uid, name, email, message } = req.body;
+  if (!uid || !message) return res.status(400).json({ error: 'Missing uid or message' });
+
+  try {
+    const docRef = await dbAdmin.collection('supportMessages').add({
+      uid,
+      name: name || 'Unknown',
+      email: email || '',
+      message,
+      status: 'open',
+      replies: [],
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    res.json({ success: true, id: docRef.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// User fetches their own support messages
+app.get('/api/support/my-messages', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const uid = req.query.uid;
+  if (!uid) return res.status(400).json({ error: 'Missing uid' });
+
+  try {
+    const snap = await dbAdmin.collection('supportMessages')
+      .where('uid', '==', uid)
+      .orderBy('createdAt', 'desc')
+      .limit(50)
+      .get();
+
+    const messages = snap.docs.map(doc => {
+      const d = doc.data();
+      return {
+        id: doc.id,
+        message: d.message,
+        status: d.status,
+        replies: d.replies || [],
+        createdAt: d.createdAt ? d.createdAt.toDate().toISOString() : null,
+        updatedAt: d.updatedAt ? d.updatedAt.toDate().toISOString() : null
+      };
+    });
+    res.json({ messages });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: fetch all support messages
+app.get('/api/admin/support', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const authHeader = req.headers['x-admin-secret'];
+  if (authHeader !== WEBHOOK_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const statusFilter = req.query.status || 'all';
+    let query = dbAdmin.collection('supportMessages').orderBy('createdAt', 'desc').limit(100);
+    if (statusFilter !== 'all') {
+      query = dbAdmin.collection('supportMessages').where('status', '==', statusFilter).orderBy('createdAt', 'desc').limit(100);
+    }
+    const snap = await query.get();
+
+    const tickets = snap.docs.map(doc => {
+      const d = doc.data();
+      return {
+        id: doc.id,
+        uid: d.uid,
+        name: d.name,
+        email: d.email,
+        message: d.message,
+        status: d.status,
+        replies: d.replies || [],
+        createdAt: d.createdAt ? d.createdAt.toDate().toISOString() : null
+      };
+    });
+    res.json({ tickets });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: reply to a support message
+app.post('/api/admin/support/reply', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const { secret, ticketId, reply } = req.body;
+  if (secret !== WEBHOOK_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  if (!ticketId || !reply) return res.status(400).json({ error: 'Missing ticketId or reply' });
+
+  try {
+    await dbAdmin.collection('supportMessages').doc(ticketId).update({
+      replies: admin.firestore.FieldValue.arrayUnion({
+        from: 'admin',
+        message: reply,
+        timestamp: new Date().toISOString()
+      }),
+      status: 'replied',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: resolve a support ticket
+app.post('/api/admin/support/resolve', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const { secret, ticketId } = req.body;
+  if (secret !== WEBHOOK_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  if (!ticketId) return res.status(400).json({ error: 'Missing ticketId' });
+
+  try {
+    await dbAdmin.collection('supportMessages').doc(ticketId).update({
+      status: 'resolved',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Admin: Assign Strategy to User
+// ============================================
+
+const TIER_CONFIG = {
+  '50k': { 'Stratford Alpha': { qty: 5, ticker: 'MNQ' }, 'Stratford Apex': { qty: 5, ticker: 'MNQ' }, 'Stratford Omega': { qty: 5, ticker: 'MES' }, 'Stratford Guardian': { qty: 5, ticker: 'MES' } },
+  '100k': { 'Stratford Alpha': { qty: 8, ticker: 'MNQ' }, 'Stratford Apex': { qty: 8, ticker: 'MNQ' }, 'Stratford Omega': { qty: 8, ticker: 'MES' }, 'Stratford Guardian': { qty: 8, ticker: 'MES' } },
+  '150k': { 'Stratford Alpha': { qty: 1, ticker: 'NQ' }, 'Stratford Apex': { qty: 1, ticker: 'NQ' }, 'Stratford Omega': { qty: 1, ticker: 'ES' }, 'Stratford Guardian': { qty: 1, ticker: 'ES' } }
+};
+
+app.post('/api/admin/assign-strategy', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const { secret, uid, strategy, tier, accountType } = req.body;
+  if (secret !== WEBHOOK_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  if (!uid || !strategy || !tier) return res.status(400).json({ error: 'Missing uid, strategy, or tier' });
+
+  try {
+    const config = TIER_CONFIG[tier] && TIER_CONFIG[tier][strategy];
+    if (!config) return res.status(400).json({ error: 'Invalid tier/strategy combination' });
+
+    const updateData = {
+      activeStrategies: [strategy],
+      tier: tier,
+      qty: config.qty,
+      ticker: config.ticker,
+      activeBroker: accountType || 'paper',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await dbAdmin.collection('users').doc(uid).set(updateData, { merge: true });
+
+    console.log(`[ADMIN] Assigned ${strategy} (${tier}) to user ${uid} — ${config.qty}x ${config.ticker}`);
+    res.json({ success: true, assigned: { strategy, tier, qty: config.qty, ticker: config.ticker } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
 // Start Server
 // ============================================
 app.listen(PORT, () => {

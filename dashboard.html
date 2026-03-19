@@ -1052,6 +1052,9 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
         <div class="nav-item" onclick="requireAdmin()&&nav('admin-webhooks',this,'Admin › Webhook Messages')">
           <span class="nav-icon">📨</span>Webhook Messages
         </div>
+        <div class="nav-item" onclick="requireAdmin()&&nav('admin-support',this,'Admin › Support Inbox')">
+          <span class="nav-icon">📩</span>Support Inbox <span id="admin-support-count" style="display:none;font-family:var(--mono);font-size:9px;color:#fff;background:var(--red);border-radius:9px;padding:1px 6px;margin-left:4px">0</span>
+        </div>
         <div class="nav-item" onclick="logoutAdmin()" style="color:var(--red)">
           <span class="nav-icon">🔒</span>Exit Admin
         </div>
@@ -6053,6 +6056,27 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
       </div>
     </div>
 
+    <!-- ADMIN SUPPORT INBOX -->
+    <div class="page" id="page-admin-support">
+      <div style="padding:28px 32px">
+        <div class="page-header">
+          <div><div class="page-title">📩 Support Inbox</div><div class="page-sub">Messages from members needing help</div></div>
+          <div style="display:flex;gap:8px">
+            <select id="support-filter" onchange="loadAdminSupport()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 12px;color:var(--text);font-family:var(--sans);font-size:12px">
+              <option value="all">All Tickets</option>
+              <option value="open">Open</option>
+              <option value="replied">Replied</option>
+              <option value="resolved">Resolved</option>
+            </select>
+            <button class="btn sm ghost" onclick="loadAdminSupport()">🔄 Refresh</button>
+          </div>
+        </div>
+        <div id="admin-support-container" style="display:flex;flex-direction:column;gap:12px">
+          <div style="text-align:center;color:var(--text3);font-size:13px;padding:40px">Loading...</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -8478,6 +8502,7 @@ function nav(id,el,crumb){
   if(id==='admin-strategies') renderAdminStrategies();
   if(id==='admin-signals'){ renderAdminSignals(); loadAdminDesyncs(); }
   if(id==='admin-emails') loadEmailLog();
+  if(id==='admin-support') loadAdminSupport();
   if(id==='coupons') renderUserCouponsFromData();
   if(id==='backtest') setTimeout(function(){ initBacktestCharts(); }, 50);
 }
@@ -8776,6 +8801,7 @@ function buildMemberRows(members){
       + (m.isAdmin?'':'<div style="display:flex;flex-direction:column;gap:5px;min-width:120px">'
       +'<select onchange="adminGrantAccess(\''+m.uid+'\',this.value);this.value=\'\'" style="background:linear-gradient(135deg,rgba(0,184,230,.1),rgba(139,111,255,.1));border:1px solid rgba(0,184,230,.3);border-radius:6px;padding:5px 8px;color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;outline:none;width:100%"><option value="">🔑 Grant Access</option><option value="alpha">Alpha ($99/mo)</option><option value="pro">Pro ($189/mo)</option><option value="elite">Elite ($250/mo)</option>'+(plan!=='free'?'<option value="revoke">❌ Revoke Access</option>':'')+'</select>'
       +'<button class="btn sm '+(m.accountStatus==='paused'?'':'danger')+'" style="font-size:10px;padding:4px 10px;width:100%;justify-content:center" onclick="adminToggleMember(\''+m.uid+'\',\''+(m.accountStatus==='paused'?'resume':'pause')+'\')">'+(m.accountStatus==='paused'?'▶ Resume':'⏸ Pause')+'</button>'
+      +'<button class="btn sm ghost" style="font-size:10px;padding:4px 10px;width:100%;justify-content:center;color:var(--purple)" onclick="adminAssignStrategy(\''+m.uid+'\',\''+escapeHtml(m.name||'User')+'\')">📊 Assign Strategy</button>'
       +'</div>')
       +'</td></tr>'
       +'<tr id="md-'+idx+'" style="display:none"><td colspan="10" style="padding:0;border-bottom:1px solid var(--border)">'
@@ -9138,6 +9164,140 @@ async function loadAdminDesyncs(){
 
 function generateDemoSignals(){
   renderAdminSignals();
+}
+
+// ── Admin Support Inbox ──
+async function loadAdminSupport(){
+  var container=document.getElementById('admin-support-container');
+  if(!container)return;
+  container.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:40px">Loading tickets...</div>';
+  var filter=document.getElementById('support-filter')?document.getElementById('support-filter').value:'all';
+  try{
+    var resp=await fetch('/api/admin/support?status='+filter,{headers:{'x-admin-secret':'SA_WEBHOOK_SECRET_2026'}});
+    var data=await resp.json();
+    if(!data.tickets||!data.tickets.length){
+      container.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:40px">No support tickets'+(filter!=='all'?' with status "'+filter+'"':'')+'</div>';
+      return;
+    }
+    // Update badge count
+    var openCount=data.tickets.filter(function(t){return t.status==='open'}).length;
+    var badge=document.getElementById('admin-support-count');
+    if(badge){badge.textContent=openCount;badge.style.display=openCount>0?'inline-flex':'none';}
+
+    var html='';
+    data.tickets.forEach(function(t){
+      var time=t.createdAt?new Date(t.createdAt).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'Unknown';
+      var statusColors={'open':'var(--amber)','replied':'var(--accent)','resolved':'var(--green)'};
+      var sc=statusColors[t.status]||'var(--text3)';
+
+      html+='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden" id="ticket-'+t.id+'">';
+      // Header
+      html+='<div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">';
+      html+='<div style="display:flex;align-items:center;gap:10px">';
+      html+='<div style="width:32px;height:32px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent)">'+(t.name?t.name.split(' ').map(function(w){return w[0]}).join('').toUpperCase().substring(0,2):'?')+'</div>';
+      html+='<div><div style="font-size:13px;font-weight:600;color:var(--text)">'+escapeHtml(t.name||'Unknown')+'</div>';
+      html+='<div style="font-size:11px;color:var(--text3)">'+escapeHtml(t.email||'')+'</div></div></div>';
+      html+='<div style="display:flex;align-items:center;gap:8px">';
+      html+='<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+time+'</span>';
+      html+='<span style="font-size:9px;color:'+sc+';background:'+sc+'15;border:1px solid '+sc+'40;border-radius:3px;padding:2px 8px;font-weight:600">'+t.status.toUpperCase()+'</span>';
+      html+='</div></div>';
+      // Message
+      html+='<div style="padding:14px 18px;border-bottom:1px solid var(--border)">';
+      html+='<div style="font-size:13px;color:var(--text);line-height:1.6">'+escapeHtml(t.message)+'</div>';
+      html+='</div>';
+      // Replies
+      if(t.replies&&t.replies.length){
+        t.replies.forEach(function(r){
+          var rTime=r.timestamp?new Date(r.timestamp).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+          html+='<div style="padding:10px 18px;background:rgba(0,184,230,.03);border-bottom:1px solid var(--border)">';
+          html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;font-weight:600;color:var(--accent)">Admin Reply</span><span style="font-size:10px;color:var(--text3)">'+rTime+'</span></div>';
+          html+='<div style="font-size:13px;color:var(--text);line-height:1.5">'+escapeHtml(r.message)+'</div></div>';
+        });
+      }
+      // Reply input + actions
+      html+='<div style="padding:12px 18px;display:flex;gap:8px;align-items:center">';
+      html+='<input id="reply-input-'+t.id+'" type="text" placeholder="Type a reply..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none" onkeydown="if(event.key===\'Enter\')adminReplyTicket(\''+t.id+'\')">';
+      html+='<button class="btn sm" onclick="adminReplyTicket(\''+t.id+'\')" style="font-size:11px;padding:6px 12px">Reply</button>';
+      if(t.status!=='resolved'){
+        html+='<button class="btn sm ghost" onclick="adminResolveTicket(\''+t.id+'\')" style="font-size:11px;padding:6px 12px;color:var(--green)">✓ Resolve</button>';
+      }
+      html+='</div></div>';
+    });
+    container.innerHTML=html;
+  }catch(e){
+    console.error('Load support failed:',e);
+    container.innerHTML='<div style="text-align:center;color:var(--red);font-size:13px;padding:40px">Failed to load: '+e.message+'</div>';
+  }
+}
+
+async function adminReplyTicket(ticketId){
+  var input=document.getElementById('reply-input-'+ticketId);
+  if(!input)return;
+  var reply=input.value.trim();
+  if(!reply){showToast('Type a reply first','warning');return;}
+  input.disabled=true;
+  try{
+    await fetch('/api/admin/support/reply',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({secret:'SA_WEBHOOK_SECRET_2026',ticketId:ticketId,reply:reply})
+    });
+    showToast('Reply sent!','success');
+    loadAdminSupport();
+  }catch(e){
+    showToast('Reply failed: '+e.message,'error');
+  }
+  input.disabled=false;
+}
+
+async function adminResolveTicket(ticketId){
+  try{
+    await fetch('/api/admin/support/resolve',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({secret:'SA_WEBHOOK_SECRET_2026',ticketId:ticketId})
+    });
+    showToast('Ticket resolved ✅','success');
+    loadAdminSupport();
+  }catch(e){
+    showToast('Failed: '+e.message,'error');
+  }
+}
+
+// ── Admin Assign Strategy ──
+async function adminAssignStrategy(uid,userName){
+  var strategy=prompt('Assign strategy to '+userName+':\n\n1. Stratford Alpha\n2. Stratford Apex\n3. Stratford Omega\n4. Stratford Guardian\n\nEnter number (1-4):');
+  if(!strategy)return;
+  var stratNames={'1':'Stratford Alpha','2':'Stratford Apex','3':'Stratford Omega','4':'Stratford Guardian'};
+  var stratName=stratNames[strategy];
+  if(!stratName){showToast('Invalid selection','error');return;}
+
+  var tier=prompt('Select tier for '+userName+':\n\n1. 50k ($50,000)\n2. 100k ($100,000)\n3. 150k ($150,000)\n\nEnter number (1-3):');
+  if(!tier)return;
+  var tierNames={'1':'50k','2':'100k','3':'150k'};
+  var tierName=tierNames[tier];
+  if(!tierName){showToast('Invalid tier','error');return;}
+
+  var acctType=prompt('Account type:\n\n1. Paper Demo\n2. Live\n\nEnter number (1-2):');
+  var acctMap={'1':'paper','2':'live'};
+  var acctName=acctMap[acctType||'1']||'paper';
+
+  try{
+    var resp=await fetch('/api/admin/assign-strategy',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({secret:'SA_WEBHOOK_SECRET_2026',uid:uid,strategy:stratName,tier:tierName,accountType:acctName})
+    });
+    var data=await resp.json();
+    if(data.success){
+      showToast('Assigned '+stratName+' ('+tierName+') to '+userName,'success');
+      loadAdminMembers();
+    }else{
+      showToast('Failed: '+(data.error||'Unknown error'),'error');
+    }
+  }catch(e){
+    showToast('Failed: '+e.message,'error');
+  }
 }
 
 // Render user-facing coupons from data
@@ -12388,6 +12548,122 @@ function toggleTheme(){
   box-shadow:0 4px 16px rgba(0,0,0,.4);
   transition:all .3s;backdrop-filter:blur(8px);
 ">☀️</button>
+
+<!-- Floating Support Chat -->
+<div id="support-chat-btn" onclick="toggleSupportChat()" style="display:none;position:fixed;bottom:24px;right:24px;z-index:250;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0090d0);color:#fff;font-size:24px;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,184,230,.4);display:flex;align-items:center;justify-content:center;transition:all .2s" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+  💬
+  <span id="support-unread-badge" style="display:none;position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:var(--mono)">0</span>
+</div>
+
+<div id="support-chat-panel" style="display:none;position:fixed;bottom:90px;right:24px;z-index:251;width:360px;max-height:500px;background:var(--bg);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.5);overflow:hidden;flex-direction:column">
+  <!-- Header -->
+  <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2)">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--text)">💬 Support Chat</div>
+      <div style="font-size:11px;color:var(--text3)">We typically reply within a few hours</div>
+    </div>
+    <button onclick="toggleSupportChat()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">&times;</button>
+  </div>
+  <!-- Messages -->
+  <div id="support-chat-messages" style="flex:1;overflow-y:auto;padding:16px;min-height:200px;max-height:320px">
+    <div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">Send a message and our team will get back to you!</div>
+  </div>
+  <!-- Input -->
+  <div style="padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--bg2)">
+    <input id="support-chat-input" type="text" placeholder="Type your message..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none" onkeydown="if(event.key==='Enter')sendSupportMsg()">
+    <button onclick="sendSupportMsg()" class="btn sm" style="padding:8px 16px;font-size:12px">Send</button>
+  </div>
+</div>
+
+<script>
+// ── Support Chat ──
+var supportChatOpen=false;
+
+function toggleSupportChat(){
+  supportChatOpen=!supportChatOpen;
+  document.getElementById('support-chat-panel').style.display=supportChatOpen?'flex':'none';
+  if(supportChatOpen) loadSupportMessages();
+}
+
+function showSupportChatBtn(){
+  var user=JSON.parse(localStorage.getItem('sa_user')||'{}');
+  var btn=document.getElementById('support-chat-btn');
+  if(btn) btn.style.display=user.signedUp?'flex':'none';
+}
+
+async function loadSupportMessages(){
+  if(!auth.currentUser)return;
+  var container=document.getElementById('support-chat-messages');
+  try{
+    var resp=await fetch('/api/support/my-messages?uid='+auth.currentUser.uid);
+    var data=await resp.json();
+    if(!data.messages||!data.messages.length){
+      container.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">No messages yet. Send one and our team will get back to you!</div>';
+      return;
+    }
+    var html='';
+    // Show in chronological order (oldest first)
+    var msgs=data.messages.reverse();
+    msgs.forEach(function(m){
+      var time=m.createdAt?new Date(m.createdAt).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+      var statusColor=m.status==='resolved'?'var(--green)':m.status==='replied'?'var(--accent)':'var(--amber)';
+      // User message
+      html+='<div style="margin-bottom:12px">';
+      html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;color:var(--text3)">You</span><span style="font-size:10px;color:var(--text3)">'+time+'</span>';
+      html+='<span style="font-size:9px;color:'+statusColor+';background:'+statusColor+'15;border:1px solid '+statusColor+'40;border-radius:3px;padding:1px 6px;margin-left:auto">'+m.status.toUpperCase()+'</span></div>';
+      html+='<div style="background:rgba(0,184,230,.1);border:1px solid rgba(0,184,230,.2);border-radius:10px;border-top-right-radius:2px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5">'+escapeHtml(m.message)+'</div>';
+      html+='</div>';
+      // Admin replies
+      if(m.replies&&m.replies.length){
+        m.replies.forEach(function(r){
+          var rTime=r.timestamp?new Date(r.timestamp).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+          html+='<div style="margin-bottom:12px;padding-left:12px">';
+          html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;color:var(--accent);font-weight:600">Support</span><span style="font-size:10px;color:var(--text3)">'+rTime+'</span></div>';
+          html+='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;border-top-left-radius:2px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5">'+escapeHtml(r.message)+'</div>';
+          html+='</div>';
+        });
+      }
+    });
+    container.innerHTML=html;
+    container.scrollTop=container.scrollHeight;
+  }catch(e){
+    console.error('Load support msgs failed:',e);
+    container.innerHTML='<div style="text-align:center;color:var(--red);font-size:12px;padding:20px">Failed to load messages</div>';
+  }
+}
+
+async function sendSupportMsg(){
+  var input=document.getElementById('support-chat-input');
+  var msg=input.value.trim();
+  if(!msg)return;
+  if(!auth.currentUser){showToast('Sign in first','warning');return;}
+  var user=JSON.parse(localStorage.getItem('sa_user')||'{}');
+  input.value='';
+  input.disabled=true;
+  try{
+    await fetch('/api/support/send',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({uid:auth.currentUser.uid,name:user.name||'User',email:user.email||'',message:msg})
+    });
+    showToast('Message sent!','success');
+    loadSupportMessages();
+  }catch(e){
+    showToast('Failed to send','error');
+  }
+  input.disabled=false;
+  input.focus();
+}
+
+function escapeHtml(t){
+  var d=document.createElement('div');d.textContent=t;return d.innerHTML;
+}
+
+// Show chat button when user is signed in
+auth.onAuthStateChanged(function(u){
+  setTimeout(showSupportChatBtn,500);
+});
+</script>
 
 </body>
 </html>
