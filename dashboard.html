@@ -6270,6 +6270,66 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
   </div>
 </div>
 
+<!-- Admin Manage User Modal -->
+<div id="admin-manage-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:310;align-items:center;justify-content:center;backdrop-filter:blur(6px)">
+  <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;width:440px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)">
+    <div style="padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:16px;font-weight:700;color:var(--text)">👤 Manage User</div>
+      <button onclick="document.getElementById('admin-manage-modal').style.display='none'" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">&times;</button>
+    </div>
+    <div style="padding:20px 22px">
+      <div style="margin-bottom:16px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:8px">
+        <div style="font-size:14px;font-weight:600;color:var(--text)" id="amm-name">User Name</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono)" id="amm-email">email@example.com</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px" id="amm-current">Current: No strategy</div>
+      </div>
+
+      <!-- Assign Strategy -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">📊 Assign Strategy</div>
+        <div id="amm-strategies" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button onclick="ammSelectStrat('Stratford Alpha')" class="btn ghost sm amm-strat" style="padding:10px;font-size:12px;justify-content:center;border-color:var(--border)" data-strat="Stratford Alpha"><span style="color:var(--accent);font-weight:700">NQ</span>&nbsp; Alpha</button>
+          <button onclick="ammSelectStrat('Stratford Apex')" class="btn ghost sm amm-strat" style="padding:10px;font-size:12px;justify-content:center;border-color:var(--border)" data-strat="Stratford Apex"><span style="color:var(--purple);font-weight:700">MNQ</span>&nbsp; Apex</button>
+          <button onclick="ammSelectStrat('Stratford Omega')" class="btn ghost sm amm-strat" style="padding:10px;font-size:12px;justify-content:center;border-color:var(--border)" data-strat="Stratford Omega"><span style="color:var(--green);font-weight:700">ES</span>&nbsp; Omega</button>
+          <button onclick="ammSelectStrat('Stratford Guardian')" class="btn ghost sm amm-strat" style="padding:10px;font-size:12px;justify-content:center;border-color:var(--border)" data-strat="Stratford Guardian"><span style="color:var(--amber);font-weight:700">MES</span>&nbsp; Guardian</button>
+        </div>
+      </div>
+
+      <!-- Select Tier -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">💰 Account Tier</div>
+        <div id="amm-tiers" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <button onclick="ammSelectTier('50k')" class="btn ghost sm amm-tier" style="padding:10px;font-size:12px;justify-content:center;border-color:var(--border)" data-tier="50k">$50K</button>
+          <button onclick="ammSelectTier('100k')" class="btn ghost sm amm-tier" style="padding:10px;font-size:12px;justify-content:center;border-color:var(--border)" data-tier="100k">$100K</button>
+          <button onclick="ammSelectTier('150k')" class="btn ghost sm amm-tier" style="padding:10px;font-size:12px;justify-content:center;border-color:var(--border)" data-tier="150k">$150K</button>
+        </div>
+      </div>
+
+      <!-- Account Type -->
+      <div style="margin-bottom:20px">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">📋 Account Type</div>
+        <div id="amm-acct" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button onclick="ammSelectAcct('paper')" class="btn ghost sm amm-acct-btn" style="padding:10px;font-size:12px;justify-content:center;border-color:var(--accent);background:rgba(0,184,230,.1);color:var(--accent)" data-acct="paper">📄 Paper Demo</button>
+          <button onclick="ammSelectAcct('live')" class="btn ghost sm amm-acct-btn" style="padding:10px;font-size:12px;justify-content:center;border-color:var(--border)" data-acct="live">🔗 Live</button>
+        </div>
+      </div>
+
+      <!-- Assign Button -->
+      <button id="amm-assign-btn" onclick="ammDoAssign()" class="btn" style="width:100%;justify-content:center;padding:12px;font-size:13px;font-weight:600;margin-bottom:12px">📊 Assign Strategy</button>
+
+      <!-- Divider -->
+      <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px">⚠️ Danger Zone</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button onclick="ammRemoveStrategy()" class="btn ghost sm" style="width:100%;justify-content:center;padding:10px;font-size:12px;color:var(--amber);border-color:rgba(245,158,11,.3)">🔌 Remove Strategy</button>
+          <button onclick="ammResetPnl()" class="btn ghost sm" style="width:100%;justify-content:center;padding:10px;font-size:12px;color:var(--amber);border-color:rgba(245,158,11,.3)">📊 Reset P&L & Trades</button>
+          <button onclick="ammRevokeMembership()" class="btn ghost sm" style="width:100%;justify-content:center;padding:10px;font-size:12px;color:var(--red);border-color:rgba(239,68,68,.3)">❌ Revoke Membership</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Signup Modal -->
 <div id="signup-modal" style="display:none;position:fixed;inset:0;z-index:300;align-items:center;justify-content:center;background:#0a0e17;overflow:hidden">
   <!-- Fake blurred dashboard background -->
@@ -8801,7 +8861,7 @@ function buildMemberRows(members){
       + (m.isAdmin?'':'<div style="display:flex;flex-direction:column;gap:5px;min-width:120px">'
       +'<select onchange="adminGrantAccess(\''+m.uid+'\',this.value);this.value=\'\'" style="background:linear-gradient(135deg,rgba(0,184,230,.1),rgba(139,111,255,.1));border:1px solid rgba(0,184,230,.3);border-radius:6px;padding:5px 8px;color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;outline:none;width:100%"><option value="">🔑 Grant Access</option><option value="alpha">Alpha ($99/mo)</option><option value="pro">Pro ($189/mo)</option><option value="elite">Elite ($250/mo)</option>'+(plan!=='free'?'<option value="revoke">❌ Revoke Access</option>':'')+'</select>'
       +'<button class="btn sm '+(m.accountStatus==='paused'?'':'danger')+'" style="font-size:10px;padding:4px 10px;width:100%;justify-content:center" onclick="adminToggleMember(\''+m.uid+'\',\''+(m.accountStatus==='paused'?'resume':'pause')+'\')">'+(m.accountStatus==='paused'?'▶ Resume':'⏸ Pause')+'</button>'
-      +'<button class="btn sm ghost" style="font-size:10px;padding:4px 10px;width:100%;justify-content:center;color:var(--purple)" onclick="adminAssignStrategy(\''+m.uid+'\',\''+escapeHtml(m.name||'User')+'\')">📊 Assign Strategy</button>'
+      +'<button class="btn sm ghost" style="font-size:10px;padding:4px 10px;width:100%;justify-content:center;color:var(--purple)" onclick="adminAssignStrategy(\''+m.uid+'\',\''+escapeHtml(m.name||'User')+'\',\''+escapeHtml(m.email||'')+'\',\''+(strategies||'')+'\',\''+(m.tier||'')+'\')">⚙ Manage</button>'
       +'</div>')
       +'</td></tr>'
       +'<tr id="md-'+idx+'" style="display:none"><td colspan="10" style="padding:0;border-bottom:1px solid var(--border)">'
@@ -9264,40 +9324,130 @@ async function adminResolveTicket(ticketId){
   }
 }
 
-// ── Admin Assign Strategy ──
-async function adminAssignStrategy(uid,userName){
-  var strategy=prompt('Assign strategy to '+userName+':\n\n1. Stratford Alpha\n2. Stratford Apex\n3. Stratford Omega\n4. Stratford Guardian\n\nEnter number (1-4):');
-  if(!strategy)return;
-  var stratNames={'1':'Stratford Alpha','2':'Stratford Apex','3':'Stratford Omega','4':'Stratford Guardian'};
-  var stratName=stratNames[strategy];
-  if(!stratName){showToast('Invalid selection','error');return;}
+// ── Admin Manage User Modal ──
+var ammUid='',ammName='',ammEmail='';
+var ammStrat='',ammTier='50k',ammAcct='paper';
 
-  var tier=prompt('Select tier for '+userName+':\n\n1. 50k ($50,000)\n2. 100k ($100,000)\n3. 150k ($150,000)\n\nEnter number (1-3):');
-  if(!tier)return;
-  var tierNames={'1':'50k','2':'100k','3':'150k'};
-  var tierName=tierNames[tier];
-  if(!tierName){showToast('Invalid tier','error');return;}
+function adminAssignStrategy(uid,userName,userEmail,currentStrat,currentTier){
+  ammUid=uid;ammName=userName;ammEmail=userEmail||'';
+  ammStrat='';ammTier='50k';ammAcct='paper';
+  document.getElementById('amm-name').textContent=userName||'User';
+  document.getElementById('amm-email').textContent=userEmail||uid;
+  document.getElementById('amm-current').textContent='Current: '+(currentStrat||'No strategy')+' · '+(currentTier||'No tier');
+  // Reset button states
+  document.querySelectorAll('.amm-strat').forEach(function(b){b.style.borderColor='var(--border)';b.style.background='';});
+  document.querySelectorAll('.amm-tier').forEach(function(b){b.style.borderColor='var(--border)';b.style.background='';});
+  document.querySelectorAll('.amm-acct-btn').forEach(function(b){b.style.borderColor='var(--border)';b.style.background='';b.style.color='var(--text2)';});
+  // Default paper selected
+  var paperBtn=document.querySelector('.amm-acct-btn[data-acct="paper"]');
+  if(paperBtn){paperBtn.style.borderColor='var(--accent)';paperBtn.style.background='rgba(0,184,230,.1)';paperBtn.style.color='var(--accent)';}
+  document.getElementById('admin-manage-modal').style.display='flex';
+}
 
-  var acctType=prompt('Account type:\n\n1. Paper Demo\n2. Live\n\nEnter number (1-2):');
-  var acctMap={'1':'paper','2':'live'};
-  var acctName=acctMap[acctType||'1']||'paper';
+function ammSelectStrat(s){
+  ammStrat=s;
+  document.querySelectorAll('.amm-strat').forEach(function(b){
+    var isActive=b.getAttribute('data-strat')===s;
+    b.style.borderColor=isActive?'var(--accent)':'var(--border)';
+    b.style.background=isActive?'rgba(0,184,230,.1)':'';
+  });
+}
 
+function ammSelectTier(t){
+  ammTier=t;
+  document.querySelectorAll('.amm-tier').forEach(function(b){
+    var isActive=b.getAttribute('data-tier')===t;
+    b.style.borderColor=isActive?'var(--accent)':'var(--border)';
+    b.style.background=isActive?'rgba(0,184,230,.1)':'';
+  });
+}
+
+function ammSelectAcct(a){
+  ammAcct=a;
+  document.querySelectorAll('.amm-acct-btn').forEach(function(b){
+    var isActive=b.getAttribute('data-acct')===a;
+    b.style.borderColor=isActive?'var(--accent)':'var(--border)';
+    b.style.background=isActive?'rgba(0,184,230,.1)':'';
+    b.style.color=isActive?'var(--accent)':'var(--text2)';
+  });
+}
+
+async function ammDoAssign(){
+  if(!ammStrat){showToast('Select a strategy first','warning');return;}
+  if(!ammUid){showToast('No user selected','error');return;}
+  var btn=document.getElementById('amm-assign-btn');
+  btn.textContent='Assigning...';btn.disabled=true;
   try{
     var resp=await fetch('/api/admin/assign-strategy',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({secret:'SA_WEBHOOK_SECRET_2026',uid:uid,strategy:stratName,tier:tierName,accountType:acctName})
+      body:JSON.stringify({secret:'SA_WEBHOOK_SECRET_2026',uid:ammUid,strategy:ammStrat,tier:ammTier,accountType:ammAcct})
     });
     var data=await resp.json();
     if(data.success){
-      showToast('Assigned '+stratName+' ('+tierName+') to '+userName,'success');
-      loadAdminMembers();
+      showToast('Assigned '+ammStrat+' ('+ammTier+') to '+ammName,'success');
+      document.getElementById('admin-manage-modal').style.display='none';
+      loadAdminMembersFromServer();
     }else{
       showToast('Failed: '+(data.error||'Unknown error'),'error');
     }
   }catch(e){
     showToast('Failed: '+e.message,'error');
   }
+  btn.textContent='📊 Assign Strategy';btn.disabled=false;
+}
+
+async function ammRemoveStrategy(){
+  if(!ammUid)return;
+  if(!confirm('Remove strategy from '+ammName+'? They will stop receiving trade signals.'))return;
+  try{
+    await db.collection('users').doc(ammUid).set({
+      activeStrategies:[],activeBroker:'',tier:null,qty:null,ticker:null,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+    showToast('Strategy removed from '+ammName,'success');
+    document.getElementById('admin-manage-modal').style.display='none';
+    loadAdminMembersFromServer();
+  }catch(e){showToast('Failed: '+e.message,'error');}
+}
+
+async function ammResetPnl(){
+  if(!ammUid)return;
+  if(!confirm('Reset ALL trades and P&L for '+ammName+'? This cannot be undone.'))return;
+  try{
+    // Delete all trades subcollection
+    var tradesSnap=await db.collection('users').doc(ammUid).collection('trades').get();
+    if(!tradesSnap.empty){
+      var batch=db.batch();
+      tradesSnap.forEach(function(doc){batch.delete(doc.ref);});
+      await batch.commit();
+    }
+    // Reset stats
+    await db.collection('users').doc(ammUid).set({
+      totalPnl:0,tradeCount:0,winCount:0,lossCount:0,
+      calendarNotes:{},
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+    showToast('P&L and trades reset for '+ammName,'success');
+    document.getElementById('admin-manage-modal').style.display='none';
+    loadAdminMembersFromServer();
+  }catch(e){showToast('Failed: '+e.message,'error');}
+}
+
+async function ammRevokeMembership(){
+  if(!ammUid)return;
+  if(!confirm('Revoke membership for '+ammName+'? This will set them to Free plan and remove strategy access.'))return;
+  try{
+    await db.collection('users').doc(ammUid).set({
+      plan:'free',
+      activeStrategies:[],activeBroker:'',tier:null,qty:null,ticker:null,
+      subscriptionStatus:'cancelled',
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+    showToast('Membership revoked for '+ammName,'success');
+    document.getElementById('admin-manage-modal').style.display='none';
+    loadAdminMembersFromServer();
+  }catch(e){showToast('Failed: '+e.message,'error');}
 }
 
 // Render user-facing coupons from data
