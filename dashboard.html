@@ -7963,6 +7963,20 @@ let miniCalY=2026,miniCalM=2;
 function miniCalPrev(){miniCalM--;if(miniCalM<0){miniCalM=11;miniCalY--;}renderMiniCal();}
 function miniCalNext(){miniCalM++;if(miniCalM>11){miniCalM=0;miniCalY++;}renderMiniCal();}
 function miniCalToday(){const d=new Date();miniCalY=d.getFullYear();miniCalM=d.getMonth();renderMiniCal();}
+// Aggregate trades by date from userTradesCache
+function getTradesByDate(){
+  var byDate={};
+  (userTradesCache||[]).forEach(function(t){
+    if(!t.timestamp||t.status==='open')return;
+    var ds=t.timestamp.slice(0,10);
+    if(!byDate[ds])byDate[ds]={trades:0,pnl:0,wins:0,losses:0,details:[]};
+    byDate[ds].trades++;
+    byDate[ds].pnl+=(t.pnl||0);
+    if((t.pnl||0)>=0)byDate[ds].wins++;else byDate[ds].losses++;
+    byDate[ds].details.push(t);
+  });
+  return byDate;
+}
 function renderMiniCal(){
   const grid=document.getElementById('mini-cal-grid');
   const stats=document.getElementById('mini-cal-stats');
@@ -7975,14 +7989,12 @@ function renderMiniCal(){
   const today=new Date();
   const isCurrentMonth=miniCalY===today.getFullYear()&&miniCalM===today.getMonth();
   const todayDate=today.getDate();
-  function seedRand(s){return((s*9301+49297)%233280)/233280;}
+  var tradesByDate=getTradesByDate();
   function getDayPnl(d){
-    const seed=miniCalY*10000+(miniCalM+1)*100+d;
-    const r=seedRand(seed);
-    if(r<0.3)return null;
-    const trades=Math.floor(seedRand(seed+1)*6)+1;
-    const pnl=Math.round((seedRand(seed+2)*2000-700)*100)/100;
-    return{trades,pnl};
+    var ds=miniCalY+'-'+String(miniCalM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var data=tradesByDate[ds];
+    if(!data||data.trades===0)return null;
+    return{trades:data.trades,pnl:data.pnl};
   }
   // Compute stats first
   let totalPnl=0,totalTrades=0,greenDays=0,redDays=0;
@@ -8050,6 +8062,7 @@ function renderCalendar(){
   const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
   const today=new Date();
   const notes=JSON.parse(localStorage.getItem('sa_calendar_notes')||'{}');
+  var tradesByDate=getTradesByDate();
   let monthTrades=0,monthPnl=0,greenDays=0,redDays=0,tradingDays=0;
   // Empty cells
   for(let i=0;i<firstDay;i++){
@@ -8062,11 +8075,10 @@ function renderCalendar(){
     const isWeekend=dayOfWeek===0||dayOfWeek===6;
     const isToday=calYear===today.getFullYear()&&calMonth===today.getMonth()&&d===today.getDate();
     let trades=0,pnl=0;
-    if(!isWeekend&&new Date(calYear,calMonth,d)<=today){
-      const seed=(calYear*10000+calMonth*100+d);
-      const r=((seed*9301+49297)%233280)/233280;
-      trades=Math.floor(r*6)+1;
-      pnl=Math.round((r*600-200)*100)/100;
+    var dayData=tradesByDate[dateStr];
+    if(dayData&&dayData.trades>0){
+      trades=dayData.trades;
+      pnl=Math.round(dayData.pnl*100)/100;
       monthTrades+=trades;monthPnl+=pnl;tradingDays++;
       if(pnl>0)greenDays++;else if(pnl<0)redDays++;
     }
@@ -8106,25 +8118,26 @@ function showDayDetail(day){
     statsEl.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:13px;padding:12px">'+(isWeekend?'Market closed (weekend)':'Future date')+'</div>';
     tradesEl.innerHTML='';
   } else {
-    const seed=(calYear*10000+calMonth*100+day);
-    const r=((seed*9301+49297)%233280)/233280;
-    const trades=Math.floor(r*6)+1;
-    const pnl=Math.round((r*600-200)*100)/100;
-    const wins=Math.floor(trades*(.5+r*.3));
-    const wr=Math.round(wins/trades*100);
-    statsEl.innerHTML='<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center"><div style="font-size:10px;color:var(--text3);text-transform:uppercase">Trades</div><div style="font-size:18px;font-weight:700;color:var(--text);font-family:var(--mono)">'+trades+'</div></div>'
-      +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center"><div style="font-size:10px;color:var(--text3);text-transform:uppercase">Win Rate</div><div style="font-size:18px;font-weight:700;color:var(--text);font-family:var(--mono)">'+wr+'%</div></div>'
-      +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center"><div style="font-size:10px;color:var(--text3);text-transform:uppercase">P&L</div><div style="font-size:18px;font-weight:700;color:'+(pnl>=0?'var(--green)':'var(--red)')+';font-family:var(--mono)">$'+pnl.toFixed(2)+'</div></div>';
-    let thtml='<div style="display:flex;flex-direction:column;gap:4px">';
-    const symbols=['NQ','MNQ'];const sides=['Long','Short'];
-    for(let i=0;i<trades;i++){
-      const tr=((seed*1301+i*7919)%233280)/233280;
-      const sym=symbols[i%2];const side=sides[Math.floor(tr*2)];
-      const tpnl=Math.round((tr*200-60)*100)/100;
-      thtml+='<div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--bg3);border-radius:4px;font-size:12px"><span style="color:var(--text)">'+sym+' · '+side+'</span><span style="color:'+(tpnl>=0?'var(--green)':'var(--red)')+';font-family:var(--mono)">$'+tpnl.toFixed(2)+'</span></div>';
+    var tradesByDate=getTradesByDate();
+    var dayData=tradesByDate[dateStr];
+    if(!dayData||dayData.trades===0){
+      statsEl.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:13px;padding:12px">No trades on this day</div>';
+      tradesEl.innerHTML='';
+    } else {
+      var trades=dayData.trades;var pnl=Math.round(dayData.pnl*100)/100;
+      var wins=dayData.wins;var wr=trades>0?Math.round(wins/trades*100):0;
+      statsEl.innerHTML='<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center"><div style="font-size:10px;color:var(--text3);text-transform:uppercase">Trades</div><div style="font-size:18px;font-weight:700;color:var(--text);font-family:var(--mono)">'+trades+'</div></div>'
+        +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center"><div style="font-size:10px;color:var(--text3);text-transform:uppercase">Win Rate</div><div style="font-size:18px;font-weight:700;color:var(--text);font-family:var(--mono)">'+wr+'%</div></div>'
+        +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center"><div style="font-size:10px;color:var(--text3);text-transform:uppercase">P&L</div><div style="font-size:18px;font-weight:700;color:'+(pnl>=0?'var(--green)':'var(--red)')+';font-family:var(--mono)">'+(pnl>=0?'+$':'-$')+Math.abs(pnl).toFixed(2)+'</div></div>';
+      var thtml='<div style="display:flex;flex-direction:column;gap:4px">';
+      dayData.details.forEach(function(t){
+        var side=t.action==='BUY'?'Long':'Short';
+        var tpnl=t.pnl||0;
+        thtml+='<div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--bg3);border-radius:4px;font-size:12px"><span style="color:var(--text)">'+(t.ticker||'NQ')+' · '+side+'</span><span style="color:'+(tpnl>=0?'var(--green)':'var(--red)')+';font-family:var(--mono)">'+(tpnl>=0?'+$':'-$')+Math.abs(tpnl).toFixed(2)+'</span></div>';
+      });
+      thtml+='</div>';
+      tradesEl.innerHTML=thtml;
     }
-    thtml+='</div>';
-    tradesEl.innerHTML=thtml;
   }
   // Load notes
   const notes=JSON.parse(localStorage.getItem('sa_calendar_notes')||'{}');
