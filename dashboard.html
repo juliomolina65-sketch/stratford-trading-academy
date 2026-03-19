@@ -1241,6 +1241,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
               <span style="background:rgba(139,111,255,.1);border:1px solid rgba(139,111,255,.3);border-radius:3px;color:var(--purple);font-family:var(--mono);font-size:10px;padding:2px 8px" id="paper-status-badge">NOT CONNECTED</span>
             </div>
             <div style="display:flex;gap:8px">
+              <button class="btn ghost sm" onclick="emergencySync()" title="Re-sync trades from server">🔄 Sync</button>
               <button class="btn ghost sm" onclick="resetPaper()">Reset</button>
             </div>
           </div>
@@ -9070,11 +9071,21 @@ function setPnlEl(id, v) {
   el.style.color = v >= 0 ? 'var(--green)' : 'var(--red)';
 }
 
-function resetPaper() {
-  paper.balance = 50000; paper.rpnl = 0; paper.upnl = 0;
+async function resetPaper() {
+  if(!confirm('Reset account? This will delete ALL trades, calendar data, and P&L history. This cannot be undone.')) return;
+
+  // Determine current tier balance (keep same tier on reset)
+  var user=JSON.parse(localStorage.getItem('sa_user')||'{}');
+  var tierKey=user.tier||'50k';
+  var tierBalances={'50k':50000,'100k':100000,'150k':150000};
+  var tierFmt={'50k':'$50,000','100k':'$100,000','150k':'$150,000'};
+  var resetBalance=tierBalances[tierKey]||50000;
+  var resetFmt=tierFmt[tierKey]||'$50,000';
+
+  paper.balance = resetBalance; paper.rpnl = 0; paper.upnl = 0;
   paper.side = null; paper.entry = 0; paper.qty = 0;
   paper.wins = 0; paper.losses = 0; paper.closedTrades = 0;
-  document.getElementById('paper-balance').textContent = '$150,000.00';
+  document.getElementById('paper-balance').textContent = resetFmt+'.00';
   document.getElementById('paper-upnl').textContent = '+$0.00';
   document.getElementById('paper-upnl').style.color = 'var(--green)';
   document.getElementById('paper-rpnl').textContent = '+$0.00';
@@ -9088,6 +9099,72 @@ function resetPaper() {
   document.getElementById('paper-trades-count').textContent = '0 trades closed';
   const log = document.getElementById('paper-log');
   log.innerHTML = '<tr id="paper-empty"><td colspan="8" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">No paper trades yet — waiting for the next signal from your strategy</td></tr>';
+
+  // Clear trade history table on dashboard
+  var tbody=document.getElementById('trades-table');
+  if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">No trades yet — connect a strategy to start trading</td></tr>';
+  // Reset trade summary stats
+  var tsTotal=document.getElementById('ts-total'); if(tsTotal) tsTotal.textContent='0';
+  var tsWin=document.getElementById('ts-winrate'); if(tsWin) tsWin.textContent='—';
+  var tsPnl=document.getElementById('ts-pnl'); if(tsPnl){ tsPnl.textContent='$0.00'; tsPnl.style.color='var(--text3)'; }
+  var tsAvg=document.getElementById('ts-avg'); if(tsAvg){ tsAvg.textContent='—'; tsAvg.style.color='var(--text3)'; }
+
+  // Clear localStorage trade & calendar data
+  localStorage.removeItem('sa_trades');
+  localStorage.removeItem('sa_paper_demo');
+  localStorage.removeItem('sa_calendar_notes');
+  userTradesCache=[];
+
+  // Clear Firestore trades + calendar + stats for this user
+  if(auth.currentUser){
+    var uid=auth.currentUser.uid;
+    try{
+      // Delete all trades subcollection
+      var tradesSnap=await db.collection('users').doc(uid).collection('trades').get();
+      var batch=db.batch();
+      tradesSnap.forEach(function(doc){ batch.delete(doc.ref); });
+      if(!tradesSnap.empty) await batch.commit();
+
+      // Reset user stats & calendar
+      await db.collection('users').doc(uid).set({
+        totalPnl:0, tradeCount:0, winCount:0, lossCount:0,
+        calendarNotes:{},
+        paperDemo:null,
+        updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+      },{merge:true});
+
+      showToast('Account reset — all trades & calendar cleared','success');
+    }catch(e){
+      console.warn('Firestore reset failed:',e);
+      showToast('Local data cleared but Firestore sync failed','warning');
+    }
+  } else {
+    showToast('Account reset','success');
+  }
+
+  // Reset Today's P&L card on dashboard
+  var dcPnl=document.getElementById('dc-pnl');
+  if(dcPnl){ dcPnl.textContent='$0.00'; dcPnl.style.color='var(--green)'; }
+  var dcPnlSub=dcPnl?dcPnl.parentElement.querySelector('.dd'):null;
+  if(dcPnlSub) dcPnlSub.textContent='0 trades today';
+
+  // Reset calendar UI if loaded
+  if(typeof renderCalendar==='function') renderCalendar();
+}
+
+// ── Emergency Sync — re-fetch trades from Firestore & refresh UI ──
+async function emergencySync(){
+  if(!auth.currentUser){ showToast('Sign in first','warning'); return; }
+  showToast('Syncing...','info');
+  try{
+    var trades=await loadUserTrades(200);
+    renderTradesTable(trades);
+    if(typeof updateDashboardStats==='function') updateDashboardStats(trades);
+    showToast('Synced — '+trades.length+' trades loaded','success');
+  }catch(e){
+    console.error('Sync failed:',e);
+    showToast('Sync failed: '+e.message,'error');
+  }
 }
 
 function updatePaperFromSignal(act, ticker, qty) {
