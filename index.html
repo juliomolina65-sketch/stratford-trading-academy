@@ -173,6 +173,7 @@ a:hover{text-decoration:underline}
   .pricing-grid{grid-template-columns:1fr;max-width:380px;margin:0 auto}
   .strats-grid{grid-template-columns:repeat(2,1fr)!important}
   .testimonials-scroll{grid-template-columns:1fr}
+  #features > div:last-child{grid-template-columns:1fr !important}
   .lb-row{grid-template-columns:30px 1.2fr 1fr 1fr;font-size:11px}
   .lb-row .lb-wr{display:none}
   .hero-btns{flex-direction:column}
@@ -282,6 +283,73 @@ a:hover{text-decoration:underline}
   </div>
 
   <a href="#" onclick="showSignupModal();return false" class="btn btn-primary btn-lg" style="margin:0 auto;display:inline-flex">Start Free — No Experience Needed</a>
+</section>
+
+<div class="divider"></div>
+
+<!-- PLATFORM FEATURES -->
+<section class="section section-center" id="features">
+  <div class="section-label">What You Get</div>
+  <div class="section-title">Everything You Need In One Platform</div>
+  <div class="section-sub">Stratford Academy isn't just signals — it's a complete trading ecosystem built to help you grow.</div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:36px auto 0">
+
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:24px 20px;text-align:left;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,184,230,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+      <div style="font-size:28px;margin-bottom:10px">📊</div>
+      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">Live TradingView Charts</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">Real-time CME futures data for NQ, ES, MNQ & MES. Full charting tools powered by TradingView.</div>
+    </div>
+
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:24px 20px;text-align:left;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,217,126,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+      <div style="font-size:28px;margin-bottom:10px">📈</div>
+      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">Backtest Results</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">4+ years of transparent performance data with equity curves, monthly returns, and strategy breakdowns.</div>
+    </div>
+
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:24px 20px;text-align:left;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(139,111,255,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+      <div style="font-size:28px;margin-bottom:10px">📋</div>
+      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">Paper Demo Account</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">Start trading risk-free with a simulated account. Watch the bot execute trades before going live.</div>
+    </div>
+
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:24px 20px;text-align:left;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(245,158,11,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+      <div style="font-size:28px;margin-bottom:10px">📅</div>
+      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">Calendar & Journal</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">Track daily P&L, write trading notes, log your mood, wins, and lessons learned — all in one place.</div>
+    </div>
+
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:24px 20px;text-align:left;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,184,230,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+      <div style="font-size:28px;margin-bottom:10px">💬</div>
+      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">Community Chat</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">Connect with other traders, share ideas, and learn together in our built-in community.</div>
+    </div>
+
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:24px 20px;text-align:left;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,217,126,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+      <div style="font-size:28px;margin-bottom:10px">🏆</div>
+      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">Rewards & Points</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">Earn points for being active, unlock tiers, and access exclusive perks and coupon codes.</div>
+    </div>
+
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:24px 20px;text-align:left;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(139,111,255,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+      <div style="font-size:28px;margin-bottom:10px">🎓</div>
+      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">Free Learning Center</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">5 beginner guides covering futures, prop firms, indicators, and key trading terms in plain English.</div>
+    </div>
+
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:24px 20px;text-align:left;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(245,158,11,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+      <div style="font-size:28px;margin-bottom:10px">🔔</div>
+      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">Trade Alerts</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">Get notified every time the bot opens or closes a trade. Never miss a signal.</div>
+    </div>
+
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:24px 20px;text-align:left;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,184,230,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+      <div style="font-size:28px;margin-bottom:10px">🔒</div>
+      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">Synced Across Devices</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">Your trades, journal, settings, and progress sync across all your devices via Firebase.</div>
+    </div>
+
+  </div>
 </section>
 
 <div class="divider"></div>

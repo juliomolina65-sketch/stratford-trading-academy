@@ -356,6 +356,7 @@ select option{background:var(--bg3);}
   #page-calendar [style*="padding:28px 32px"]{padding:12px !important;}
   #cal-grid > div{padding:6px 2px !important;font-size:10px !important;}
   #cal-grid > div > div{font-size:9px !important;}
+  #cal-journal-always{grid-template-columns:1fr !important;}
 
   /* Trades filters */
   #trades-summary{grid-template-columns:1fr 1fr !important;}
@@ -2154,7 +2155,59 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
           <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr)"></div>
         </div>
 
-        <!-- Day detail panel -->
+        <!-- Always-visible Journal + Quick Note Section -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px" id="cal-journal-always">
+          <!-- Quick Note -->
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:14px;font-weight:600;color:var(--text)">📝 Today's Note</span>
+              <span style="font-size:11px;color:var(--text3);font-family:var(--mono)" id="cal-today-label-note"></span>
+            </div>
+            <div style="padding:16px">
+              <textarea id="cal-today-notes" rows="4" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;resize:vertical" placeholder="What's on your mind today?" oninput="saveTodayNote()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveTodayNote();showToast('Note saved','success')}"></textarea>
+              <div style="display:flex;justify-content:flex-end;margin-top:8px">
+                <button class="btn sm" onclick="saveTodayNote();showToast('Note saved','success')" style="font-size:11px;padding:6px 14px">💾 Save</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Today's Journal -->
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:14px;font-weight:600;color:var(--text)">📓 Today's Journal</span>
+              <span style="font-size:11px;color:var(--text3);font-family:var(--mono)" id="cal-today-label-journal"></span>
+            </div>
+            <div style="padding:16px">
+              <div style="margin-bottom:10px">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:4px">How are you feeling?</div>
+                <div id="cal-today-mood" style="display:flex;gap:6px;flex-wrap:wrap">
+                  <button onclick="setTodayMood('😤','Frustrated',this)" class="btn ghost sm" style="font-size:14px;padding:5px 8px" title="Frustrated">😤</button>
+                  <button onclick="setTodayMood('😟','Anxious',this)" class="btn ghost sm" style="font-size:14px;padding:5px 8px" title="Anxious">😟</button>
+                  <button onclick="setTodayMood('😐','Neutral',this)" class="btn ghost sm" style="font-size:14px;padding:5px 8px" title="Neutral">😐</button>
+                  <button onclick="setTodayMood('😊','Confident',this)" class="btn ghost sm" style="font-size:14px;padding:5px 8px" title="Confident">😊</button>
+                  <button onclick="setTodayMood('🔥','On Fire',this)" class="btn ghost sm" style="font-size:14px;padding:5px 8px" title="On Fire">🔥</button>
+                </div>
+              </div>
+              <div style="margin-bottom:8px">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:4px">What went well?</div>
+                <textarea id="cal-today-wins" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none;resize:vertical" placeholder="Wins & highlights..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveTodayJournal();showToast('Journal saved','success')}"></textarea>
+              </div>
+              <div style="margin-bottom:8px">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:4px">What could improve?</div>
+                <textarea id="cal-today-improve" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none;resize:vertical" placeholder="Areas to work on..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveTodayJournal();showToast('Journal saved','success')}"></textarea>
+              </div>
+              <div style="margin-bottom:8px">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Lessons learned</div>
+                <textarea id="cal-today-lessons" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none;resize:vertical" placeholder="Key takeaways..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveTodayJournal();showToast('Journal saved','success')}"></textarea>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px">
+                <button class="btn sm" onclick="saveTodayJournal();showToast('Journal saved ✅','success')" style="font-size:11px;padding:6px 14px">📓 Save Journal</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Day detail panel (click a day for past entries) -->
         <div id="cal-day-detail" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
             <span style="font-size:14px;font-weight:600;color:var(--text)" id="cal-detail-title">March 13, 2026</span>
@@ -8211,6 +8264,84 @@ function saveCalNote(){
   }
 }
 
+// ── Today's Note & Journal (always visible) ──
+function getTodayKey(){
+  var d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function loadTodayNoteAndJournal(){
+  var key=getTodayKey();
+  var d=new Date();
+  var label=d.toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'});
+  var el1=document.getElementById('cal-today-label-note');
+  var el2=document.getElementById('cal-today-label-journal');
+  if(el1) el1.textContent=label;
+  if(el2) el2.textContent=label;
+
+  // Load note
+  var notes=JSON.parse(localStorage.getItem('sa_calendar_notes')||'{}');
+  var noteEl=document.getElementById('cal-today-notes');
+  if(noteEl) noteEl.value=notes[key]||'';
+
+  // Load journal
+  var journals=JSON.parse(localStorage.getItem('sa_journal')||'{}');
+  var entry=journals[key]||{};
+  var winsEl=document.getElementById('cal-today-wins');
+  var impEl=document.getElementById('cal-today-improve');
+  var lessEl=document.getElementById('cal-today-lessons');
+  if(winsEl) winsEl.value=entry.wins||'';
+  if(impEl) impEl.value=entry.improve||'';
+  if(lessEl) lessEl.value=entry.lessons||'';
+
+  // Highlight mood
+  todayMoodSelected=entry.mood||'';
+  var btns=document.querySelectorAll('#cal-today-mood .btn');
+  btns.forEach(function(b){ b.style.background=''; b.style.borderColor='var(--border)'; });
+  if(entry.mood){
+    btns.forEach(function(b){
+      if(entry.mood.indexOf(b.textContent.trim())===0){
+        b.style.background='var(--bg3)';
+        b.style.borderColor='var(--accent)';
+      }
+    });
+  }
+}
+
+var todayMoodSelected='';
+function setTodayMood(emoji,label,btn){
+  todayMoodSelected=emoji+' '+label;
+  var btns=document.querySelectorAll('#cal-today-mood .btn');
+  btns.forEach(function(b){ b.style.background=''; b.style.borderColor='var(--border)'; });
+  if(btn){ btn.style.background='var(--bg3)'; btn.style.borderColor='var(--accent)'; }
+}
+
+function saveTodayNote(){
+  var key=getTodayKey();
+  var notes=JSON.parse(localStorage.getItem('sa_calendar_notes')||'{}');
+  notes[key]=(document.getElementById('cal-today-notes').value||'');
+  localStorage.setItem('sa_calendar_notes',JSON.stringify(notes));
+  if(auth.currentUser){
+    try{db.collection('users').doc(auth.currentUser.uid).set({calendarNotes:notes,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}catch(e){}
+  }
+}
+
+function saveTodayJournal(){
+  var key=getTodayKey();
+  var journals=JSON.parse(localStorage.getItem('sa_journal')||'{}');
+  journals[key]={
+    mood:todayMoodSelected||'',
+    wins:(document.getElementById('cal-today-wins').value||'').trim(),
+    improve:(document.getElementById('cal-today-improve').value||'').trim(),
+    lessons:(document.getElementById('cal-today-lessons').value||'').trim(),
+    updatedAt:new Date().toISOString()
+  };
+  localStorage.setItem('sa_journal',JSON.stringify(journals));
+  if(auth.currentUser){
+    try{db.collection('users').doc(auth.currentUser.uid).set({journal:journals,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}catch(e){}
+  }
+}
+
 // ── Trading Journal ──
 var journalMoodSelected='';
 function setJournalMood(emoji,label){
@@ -11471,7 +11602,7 @@ async function checkWebhookHealth(){
 
 // Init reviews on page load
 document.addEventListener('DOMContentLoaded',async function(){
-  renderDashTestimonials();renderLeaderboard();loadReviewsPage();renderCalendar();renderMiniCal();initTrialCountdown();
+  renderDashTestimonials();renderLeaderboard();loadReviewsPage();renderCalendar();renderMiniCal();initTrialCountdown();loadTodayNoteAndJournal();
   // Coupon & Admin init (async — loads from Firestore)
   await initCoupons();renderUserCouponsFromData();
   if(isAdmin()){showAdminSidebar();await initAdminData();}
