@@ -906,6 +906,9 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
       <div class="nav-item active" onclick="nav('dashboard',this,'Dashboard')">
         <span class="nav-icon">◼</span>Dashboard
       </div>
+      <div class="nav-item" onclick="nav('charts',this,'Charts')">
+        <span class="nav-icon">📊</span>Charts
+      </div>
       <div class="nav-item" onclick="nav('strategies',this,'Strategies')">
         <span class="nav-icon">🧠</span>Strategies
       </div>
@@ -914,9 +917,6 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
       </div>
       <div class="nav-item" onclick="nav('trades',this,'Trades')">
         <span class="nav-icon">📋</span>Trades
-      </div>
-      <div class="nav-item" onclick="nav('charts',this,'Charts')">
-        <span class="nav-icon">📊</span>Charts
       </div>
       <div class="nav-item" onclick="nav('reviews',this,'Reviews')">
         <span class="nav-icon">⭐</span>Reviews
@@ -1105,7 +1105,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
           </div>
           <div style="display:flex;gap:10px;flex-shrink:0">
             <button class="btn sm" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;backdrop-filter:blur(4px)" onclick="connectDemo('Stratford Alpha')">Try Demo</button>
-            <button class="btn sm" onclick="nav('strategies',document.querySelectorAll('.nav-item')[1],'Strategies')">View Strategy →</button>
+            <button class="btn sm" onclick="nav('strategies',document.querySelectorAll('.nav-item')[2],'Strategies')">View Strategy →</button>
           </div>
         </div>
       </div>
@@ -1148,7 +1148,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
 
       <!-- Quick actions -->
       <div class="quick-actions" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:0">
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;gap:16px;cursor:pointer" onclick="nav('strategies',document.querySelectorAll('.nav-item')[1],'Strategies')">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;gap:16px;cursor:pointer" onclick="nav('strategies',document.querySelectorAll('.nav-item')[2],'Strategies')">
           <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,rgba(0,200,240,.1),rgba(139,111,255,.1));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🧠</div>
           <div>
             <div style="font-size:14px;font-weight:500;color:var(--text)">Browse Strategies</div>
@@ -1299,7 +1299,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
               <tr id="paper-empty"><td colspan="8" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">No paper trades yet — waiting for the next signal from your strategy</td></tr>
             </tbody></table>
             <div id="paper-log-viewall" style="display:none;padding:10px 20px 14px;text-align:center;border-top:1px solid var(--border)">
-              <button class="btn ghost sm" onclick="nav('trades',document.querySelectorAll('.nav-item')[2],'Trades')" style="font-size:11px">View All Trades →</button>
+              <button class="btn ghost sm" onclick="nav('trades',document.querySelectorAll('.nav-item')[4],'Trades')" style="font-size:11px">View All Trades →</button>
             </div>
           </div>
         </div>
@@ -1364,7 +1364,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
               <div style="font-size:11px;color:var(--text3);margin-top:2px">Best performing strategy this year</div>
             </div>
           </div>
-          <button class="btn sm" onclick="nav('strategies',document.querySelectorAll('.nav-item')[1],'Strategies')">View Strategy →</button>
+          <button class="btn sm" onclick="nav('strategies',document.querySelectorAll('.nav-item')[2],'Strategies')">View Strategy →</button>
         </div>
 
         <div style="padding:20px 24px;display:flex;align-items:center;gap:20px;border-bottom:1px solid var(--border);position:relative">
@@ -1532,15 +1532,47 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
             <div class="page-title" style="margin:0;font-size:18px">Live Charts</div>
             <div style="font-size:12px;color:var(--text3);margin-top:2px">Real-time CME futures data powered by TradingView</div>
           </div>
-          <div id="chart-tabs" style="display:flex;gap:6px">
-            <button class="chart-tab active" onclick="switchChart('OANDA:NAS100USD','NQ',this)" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">NQ</button>
-            <button class="chart-tab" onclick="switchChart('OANDA:NAS100USD','MNQ',this)" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">MNQ</button>
-            <button class="chart-tab" onclick="switchChart('OANDA:SPX500USD','ES',this)" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">ES</button>
-            <button class="chart-tab" onclick="switchChart('OANDA:SPX500USD','MES',this)" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">MES</button>
+          <div style="display:flex;gap:6px;align-items:center">
+            <div id="chart-tabs" style="display:flex;gap:6px">
+              <button class="chart-tab active" onclick="switchChart('OANDA:NAS100USD','NQ',this)" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">NQ</button>
+              <button class="chart-tab" onclick="switchChart('OANDA:NAS100USD','MNQ',this)" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">MNQ</button>
+              <button class="chart-tab" onclick="switchChart('OANDA:SPX500USD','ES',this)" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">ES</button>
+              <button class="chart-tab" onclick="switchChart('OANDA:SPX500USD','MES',this)" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">MES</button>
+            </div>
+            <div style="width:1px;height:24px;background:var(--border);margin:0 6px"></div>
+            <button id="alpha-trades-btn" onclick="toggleAlphaTrades()" style="background:linear-gradient(135deg,rgba(0,184,230,.1),rgba(139,111,255,.1));border:1px solid rgba(0,184,230,.3);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);color:var(--accent);transition:all .15s;display:flex;align-items:center;gap:6px" onmouseover="this.style.borderColor='rgba(0,184,230,.6)'" onmouseout="this.style.borderColor='rgba(0,184,230,.3)'">⚡ Stratford Alpha Trades</button>
           </div>
         </div>
         <!-- TradingView Chart Container -->
-        <div id="tv-chart-container" style="flex:1;overflow:hidden"></div>
+        <div id="tv-chart-container" style="flex:1;overflow:hidden;min-height:0"></div>
+        <!-- Alpha Trades Panel (hidden by default) -->
+        <div id="alpha-trades-panel" style="display:none;flex-shrink:0;max-height:240px;overflow-y:auto;border-top:1px solid var(--border);background:var(--bg2)">
+          <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:1">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:14px">⚡</span>
+              <span style="font-size:13px;font-weight:600;color:var(--text)">Stratford Alpha — Recent Trades</span>
+              <span id="alpha-trade-count" style="font-family:var(--mono);font-size:10px;color:var(--accent);background:rgba(0,184,230,.1);border:1px solid rgba(0,184,230,.2);border-radius:4px;padding:2px 8px">0 trades</span>
+            </div>
+            <button onclick="toggleAlphaTrades()" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:2px 6px">&times;</button>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="position:sticky;top:42px;background:var(--bg2);z-index:1">
+                <th style="text-align:left;padding:8px 16px;color:var(--text3);font-family:var(--mono);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Time</th>
+                <th style="text-align:left;padding:8px 12px;color:var(--text3);font-family:var(--mono);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Action</th>
+                <th style="text-align:left;padding:8px 12px;color:var(--text3);font-family:var(--mono);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Ticker</th>
+                <th style="text-align:left;padding:8px 12px;color:var(--text3);font-family:var(--mono);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Qty</th>
+                <th style="text-align:left;padding:8px 12px;color:var(--text3);font-family:var(--mono);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Entry</th>
+                <th style="text-align:left;padding:8px 12px;color:var(--text3);font-family:var(--mono);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Exit</th>
+                <th style="text-align:left;padding:8px 12px;color:var(--text3);font-family:var(--mono);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">P&L</th>
+                <th style="text-align:left;padding:8px 12px;color:var(--text3);font-family:var(--mono);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Status</th>
+              </tr>
+            </thead>
+            <tbody id="alpha-trades-tbody">
+              <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px">Loading trades...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -3638,7 +3670,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
             <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px">Try the Paper Demo (Free)</div>
             <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">Start risk-free with a simulated account. No broker credentials needed, no real money at stake. This lets you see the strategy in action before committing.</div>
             <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-size:12px;color:var(--text2);line-height:1.6">
-              <strong style="color:var(--text)">How to:</strong> Go to <strong style="color:var(--accent);cursor:pointer" onclick="nav('strategies',document.querySelectorAll('.nav-item')[1],'Strategies')">Strategies</strong> → Click "Start Demo" on any strategy → Pick your account size ($50K, $100K, or $150K) → Done! Signals will start flowing to your paper account.
+              <strong style="color:var(--text)">How to:</strong> Go to <strong style="color:var(--accent);cursor:pointer" onclick="nav('strategies',document.querySelectorAll('.nav-item')[2],'Strategies')">Strategies</strong> → Click "Start Demo" on any strategy → Pick your account size ($50K, $100K, or $150K) → Done! Signals will start flowing to your paper account.
             </div>
           </div>
         </div>
@@ -3687,7 +3719,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
             <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px">Activate a Strategy</div>
             <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">Pick a strategy and connect it to your live broker account. Once activated, every signal the strategy generates will be automatically executed on your account.</div>
             <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-size:12px;color:var(--text2);line-height:1.6">
-              <strong style="color:var(--text)">How to:</strong> Go to <strong style="color:var(--accent);cursor:pointer" onclick="nav('strategies',document.querySelectorAll('.nav-item')[1],'Strategies')">Strategies</strong> → Review the backtest stats → Click "Subscribe" to connect with your live broker.
+              <strong style="color:var(--text)">How to:</strong> Go to <strong style="color:var(--accent);cursor:pointer" onclick="nav('strategies',document.querySelectorAll('.nav-item')[2],'Strategies')">Strategies</strong> → Review the backtest stats → Click "Subscribe" to connect with your live broker.
             </div>
           </div>
         </div>
@@ -4669,7 +4701,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
             <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Ready to see our strategy in action?</div>
             <div style="font-size:13px;color:var(--text2)">Check out Stratford Alpha's full backtest results, then try it risk-free with a paper demo account.</div>
           </div>
-          <button class="btn" onclick="nav('strategies',document.querySelectorAll('.nav-item')[1],'Strategies')">View Strategies →</button>
+          <button class="btn" onclick="nav('strategies',document.querySelectorAll('.nav-item')[2],'Strategies')">View Strategies →</button>
         </div>
       </div>
     </div>
@@ -4955,7 +4987,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div style="font-size:14px;font-weight:600;color:var(--text)">Active Strategies</div>
-            <button class="btn ghost" style="font-size:11px;padding:4px 12px" onclick="nav('strategies',document.querySelectorAll('.nav-item')[1],'Strategies')">View All</button>
+            <button class="btn ghost" style="font-size:11px;padding:4px 12px" onclick="nav('strategies',document.querySelectorAll('.nav-item')[2],'Strategies')">View All</button>
           </div>
           <div id="acct-strategies-list"></div>
         </div>
@@ -4964,7 +4996,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div style="font-size:14px;font-weight:600;color:var(--text)">Trading Performance</div>
-            <button class="btn ghost" style="font-size:11px;padding:4px 12px" onclick="nav('trades',document.querySelectorAll('.nav-item')[2],'Trades')">View All Trades</button>
+            <button class="btn ghost" style="font-size:11px;padding:4px 12px" onclick="nav('trades',document.querySelectorAll('.nav-item')[4],'Trades')">View All Trades</button>
           </div>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden">
             <div style="background:var(--bg);padding:14px 16px;text-align:center">
@@ -11328,6 +11360,74 @@ function switchChart(symbol,label,btn){
   });
   if(btn){btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.border='none';btn.classList.add('active');}
   loadTVChart(symbol);
+}
+
+// Alpha Trades Panel
+var alphaTradesPanelOpen=false;
+var alphaTradesLoaded=false;
+
+function toggleAlphaTrades(){
+  var panel=document.getElementById('alpha-trades-panel');
+  var btn=document.getElementById('alpha-trades-btn');
+  if(!panel)return;
+  alphaTradesPanelOpen=!alphaTradesPanelOpen;
+  panel.style.display=alphaTradesPanelOpen?'block':'none';
+  if(btn){
+    if(alphaTradesPanelOpen){
+      btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.borderColor='var(--accent)';
+    }else{
+      btn.style.background='linear-gradient(135deg,rgba(0,184,230,.1),rgba(139,111,255,.1))';btn.style.color='var(--accent)';btn.style.borderColor='rgba(0,184,230,.3)';
+    }
+  }
+  if(alphaTradesPanelOpen && !alphaTradesLoaded) loadAlphaTrades();
+}
+
+async function loadAlphaTrades(){
+  var tbody=document.getElementById('alpha-trades-tbody');
+  if(!tbody)return;
+  tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px">⏳ Loading trades...</td></tr>';
+  try{
+    // Fetch all trades from Firestore (strategy: Stratford Alpha)
+    var snapshot=await db.collection('trades').where('strategy','==','Stratford Alpha').orderBy('timestamp','desc').limit(50).get();
+    var trades=[];
+    snapshot.forEach(function(doc){ trades.push(doc.data()); });
+    // Deduplicate: group by entryPrice+action, keep most recent (the SELL/close)
+    var seen={};
+    var unique=[];
+    trades.forEach(function(t){
+      var key=(t.entryPrice||'')+'_'+(t.exitPrice||'')+'_'+(t.action||'');
+      if(!seen[key]){seen[key]=true;unique.push(t);}
+    });
+    if(unique.length===0){
+      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px">No Stratford Alpha trades found yet</td></tr>';
+      document.getElementById('alpha-trade-count').textContent='0 trades';
+      alphaTradesLoaded=true;
+      return;
+    }
+    document.getElementById('alpha-trade-count').textContent=unique.length+' trades';
+    tbody.innerHTML=unique.map(function(t){
+      var time=t.timestamp?new Date(t.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):'—';
+      var actionColor=t.action==='BUY'?'var(--green)':'var(--red)';
+      var pnl=t.pnl;
+      var pnlColor=pnl===null||pnl===undefined?'var(--text3)':(pnl>=0?'var(--green)':'var(--red)');
+      var pnlStr=pnl===null||pnl===undefined?'—':(pnl>=0?'+$'+pnl.toLocaleString():'-$'+Math.abs(pnl).toLocaleString());
+      var statusColor=t.status==='open'?'var(--amber)':'var(--green)';
+      return '<tr onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'none\'">'
+        +'<td style="padding:8px 16px;border-bottom:1px solid var(--border);color:var(--text2);font-family:var(--mono);white-space:nowrap">'+time+'</td>'
+        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-weight:700;color:'+actionColor+'">'+t.action+'</td>'
+        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--mono)">'+t.ticker+'</td>'
+        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text2)">'+t.qty+'</td>'
+        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--mono)">'+(t.entryPrice||'—')+'</td>'
+        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--mono)">'+(t.exitPrice||'—')+'</td>'
+        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-weight:700;color:'+pnlColor+';font-family:var(--mono)">'+pnlStr+'</td>'
+        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border)"><span style="color:'+statusColor+';font-weight:500">● '+(t.status||'closed')+'</span></td>'
+        +'</tr>';
+    }).join('');
+    alphaTradesLoaded=true;
+  }catch(err){
+    console.warn('Failed to load alpha trades:',err);
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--red);padding:20px">Failed to load trades: '+err.message+'</td></tr>';
+  }
 }
 
 // ============================================
