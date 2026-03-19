@@ -915,6 +915,9 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
       <div class="nav-item" onclick="nav('trades',this,'Trades')">
         <span class="nav-icon">📋</span>Trades
       </div>
+      <div class="nav-item" onclick="nav('charts',this,'Charts')">
+        <span class="nav-icon">📊</span>Charts
+      </div>
       <div class="nav-item" onclick="nav('reviews',this,'Reviews')">
         <span class="nav-icon">⭐</span>Reviews
       </div>
@@ -931,7 +934,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
       <div class="nav-item" onclick="nav('brokers',this,'Brokers')">
         <span class="nav-icon">🔗</span>Brokers<span class="nav-chevron">›</span>
       </div>
-      <div class="sidebar-sub-item" onclick="nav('brokers',document.querySelectorAll('.nav-item')[6],'Brokers › Connect Broker')">
+      <div class="sidebar-sub-item" onclick="nav('brokers',document.querySelectorAll('.nav-item')[7],'Brokers › Connect Broker')">
         Connect Broker
       </div>
       <div class="nav-item" onclick="nav('prop-firms',this,'Best Prop Firms')">
@@ -966,19 +969,19 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
       <div class="nav-item" onclick="toggleLearnSub(this)">
         <span class="nav-icon">🎓</span>New to Trading?<span class="nav-chevron" id="learn-chevron">›</span>
       </div>
-      <div class="sidebar-sub-item" id="learn-sub-pairs" style="display:none" onclick="nav('learn',document.querySelectorAll('.nav-item')[13],'New to Trading? › Pairs Explained');this.classList.add('active')">
+      <div class="sidebar-sub-item" id="learn-sub-pairs" style="display:none" onclick="nav('learn',document.querySelectorAll('.nav-item')[14],'New to Trading? › Pairs Explained');this.classList.add('active')">
         Pairs Explained
       </div>
-      <div class="sidebar-sub-item" id="learn-sub-propfirms" style="display:none" onclick="nav('learn-propfirms',document.querySelectorAll('.nav-item')[13],'New to Trading? › What Are Prop Firms?');this.classList.add('active')">
+      <div class="sidebar-sub-item" id="learn-sub-propfirms" style="display:none" onclick="nav('learn-propfirms',document.querySelectorAll('.nav-item')[14],'New to Trading? › What Are Prop Firms?');this.classList.add('active')">
         What Are Prop Firms?
       </div>
-      <div class="sidebar-sub-item" id="learn-sub-terminology" style="display:none" onclick="nav('learn-terminology',document.querySelectorAll('.nav-item')[13],'New to Trading? › Trading Terminology');this.classList.add('active')">
+      <div class="sidebar-sub-item" id="learn-sub-terminology" style="display:none" onclick="nav('learn-terminology',document.querySelectorAll('.nav-item')[14],'New to Trading? › Trading Terminology');this.classList.add('active')">
         Trading Terminology
       </div>
-      <div class="sidebar-sub-item" id="learn-sub-autotrading" style="display:none" onclick="nav('learn-autotrading',document.querySelectorAll('.nav-item')[13],'New to Trading? › How Automated Trading Works');this.classList.add('active')">
+      <div class="sidebar-sub-item" id="learn-sub-autotrading" style="display:none" onclick="nav('learn-autotrading',document.querySelectorAll('.nav-item')[14],'New to Trading? › How Automated Trading Works');this.classList.add('active')">
         How Automated Trading Works
       </div>
-      <div class="sidebar-sub-item" id="learn-sub-indicators" style="display:none" onclick="nav('learn-indicators',document.querySelectorAll('.nav-item')[13],'New to Trading? › What Are Indicators?');this.classList.add('active')">
+      <div class="sidebar-sub-item" id="learn-sub-indicators" style="display:none" onclick="nav('learn-indicators',document.querySelectorAll('.nav-item')[14],'New to Trading? › What Are Indicators?');this.classList.add('active')">
         What Are Indicators?
       </div>
       <div class="nav-item" onclick="nav('how-strategies',this,'How Strategies Work')">
@@ -1076,7 +1079,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
           <div class="plan-stat"><div class="ps-label">Strategy</div><div class="ps-val">1</div></div>
         </div>
         <button class="upgrade-btn" onclick="openSubscribeModal()">⚡ Upgrade Plan</button>
-        <button class="upgrade-btn" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);margin-top:6px" onclick="nav('account',document.querySelectorAll('.nav-item')[16],'Account')" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text)'">👤 Account Overview</button>
+        <button class="upgrade-btn" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);margin-top:6px" onclick="nav('account',document.querySelectorAll('.nav-item')[17],'Account')" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text)'">👤 Account Overview</button>
         <button id="enter-admin-btn" class="upgrade-btn" style="display:none;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.25);margin-top:6px" onclick="showAdminSidebar();nav('admin-overview',this,'Admin › Overview')" onmouseover="this.style.background='rgba(239,68,68,.2)'" onmouseout="this.style.background='rgba(239,68,68,.1)'">🛡 Enter Admin Mode</button>
       </div>
     </div>
@@ -1153,7 +1156,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
           </div>
           <span style="margin-left:auto;color:var(--text3);font-size:18px">›</span>
         </div>
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;gap:16px;cursor:pointer" onclick="nav('brokers',document.querySelectorAll('.nav-item')[6],'Brokers')">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;display:flex;align-items:center;gap:16px;cursor:pointer" onclick="nav('brokers',document.querySelectorAll('.nav-item')[7],'Brokers')">
           <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,rgba(0,217,126,.1),rgba(0,200,240,.1));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔗</div>
           <div>
             <div style="font-size:14px;font-weight:500;color:var(--text)">Connect Broker</div>
@@ -1165,7 +1168,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
 
       <!-- HOW IT WORKS -->
       <div class="panel" style="margin-top:20px">
-        <div class="ph"><span class="pt">How It Works</span><div style="display:flex;gap:8px"><button class="btn ghost sm" onclick="nav('how-strategies',document.querySelectorAll('.nav-item')[14],'How Strategies Work')">How Strategies Work</button><button class="btn ghost sm" onclick="nav('guide',document.querySelectorAll('.nav-item')[12],'Setup Guide')">View Full Guide →</button></div></div>
+        <div class="ph"><span class="pt">How It Works</span><div style="display:flex;gap:8px"><button class="btn ghost sm" onclick="nav('how-strategies',document.querySelectorAll('.nav-item')[15],'How Strategies Work')">How Strategies Work</button><button class="btn ghost sm" onclick="nav('guide',document.querySelectorAll('.nav-item')[13],'Setup Guide')">View Full Guide →</button></div></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;border-top:none">
           <div style="padding:24px 20px;text-align:center;position:relative">
             <div style="width:40px;height:40px;border-radius:50%;background:rgba(0,200,240,.1);border:2px solid rgba(0,200,240,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-family:var(--mono);font-size:14px;font-weight:600;color:var(--accent)">1</div>
@@ -1219,7 +1222,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
               No brokers connected yet
             </div>
           </div>
-          <div onclick="nav('brokers',document.querySelectorAll('.nav-item')[6],'Brokers')" style="padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s;background:rgba(0,200,240,.03)" onmouseover="this.style.background='rgba(0,200,240,.08)'" onmouseout="this.style.background='rgba(0,200,240,.03)'">
+          <div onclick="nav('brokers',document.querySelectorAll('.nav-item')[7],'Brokers')" style="padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s;background:rgba(0,200,240,.03)" onmouseover="this.style.background='rgba(0,200,240,.08)'" onmouseout="this.style.background='rgba(0,200,240,.03)'">
             <div style="width:32px;height:32px;border-radius:8px;border:1.5px dashed var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--accent)">+</div>
             <div style="font-size:13px;font-weight:500;color:var(--accent)">Connect a Broker</div>
           </div>
@@ -1303,7 +1306,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
       </div>
 
       <!-- AFFILIATE PROMO BANNER -->
-      <div id="affiliate-promo-banner" style="margin-top:20px;background:linear-gradient(135deg,rgba(0,217,126,.06) 0%,rgba(0,200,240,.06) 50%,rgba(139,111,255,.06) 100%);border:1px solid rgba(0,217,126,.2);border-radius:10px;padding:22px 24px;display:flex;align-items:center;gap:20px;cursor:pointer;transition:all .2s" onclick="gateAffiliate(document.querySelectorAll('.nav-item')[10])" onmouseover="this.style.borderColor='rgba(0,217,126,.4)'" onmouseout="this.style.borderColor='rgba(0,217,126,.2)'">
+      <div id="affiliate-promo-banner" style="margin-top:20px;background:linear-gradient(135deg,rgba(0,217,126,.06) 0%,rgba(0,200,240,.06) 50%,rgba(139,111,255,.06) 100%);border:1px solid rgba(0,217,126,.2);border-radius:10px;padding:22px 24px;display:flex;align-items:center;gap:20px;cursor:pointer;transition:all .2s" onclick="gateAffiliate(document.querySelectorAll('.nav-item')[11])" onmouseover="this.style.borderColor='rgba(0,217,126,.4)'" onmouseout="this.style.borderColor='rgba(0,217,126,.2)'">
         <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,rgba(0,217,126,.15),rgba(0,200,240,.1));display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">💰</div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
@@ -1326,7 +1329,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
           <span style="font-size:13px;font-weight:600;color:var(--text)">4.9/5</span>
           <span style="font-size:12px;color:var(--text3)">from 520+ traders</span>
         </div>
-        <button class="btn ghost sm" onclick="nav('reviews',document.querySelectorAll('.nav-item')[3],'Reviews')">All Reviews →</button>
+        <button class="btn ghost sm" onclick="nav('reviews',document.querySelectorAll('.nav-item')[5],'Reviews')">All Reviews →</button>
       </div>
       <div id="dash-reviews-scroll" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch"></div>
 
@@ -1444,7 +1447,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
             <button onclick="miniCalToday()" style="height:28px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;padding:0 10px;font-family:var(--sans);font-size:11px;font-weight:500;transition:all .15s" onmouseover="this.style.background='var(--bg4)';this.style.color='var(--text)'" onmouseout="this.style.background='var(--bg3)';this.style.color='var(--text2)'">Today</button>
             <button onclick="miniCalNext()" style="width:28px;height:28px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s" onmouseover="this.style.background='var(--bg4)';this.style.color='var(--text)'" onmouseout="this.style.background='var(--bg3)';this.style.color='var(--text2)'">›</button>
             <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
-            <button onclick="nav('calendar',document.querySelectorAll('.nav-item')[6],'Calendar')" style="height:28px;border-radius:6px;background:rgba(0,184,230,.08);border:1px solid rgba(0,184,230,.2);color:var(--accent);cursor:pointer;padding:0 12px;font-family:var(--sans);font-size:11px;font-weight:500;transition:all .15s" onmouseover="this.style.background='rgba(0,184,230,.15)'" onmouseout="this.style.background='rgba(0,184,230,.08)'">Full Calendar →</button>
+            <button onclick="nav('calendar',document.querySelectorAll('.nav-item')[7],'Calendar')" style="height:28px;border-radius:6px;background:rgba(0,184,230,.08);border:1px solid rgba(0,184,230,.2);color:var(--accent);cursor:pointer;padding:0 12px;font-family:var(--sans);font-size:11px;font-weight:500;transition:all .15s" onmouseover="this.style.background='rgba(0,184,230,.15)'" onmouseout="this.style.background='rgba(0,184,230,.08)'">Full Calendar →</button>
           </div>
         </div>
         <div id="mini-cal-stats" style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border)"></div>
@@ -1461,7 +1464,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
               <div style="font-size:11px;color:var(--text3);margin-top:1px">Limited time offer</div>
             </div>
           </div>
-          <button onclick="nav('coupons',document.querySelectorAll('.nav-item')[12],'Coupon Codes')" style="height:28px;border-radius:6px;background:rgba(0,217,126,.08);border:1px solid rgba(0,217,126,.2);color:var(--green);cursor:pointer;padding:0 12px;font-family:var(--sans);font-size:11px;font-weight:500;transition:all .15s" onmouseover="this.style.background='rgba(0,217,126,.15)'" onmouseout="this.style.background='rgba(0,217,126,.08)'">All Coupons →</button>
+          <button onclick="nav('coupons',document.querySelectorAll('.nav-item')[13],'Coupon Codes')" style="height:28px;border-radius:6px;background:rgba(0,217,126,.08);border:1px solid rgba(0,217,126,.2);color:var(--green);cursor:pointer;padding:0 12px;font-family:var(--sans);font-size:11px;font-weight:500;transition:all .15s" onmouseover="this.style.background='rgba(0,217,126,.15)'" onmouseout="this.style.background='rgba(0,217,126,.08)'">All Coupons →</button>
         </div>
         <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px">
           <div style="flex:1">
@@ -1519,6 +1522,27 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
       </div>
     </div>
 
+
+    <!-- CHARTS -->
+    <div class="page" id="page-charts">
+      <div style="display:flex;flex-direction:column;height:calc(100vh - 56px);padding:0">
+        <!-- Chart Header -->
+        <div style="padding:14px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <div>
+            <div class="page-title" style="margin:0;font-size:18px">Live Charts</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px">Real-time CME futures data powered by TradingView</div>
+          </div>
+          <div id="chart-tabs" style="display:flex;gap:6px">
+            <button class="chart-tab active" onclick="switchChart('OANDA:NAS100USD','NQ',this)" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">NQ</button>
+            <button class="chart-tab" onclick="switchChart('OANDA:NAS100USD','MNQ',this)" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">MNQ</button>
+            <button class="chart-tab" onclick="switchChart('OANDA:SPX500USD','ES',this)" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">ES</button>
+            <button class="chart-tab" onclick="switchChart('OANDA:SPX500USD','MES',this)" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">MES</button>
+          </div>
+        </div>
+        <!-- TradingView Chart Container -->
+        <div id="tv-chart-container" style="flex:1;overflow:hidden"></div>
+      </div>
+    </div>
 
     <!-- TRADES -->
     <div class="page" id="page-trades">
@@ -2252,7 +2276,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
             <div class="page-title">Strategies</div>
             <div class="page-sub">Automated trading strategies running on your account</div>
           </div>
-          <button class="btn ghost sm" onclick="nav('how-strategies',document.querySelectorAll('.nav-item')[14],'How Strategies Work')">How Strategies Work →</button>
+          <button class="btn ghost sm" onclick="nav('how-strategies',document.querySelectorAll('.nav-item')[15],'How Strategies Work')">How Strategies Work →</button>
         </div>
 
         <!-- Strategy Filters -->
@@ -3648,7 +3672,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
             <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">Link your brokerage account so we can send orders directly. You'll need your API key and secret from your broker — we never store your login password.</div>
             <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-size:12px;color:var(--text2);line-height:1.6">
               <strong style="color:var(--text)">Supported brokers:</strong> Tradovate (recommended), NinjaTrader, Rithmic, TradeStation, Interactive Brokers, and more.<br><br>
-              <strong style="color:var(--text)">How to:</strong> Go to <strong style="color:var(--accent);cursor:pointer" onclick="nav('brokers',document.querySelectorAll('.nav-item')[6],'Brokers')">Brokers</strong> → Click your broker → Enter your API credentials → Save. That's it.
+              <strong style="color:var(--text)">How to:</strong> Go to <strong style="color:var(--accent);cursor:pointer" onclick="nav('brokers',document.querySelectorAll('.nav-item')[7],'Brokers')">Brokers</strong> → Click your broker → Enter your API credentials → Save. That's it.
             </div>
           </div>
         </div>
@@ -4922,7 +4946,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div style="font-size:14px;font-weight:600;color:var(--text)">Connected Brokers</div>
-            <button class="btn ghost" style="font-size:11px;padding:4px 12px" onclick="nav('brokers',document.querySelectorAll('.nav-item')[6],'Brokers › Connect Broker')">+ Connect</button>
+            <button class="btn ghost" style="font-size:11px;padding:4px 12px" onclick="nav('brokers',document.querySelectorAll('.nav-item')[7],'Brokers › Connect Broker')">+ Connect</button>
           </div>
           <div id="acct-brokers-list"></div>
         </div>
@@ -4985,7 +5009,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
               <span style="font-size:11px;color:var(--text3)">points</span>
             </div>
             <div id="acct-tier" style="font-size:11px;color:var(--text2)">Bronze Tier</div>
-            <button class="btn ghost" style="font-size:11px;padding:4px 12px;margin-top:10px" onclick="nav('rewards',document.querySelectorAll('.nav-item')[11],'Rewards')">View Rewards</button>
+            <button class="btn ghost" style="font-size:11px;padding:4px 12px;margin-top:10px" onclick="nav('rewards',document.querySelectorAll('.nav-item')[12],'Rewards')">View Rewards</button>
           </div>
           <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px 24px">
             <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:14px">Referrals</div>
@@ -4994,7 +5018,7 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
               <span style="font-size:11px;color:var(--text3)">friends referred</span>
             </div>
             <div id="acct-earnings" style="font-size:11px;color:var(--text2)">$0.00 earned</div>
-            <button class="btn ghost" style="font-size:11px;padding:4px 12px;margin-top:10px" onclick="gateAffiliate(document.querySelectorAll('.nav-item')[10])">Affiliate Program</button>
+            <button class="btn ghost" style="font-size:11px;padding:4px 12px;margin-top:10px" onclick="gateAffiliate(document.querySelectorAll('.nav-item')[11])">Affiliate Program</button>
           </div>
         </div>
 
@@ -5270,8 +5294,8 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
 
         <!-- Bottom links -->
         <div style="margin-top:24px;display:flex;gap:12px">
-          <button class="btn ghost" onclick="nav('disclaimer',document.querySelectorAll('.nav-item')[18],'Disclaimer')">Read Disclaimer</button>
-          <button class="btn ghost" onclick="nav('contact',document.querySelectorAll('.nav-item')[19],'Contact Us')">Contact Us</button>
+          <button class="btn ghost" onclick="nav('disclaimer',document.querySelectorAll('.nav-item')[19],'Disclaimer')">Read Disclaimer</button>
+          <button class="btn ghost" onclick="nav('contact',document.querySelectorAll('.nav-item')[20],'Contact Us')">Contact Us</button>
         </div>
       </div>
     </div>
@@ -8105,7 +8129,7 @@ function openLearnFromDashboard(){
   subs.forEach(function(id){ document.getElementById(id).style.display='block'; });
   c.style.transform='rotate(90deg)';
   /* Scroll sidebar so "New to Trading?" is visible */
-  var learnNav=document.querySelectorAll('.nav-item')[13];
+  var learnNav=document.querySelectorAll('.nav-item')[14];
   if(learnNav) learnNav.scrollIntoView({behavior:'smooth',block:'center'});
   /* Navigate to Pairs Explained and highlight it */
   nav('learn',learnNav,'New to Trading? › Pairs Explained');
@@ -11252,6 +11276,61 @@ function toggleStratCard(header){
 }
 
 // ============================================
+// Live Charts (TradingView Advanced Widget)
+// ============================================
+var tvChartLoaded=false;
+var tvCurrentSymbol='OANDA:NAS100USD';
+
+function loadTVChart(symbol){
+  tvCurrentSymbol=symbol||'NQ1!';
+  var container=document.getElementById('tv-chart-container');
+  if(!container) return;
+  container.innerHTML='';
+  var isDark=document.documentElement.getAttribute('data-theme')!=='light';
+  var widget=document.createElement('div');
+  widget.className='tradingview-widget-container';
+  widget.style.cssText='height:100%;width:100%';
+  widget.innerHTML='<div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>';
+  container.appendChild(widget);
+  var script=document.createElement('script');
+  script.type='text/javascript';
+  script.src='https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  script.async=true;
+  script.textContent=JSON.stringify({
+    "autosize":true,
+    "symbol":tvCurrentSymbol,
+    "interval":"5",
+    "timezone":"America/New_York",
+    "theme":isDark?"dark":"light",
+    "style":"1",
+    "locale":"en",
+    "allow_symbol_change":true,
+    "calendar":false,
+    "support_host":"https://www.tradingview.com",
+    "hide_top_toolbar":false,
+    "hide_legend":false,
+    "save_image":false,
+    "hide_volume":false,
+    "backgroundColor":isDark?"rgba(10,14,23,1)":"rgba(255,255,255,1)",
+    "gridColor":isDark?"rgba(42,46,57,0.3)":"rgba(42,46,57,0.06)",
+    "studies":["STD;EMA"],
+    "withdateranges":true
+  });
+  widget.appendChild(script);
+  tvChartLoaded=true;
+}
+
+function switchChart(symbol,label,btn){
+  // Update tab styles
+  document.querySelectorAll('.chart-tab').forEach(function(t){
+    t.style.background='var(--bg3)';t.style.color='var(--text2)';t.style.border='1px solid var(--border)';
+    t.classList.remove('active');
+  });
+  if(btn){btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.border='none';btn.classList.add('active');}
+  loadTVChart(symbol);
+}
+
+// ============================================
 // Community Chat
 // ============================================
 var communitySeededMessages = [
@@ -11689,6 +11768,9 @@ if(!origNav){
   var _realNav=nav;
   nav=function(id,el,crumb){
     _realNav(id,el,crumb);
+    if(id==='charts'){
+      setTimeout(function(){ if(!tvChartLoaded) loadTVChart(tvCurrentSymbol); },100);
+    }
     if(id==='community'){
       clearCommunityBadge();
       setTimeout(function(){
