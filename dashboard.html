@@ -12740,11 +12740,19 @@ function toggleTheme(){
 <script>
 // ── Support Chat ──
 var supportChatOpen=false;
+var supportPollTimer=null;
 
 function toggleSupportChat(){
   supportChatOpen=!supportChatOpen;
   document.getElementById('support-chat-panel').style.display=supportChatOpen?'flex':'none';
-  if(supportChatOpen) loadSupportMessages();
+  if(supportChatOpen){
+    loadSupportMessages();
+    // Poll for new replies every 15 seconds while chat is open
+    if(supportPollTimer) clearInterval(supportPollTimer);
+    supportPollTimer=setInterval(function(){ if(supportChatOpen) loadSupportMessages(); },15000);
+  }else{
+    if(supportPollTimer){ clearInterval(supportPollTimer); supportPollTimer=null; }
+  }
 }
 
 function showSupportChatBtn(){
@@ -12775,17 +12783,37 @@ function renderSupportMsg(m){
 async function loadSupportMessages(){
   if(!auth.currentUser)return;
   var container=document.getElementById('support-chat-messages');
+  // Don't wipe existing messages while polling — only update if we get server data
   try{
     var resp=await fetch('/api/support/my-messages?uid='+auth.currentUser.uid);
     var data=await resp.json();
+    if(data.error){
+      console.warn('Support load error:',data.error);
+      // If index error, use Firestore client directly as fallback
+      try{
+        var snap=await db.collection('supportMessages').where('uid','==',auth.currentUser.uid).get();
+        if(!snap.empty){
+          var msgs=[];
+          snap.forEach(function(doc){
+            var d=doc.data();
+            msgs.push({message:d.message,status:d.status,replies:d.replies||[],
+              createdAt:d.createdAt?d.createdAt.toDate().toISOString():null});
+          });
+          msgs.sort(function(a,b){return new Date(a.createdAt)-new Date(b.createdAt);});
+          var html='';
+          msgs.forEach(function(m){html+=renderSupportMsg(m);});
+          container.innerHTML=html;
+          container.scrollTop=container.scrollHeight;
+          return;
+        }
+      }catch(e2){console.warn('Firestore client fallback failed:',e2);}
+    }
     if(data.messages&&data.messages.length){
-      // Server messages — show them (oldest first)
       var msgs=data.messages.reverse();
       var html='';
       msgs.forEach(function(m){ html+=renderSupportMsg(m); });
       container.innerHTML=html;
       container.scrollTop=container.scrollHeight;
-      // Clear local cache since server has everything
       localStorage.removeItem('sa_support_msgs');
       return;
     }
