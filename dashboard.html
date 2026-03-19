@@ -9142,7 +9142,7 @@ async function resetPaper() {
 
   // Clear trade history table on dashboard
   var tbody=document.getElementById('trades-table');
-  if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">No trades yet — connect a strategy to start trading</td></tr>';
+  if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);font-size:13px;padding:24px">No trades yet — waiting for the next signal</td></tr>';
   // Reset trade summary stats
   var tsTotal=document.getElementById('ts-total'); if(tsTotal) tsTotal.textContent='0';
   var tsWin=document.getElementById('ts-winrate'); if(tsWin) tsWin.textContent='—';
@@ -9165,11 +9165,10 @@ async function resetPaper() {
       tradesSnap.forEach(function(doc){ batch.delete(doc.ref); });
       if(!tradesSnap.empty) await batch.commit();
 
-      // Reset user stats & calendar
+      // Reset user stats & calendar (keep activeStrategies, tier, qty, ticker intact)
       await db.collection('users').doc(uid).set({
         totalPnl:0, tradeCount:0, winCount:0, lossCount:0,
         calendarNotes:{},
-        paperDemo:null,
         updatedAt:firebase.firestore.FieldValue.serverTimestamp()
       },{merge:true});
 
