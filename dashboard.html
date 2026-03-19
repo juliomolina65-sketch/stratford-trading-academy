@@ -1525,32 +1525,42 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
 
     <!-- CHARTS -->
     <div class="page" id="page-charts">
-      <div style="display:flex;flex-direction:column;height:calc(100vh - 56px);padding:0">
+      <div id="charts-wrapper" style="display:flex;flex-direction:column;height:calc(100vh - 56px);padding:0">
         <!-- Chart Header -->
-        <div style="padding:14px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-          <div>
-            <div class="page-title" style="margin:0;font-size:18px">Live Charts</div>
-            <div style="font-size:12px;color:var(--text3);margin-top:2px">Real-time CME futures data powered by TradingView</div>
+        <div id="charts-header" style="padding:10px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:linear-gradient(180deg,rgba(10,14,23,.95),rgba(10,14,23,.8))">
+          <div style="display:flex;align-items:center;gap:16px">
+            <!-- Live indicator -->
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse-dot 2s infinite"></span>
+              <span style="font-size:13px;font-weight:700;color:var(--text)">Live Charts</span>
+            </div>
+            <!-- Ticker tabs -->
+            <div id="chart-tabs" style="display:flex;gap:4px;background:var(--bg3);border-radius:8px;padding:3px">
+              <button class="chart-tab active" onclick="switchChart('OANDA:NAS100USD','NQ',this)" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:5px 16px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--mono);transition:all .15s;letter-spacing:.02em">NQ</button>
+              <button class="chart-tab" onclick="switchChart('OANDA:NAS100USD','MNQ',this)" style="background:transparent;color:var(--text3);border:none;border-radius:6px;padding:5px 16px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--mono);transition:all .15s;letter-spacing:.02em">MNQ</button>
+              <button class="chart-tab" onclick="switchChart('OANDA:SPX500USD','ES',this)" style="background:transparent;color:var(--text3);border:none;border-radius:6px;padding:5px 16px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--mono);transition:all .15s;letter-spacing:.02em">ES</button>
+              <button class="chart-tab" onclick="switchChart('OANDA:SPX500USD','MES',this)" style="background:transparent;color:var(--text3);border:none;border-radius:6px;padding:5px 16px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--mono);transition:all .15s;letter-spacing:.02em">MES</button>
+            </div>
           </div>
           <div style="display:flex;gap:6px;align-items:center">
-            <div id="chart-tabs" style="display:flex;gap:6px">
-              <button class="chart-tab active" onclick="switchChart('OANDA:NAS100USD','NQ',this)" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">NQ</button>
-              <button class="chart-tab" onclick="switchChart('OANDA:NAS100USD','MNQ',this)" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">MNQ</button>
-              <button class="chart-tab" onclick="switchChart('OANDA:SPX500USD','ES',this)" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">ES</button>
-              <button class="chart-tab" onclick="switchChart('OANDA:SPX500USD','MES',this)" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">MES</button>
-            </div>
-            <div style="width:1px;height:24px;background:var(--border);margin:0 6px"></div>
-            <button id="alpha-trades-btn" onclick="toggleAlphaTrades()" style="background:linear-gradient(135deg,rgba(0,184,230,.1),rgba(139,111,255,.1));border:1px solid rgba(0,184,230,.3);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);color:var(--accent);transition:all .15s;display:flex;align-items:center;gap:6px" onmouseover="this.style.borderColor='rgba(0,184,230,.6)'" onmouseout="this.style.borderColor='rgba(0,184,230,.3)'">⚡ Stratford Alpha Trades</button>
+            <button id="alpha-trades-btn" onclick="toggleAlphaTrades()" style="background:linear-gradient(135deg,rgba(0,184,230,.1),rgba(139,111,255,.1));border:1px solid rgba(0,184,230,.3);border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);color:var(--accent);transition:all .15s;display:flex;align-items:center;gap:5px" onmouseover="this.style.borderColor='rgba(0,184,230,.6)'" onmouseout="this.style.borderColor='rgba(0,184,230,.3)'">⚡ Alpha Trades</button>
+            <button id="chart-fullscreen-btn" onclick="toggleChartFullscreen()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;color:var(--text3);transition:all .15s;display:flex;align-items:center" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'" title="Full Screen">⛶</button>
           </div>
         </div>
         <!-- TradingView Chart Container -->
         <div id="tv-chart-container" style="flex:1;overflow:hidden;min-height:0"></div>
-        <!-- Alpha Trades Panel (hidden by default) -->
-        <div id="alpha-trades-panel" style="display:none;flex-shrink:0;max-height:240px;overflow-y:auto;border-top:1px solid var(--border);background:var(--bg2)">
-          <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:1">
+        <!-- Strategy Trades Panel (hidden by default) -->
+        <div id="alpha-trades-panel" style="display:none;flex-shrink:0;max-height:260px;overflow-y:auto;border-top:1px solid var(--border);background:var(--bg2)">
+          <div style="padding:10px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:1">
             <div style="display:flex;align-items:center;gap:10px">
               <span style="font-size:14px">⚡</span>
-              <span style="font-size:13px;font-weight:600;color:var(--text)">Stratford Alpha — Recent Trades</span>
+              <!-- Strategy filter tabs -->
+              <div id="strat-trade-tabs" style="display:flex;gap:3px;background:var(--bg3);border-radius:6px;padding:2px">
+                <button class="strat-trade-tab active" onclick="switchStratTrades('Stratford Alpha',this)" style="background:var(--accent);color:#fff;border:none;border-radius:5px;padding:4px 12px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--mono);transition:all .15s">Alpha</button>
+                <button class="strat-trade-tab" onclick="switchStratTrades('Stratford Apex',this)" style="background:transparent;color:var(--text3);border:none;border-radius:5px;padding:4px 12px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--mono);transition:all .15s">Apex</button>
+                <button class="strat-trade-tab" onclick="switchStratTrades('Stratford Omega',this)" style="background:transparent;color:var(--text3);border:none;border-radius:5px;padding:4px 12px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--mono);transition:all .15s">Omega</button>
+                <button class="strat-trade-tab" onclick="switchStratTrades('Stratford Guardian',this)" style="background:transparent;color:var(--text3);border:none;border-radius:5px;padding:4px 12px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--mono);transition:all .15s">Guardian</button>
+              </div>
               <span id="alpha-trade-count" style="font-family:var(--mono);font-size:10px;color:var(--accent);background:rgba(0,184,230,.1);border:1px solid rgba(0,184,230,.2);border-radius:4px;padding:2px 8px">0 trades</span>
             </div>
             <button onclick="toggleAlphaTrades()" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:2px 6px">&times;</button>
@@ -11342,10 +11352,10 @@ function loadTVChart(symbol){
     "hide_top_toolbar":false,
     "hide_legend":false,
     "save_image":false,
-    "hide_volume":false,
+    "hide_volume":true,
     "backgroundColor":isDark?"rgba(10,14,23,1)":"rgba(255,255,255,1)",
     "gridColor":isDark?"rgba(42,46,57,0.3)":"rgba(42,46,57,0.06)",
-    "studies":["STD;EMA"],
+    "studies":[],
     "withdateranges":true
   });
   widget.appendChild(script);
@@ -11355,16 +11365,41 @@ function loadTVChart(symbol){
 function switchChart(symbol,label,btn){
   // Update tab styles
   document.querySelectorAll('.chart-tab').forEach(function(t){
-    t.style.background='var(--bg3)';t.style.color='var(--text2)';t.style.border='1px solid var(--border)';
+    t.style.background='transparent';t.style.color='var(--text3)';
     t.classList.remove('active');
   });
-  if(btn){btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.border='none';btn.classList.add('active');}
+  if(btn){btn.style.background='var(--accent)';btn.style.color='#fff';btn.classList.add('active');}
   loadTVChart(symbol);
 }
 
-// Alpha Trades Panel
+var chartFullscreen=false;
+function toggleChartFullscreen(){
+  chartFullscreen=!chartFullscreen;
+  var sidebar=document.querySelector('.sidebar');
+  var topbar=document.getElementById('topbar');
+  var wrapper=document.getElementById('charts-wrapper');
+  var btn=document.getElementById('chart-fullscreen-btn');
+  if(chartFullscreen){
+    if(sidebar)sidebar.style.display='none';
+    if(topbar)topbar.style.display='none';
+    if(wrapper)wrapper.style.height='100vh';
+    if(btn){btn.textContent='✕';btn.title='Exit Full Screen';}
+    document.getElementById('page-charts').style.cssText='position:fixed;inset:0;z-index:100';
+  }else{
+    if(sidebar)sidebar.style.display='';
+    if(topbar)topbar.style.display='';
+    if(wrapper)wrapper.style.height='calc(100vh - 56px)';
+    if(btn){btn.textContent='⛶';btn.title='Full Screen';}
+    document.getElementById('page-charts').style.cssText='';
+  }
+  // Reload chart to fit new size
+  setTimeout(function(){loadTVChart(tvCurrentSymbol);},200);
+}
+
+// Strategy Trades Panel
 var alphaTradesPanelOpen=false;
-var alphaTradesLoaded=false;
+var currentStratFilter='Stratford Alpha';
+var stratTradesCache={};
 
 function toggleAlphaTrades(){
   var panel=document.getElementById('alpha-trades-panel');
@@ -11379,55 +11414,83 @@ function toggleAlphaTrades(){
       btn.style.background='linear-gradient(135deg,rgba(0,184,230,.1),rgba(139,111,255,.1))';btn.style.color='var(--accent)';btn.style.borderColor='rgba(0,184,230,.3)';
     }
   }
-  if(alphaTradesPanelOpen && !alphaTradesLoaded) loadAlphaTrades();
+  if(alphaTradesPanelOpen) loadAlphaTrades(currentStratFilter);
 }
 
-async function loadAlphaTrades(){
+function switchStratTrades(strategy,btn){
+  // Check upgrade requirement for non-Alpha strategies
+  if(strategy!=='Stratford Alpha'){
+    var u=JSON.parse(localStorage.getItem('sa_user')||'{}');
+    var hasPaid=u.plan && u.plan!=='free' && (u.subscriptionStatus==='active'||u.subscriptionStatus==='canceling');
+    var isAdmin=u.isAdmin===true;
+    if(!hasPaid && !isAdmin){
+      // Show upgrade prompt
+      var tbody=document.getElementById('alpha-trades-tbody');
+      if(tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:30px"><div style="font-size:24px;margin-bottom:8px">🔒</div><div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Upgrade Required</div><div style="font-size:12px;color:var(--text3);margin-bottom:12px">'+strategy.replace('Stratford ','')+' trades are available for Pro & Elite members</div><button class="btn sm" onclick="nav(\'strategies\',document.querySelectorAll(\'.nav-item\')[2],\'Strategies\')">View Plans</button></td></tr>';
+      document.getElementById('alpha-trade-count').textContent='Locked';
+      // Update tab styling
+      document.querySelectorAll('.strat-trade-tab').forEach(function(t){t.style.background='transparent';t.style.color='var(--text3)';t.classList.remove('active');});
+      if(btn){btn.style.background='var(--purple)';btn.style.color='#fff';btn.classList.add('active');}
+      return;
+    }
+  }
+  currentStratFilter=strategy;
+  // Update tab styling
+  document.querySelectorAll('.strat-trade-tab').forEach(function(t){t.style.background='transparent';t.style.color='var(--text3)';t.classList.remove('active');});
+  if(btn){btn.style.background='var(--accent)';btn.style.color='#fff';btn.classList.add('active');}
+  loadAlphaTrades(strategy);
+}
+
+async function loadAlphaTrades(strategy){
+  strategy=strategy||currentStratFilter;
   var tbody=document.getElementById('alpha-trades-tbody');
   if(!tbody)return;
+  // Check cache
+  if(stratTradesCache[strategy]){renderStratTrades(stratTradesCache[strategy],strategy);return;}
   tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px">⏳ Loading trades...</td></tr>';
   try{
-    // Fetch all trades from Firestore (strategy: Stratford Alpha)
-    var snapshot=await db.collection('trades').where('strategy','==','Stratford Alpha').orderBy('timestamp','desc').limit(50).get();
+    var snapshot=await db.collectionGroup('trades').where('strategy','==',strategy).orderBy('timestamp','desc').limit(50).get();
     var trades=[];
     snapshot.forEach(function(doc){ trades.push(doc.data()); });
-    // Deduplicate: group by entryPrice+action, keep most recent (the SELL/close)
-    var seen={};
-    var unique=[];
+    var seen={};var unique=[];
     trades.forEach(function(t){
       var key=(t.entryPrice||'')+'_'+(t.exitPrice||'')+'_'+(t.action||'');
       if(!seen[key]){seen[key]=true;unique.push(t);}
     });
-    if(unique.length===0){
-      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px">No Stratford Alpha trades found yet</td></tr>';
-      document.getElementById('alpha-trade-count').textContent='0 trades';
-      alphaTradesLoaded=true;
-      return;
-    }
-    document.getElementById('alpha-trade-count').textContent=unique.length+' trades';
-    tbody.innerHTML=unique.map(function(t){
-      var time=t.timestamp?new Date(t.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):'—';
-      var actionColor=t.action==='BUY'?'var(--green)':'var(--red)';
-      var pnl=t.pnl;
-      var pnlColor=pnl===null||pnl===undefined?'var(--text3)':(pnl>=0?'var(--green)':'var(--red)');
-      var pnlStr=pnl===null||pnl===undefined?'—':(pnl>=0?'+$'+pnl.toLocaleString():'-$'+Math.abs(pnl).toLocaleString());
-      var statusColor=t.status==='open'?'var(--amber)':'var(--green)';
-      return '<tr onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'none\'">'
-        +'<td style="padding:8px 16px;border-bottom:1px solid var(--border);color:var(--text2);font-family:var(--mono);white-space:nowrap">'+time+'</td>'
-        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-weight:700;color:'+actionColor+'">'+t.action+'</td>'
-        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--mono)">'+t.ticker+'</td>'
-        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text2)">'+t.qty+'</td>'
-        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--mono)">'+(t.entryPrice||'—')+'</td>'
-        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--mono)">'+(t.exitPrice||'—')+'</td>'
-        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-weight:700;color:'+pnlColor+';font-family:var(--mono)">'+pnlStr+'</td>'
-        +'<td style="padding:8px 12px;border-bottom:1px solid var(--border)"><span style="color:'+statusColor+';font-weight:500">● '+(t.status||'closed')+'</span></td>'
-        +'</tr>';
-    }).join('');
-    alphaTradesLoaded=true;
+    stratTradesCache[strategy]=unique;
+    renderStratTrades(unique,strategy);
   }catch(err){
-    console.warn('Failed to load alpha trades:',err);
+    console.warn('Failed to load trades:',err);
     tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--red);padding:20px">Failed to load trades: '+err.message+'</td></tr>';
   }
+}
+function renderStratTrades(unique,strategy){
+  var tbody=document.getElementById('alpha-trades-tbody');
+  var label=strategy.replace('Stratford ','');
+  if(!unique.length){
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px">No '+label+' trades found yet</td></tr>';
+    document.getElementById('alpha-trade-count').textContent='0 trades';
+    return;
+  }
+  document.getElementById('alpha-trade-count').textContent=unique.length+' trades';
+  tbody.innerHTML=unique.map(function(t){
+    var time=t.timestamp?new Date(t.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):'—';
+    var actionColor=t.action==='BUY'?'var(--green)':'var(--red)';
+    var pnl=t.pnl;
+    var pnlColor=pnl===null||pnl===undefined?'var(--text3)':(pnl>=0?'var(--green)':'var(--red)');
+    var pnlStr=pnl===null||pnl===undefined?'—':(pnl>=0?'+$'+pnl.toLocaleString():'-$'+Math.abs(pnl).toLocaleString());
+    var statusColor=t.status==='open'?'var(--amber)':'var(--green)';
+    return '<tr onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'none\'">'
+      +'<td style="padding:8px 16px;border-bottom:1px solid var(--border);color:var(--text2);font-family:var(--mono);white-space:nowrap">'+time+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-weight:700;color:'+actionColor+'">'+t.action+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--mono)">'+t.ticker+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text2)">'+t.qty+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--mono)">'+(t.entryPrice||'—')+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--mono)">'+(t.exitPrice||'—')+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-weight:700;color:'+pnlColor+';font-family:var(--mono)">'+pnlStr+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid var(--border)"><span style="color:'+statusColor+';font-weight:500">● '+(t.status||'closed')+'</span></td>'
+      +'</tr>';
+  }).join('');
 }
 
 // ============================================
