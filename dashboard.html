@@ -2170,8 +2170,50 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
             </div>
             <!-- Notes -->
             <div>
-              <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">Notes</div>
-              <textarea id="cal-day-notes" rows="3" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;resize:vertical" placeholder="Write notes about this trading day..." oninput="saveCalNote()"></textarea>
+              <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">📝 Quick Note</div>
+              <textarea id="cal-day-notes" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;resize:vertical" placeholder="Quick note about this day..." oninput="saveCalNote()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveCalNote();showToast('Note saved','success')}"></textarea>
+              <div style="display:flex;justify-content:flex-end;margin-top:6px">
+                <button class="btn sm" onclick="saveCalNote();showToast('Note saved','success')" style="font-size:11px;padding:6px 14px">💾 Save Note</button>
+              </div>
+            </div>
+
+            <!-- Journal Entry -->
+            <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div style="font-size:12px;font-weight:600;color:var(--text2)">📓 Trading Journal</div>
+                <span style="font-size:10px;color:var(--text3)">Shift+Enter for new line</span>
+              </div>
+
+              <div style="margin-bottom:10px">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:4px">How did you feel today?</div>
+                <div id="cal-journal-mood" style="display:flex;gap:8px">
+                  <button onclick="setJournalMood('😤','Frustrated')" class="btn ghost sm" style="font-size:16px;padding:6px 10px" title="Frustrated">😤</button>
+                  <button onclick="setJournalMood('😟','Anxious')" class="btn ghost sm" style="font-size:16px;padding:6px 10px" title="Anxious">😟</button>
+                  <button onclick="setJournalMood('😐','Neutral')" class="btn ghost sm" style="font-size:16px;padding:6px 10px" title="Neutral">😐</button>
+                  <button onclick="setJournalMood('😊','Confident')" class="btn ghost sm" style="font-size:16px;padding:6px 10px" title="Confident">😊</button>
+                  <button onclick="setJournalMood('🔥','On Fire')" class="btn ghost sm" style="font-size:16px;padding:6px 10px" title="On Fire">🔥</button>
+                </div>
+              </div>
+
+              <div style="margin-bottom:10px">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:4px">What went well?</div>
+                <textarea id="cal-journal-wins" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;resize:vertical" placeholder="e.g. Followed the plan, took profits on time..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveJournalEntry();showToast('Journal saved','success')}"></textarea>
+              </div>
+
+              <div style="margin-bottom:10px">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:4px">What could improve?</div>
+                <textarea id="cal-journal-improve" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;resize:vertical" placeholder="e.g. Need to stop overtrading, stick to 1 setup..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveJournalEntry();showToast('Journal saved','success')}"></textarea>
+              </div>
+
+              <div style="margin-bottom:10px">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Lessons learned</div>
+                <textarea id="cal-journal-lessons" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;resize:vertical" placeholder="e.g. Market was choppy — best to sit out..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveJournalEntry();showToast('Journal saved','success')}"></textarea>
+              </div>
+
+              <div style="display:flex;justify-content:flex-end;gap:8px">
+                <button class="btn sm ghost" onclick="clearJournalEntry()" style="font-size:11px;padding:6px 14px">Clear</button>
+                <button class="btn sm" onclick="saveJournalEntry();showToast('Journal saved ✅','success')" style="font-size:11px;padding:6px 14px">📓 Save Journal</button>
+              </div>
             </div>
           </div>
         </div>
@@ -8155,6 +8197,8 @@ function showDayDetail(day){
   const notes=JSON.parse(localStorage.getItem('sa_calendar_notes')||'{}');
   document.getElementById('cal-day-notes').value=notes[dateStr]||'';
   document.getElementById('cal-day-detail').style.display='block';
+  // Load journal entry
+  loadJournalEntry();
 }
 function saveCalNote(){
   const dateStr=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(calSelectedDay).padStart(2,'0');
@@ -8165,6 +8209,76 @@ function saveCalNote(){
   if(auth.currentUser){
     try{db.collection('users').doc(auth.currentUser.uid).set({calendarNotes:notes,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}catch(e){}
   }
+}
+
+// ── Trading Journal ──
+var journalMoodSelected='';
+function setJournalMood(emoji,label){
+  journalMoodSelected=emoji+' '+label;
+  var btns=document.querySelectorAll('#cal-journal-mood .btn');
+  btns.forEach(function(b){ b.style.background=''; b.style.borderColor='var(--border)'; });
+  event.target.closest('.btn').style.background='var(--bg3)';
+  event.target.closest('.btn').style.borderColor='var(--accent)';
+}
+
+function getJournalKey(){
+  return calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(calSelectedDay).padStart(2,'0');
+}
+
+function saveJournalEntry(){
+  var dateStr=getJournalKey();
+  var journals=JSON.parse(localStorage.getItem('sa_journal')||'{}');
+  journals[dateStr]={
+    mood:journalMoodSelected||'',
+    wins:(document.getElementById('cal-journal-wins').value||'').trim(),
+    improve:(document.getElementById('cal-journal-improve').value||'').trim(),
+    lessons:(document.getElementById('cal-journal-lessons').value||'').trim(),
+    updatedAt:new Date().toISOString()
+  };
+  localStorage.setItem('sa_journal',JSON.stringify(journals));
+  // Persist to Firestore
+  if(auth.currentUser){
+    try{db.collection('users').doc(auth.currentUser.uid).set({journal:journals,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}catch(e){}
+  }
+}
+
+function loadJournalEntry(){
+  var dateStr=getJournalKey();
+  var journals=JSON.parse(localStorage.getItem('sa_journal')||'{}');
+  var entry=journals[dateStr]||{};
+  document.getElementById('cal-journal-wins').value=entry.wins||'';
+  document.getElementById('cal-journal-improve').value=entry.improve||'';
+  document.getElementById('cal-journal-lessons').value=entry.lessons||'';
+  journalMoodSelected=entry.mood||'';
+  // Highlight saved mood button
+  var btns=document.querySelectorAll('#cal-journal-mood .btn');
+  btns.forEach(function(b){ b.style.background=''; b.style.borderColor='var(--border)'; });
+  if(entry.mood){
+    btns.forEach(function(b){
+      if(entry.mood.indexOf(b.textContent.trim())===0){
+        b.style.background='var(--bg3)';
+        b.style.borderColor='var(--accent)';
+      }
+    });
+  }
+}
+
+function clearJournalEntry(){
+  if(!confirm('Clear this journal entry?'))return;
+  document.getElementById('cal-journal-wins').value='';
+  document.getElementById('cal-journal-improve').value='';
+  document.getElementById('cal-journal-lessons').value='';
+  journalMoodSelected='';
+  var btns=document.querySelectorAll('#cal-journal-mood .btn');
+  btns.forEach(function(b){ b.style.background=''; b.style.borderColor='var(--border)'; });
+  var dateStr=getJournalKey();
+  var journals=JSON.parse(localStorage.getItem('sa_journal')||'{}');
+  delete journals[dateStr];
+  localStorage.setItem('sa_journal',JSON.stringify(journals));
+  if(auth.currentUser){
+    try{db.collection('users').doc(auth.currentUser.uid).set({journal:journals,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}catch(e){}
+  }
+  showToast('Journal entry cleared','info');
 }
 
 // Clock
