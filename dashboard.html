@@ -12839,9 +12839,31 @@ async function sendSupportMsg(){
   input.focus();
 }
 
+var quickAnswers={
+  'How do I connect a strategy?':'Go to the Setup Guide page from the sidebar menu. Click "Connect to Paper Account" to start with a free demo, or "Connect Live Broker" if you have a subscription. Pick your strategy, choose your account tier, and you\'re all set!',
+  'How does the paper demo work?':'The paper demo is a simulated trading account. When our bot takes a trade, it automatically appears in your demo account with real market prices. You can track your P&L, win rate, and trade history — all without risking real money. It never expires!',
+  'How do I connect a broker?':'Broker connection requires a paid subscription (Alpha, Pro, or Elite). Once subscribed, go to the Setup Guide, click "Connect Live Broker", and follow the steps to link your Tradovate, NinjaTrader, or other supported broker.',
+  'What are the subscription plans?':'We offer 3 plans: Alpha ($99/mo) — 1 strategy, Pro ($189/mo) — 2 strategies, and Elite ($250/mo) — all 4 strategies. All plans include the paper demo for free. You can start with the free demo to test before subscribing!',
+  'How do I reset my demo account?':'Go to your Dashboard, scroll down to the Paper Demo section, and click the "Reset" button. This will clear all trades, P&L, and calendar data but keep your strategy connected.',
+  'Does it work with prop firms?':'Yes! Our strategies are designed to work within prop firm rules. Stratford Apex is specifically built for MNQ prop firm accounts with conservative risk management. Check the Best Prop Firms page for our recommended firms with discount codes.'
+};
+
 function sendQuickQuestion(q){
   document.getElementById('support-chat-input').value=q;
   sendSupportMsg();
+  // Show auto-response after a short delay
+  setTimeout(function(){
+    var answer=quickAnswers[q];
+    if(answer){
+      var container=document.getElementById('support-chat-messages');
+      var div=document.createElement('div');
+      div.style.cssText='margin-bottom:12px;padding-left:12px';
+      div.innerHTML='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;color:var(--accent);font-weight:600">Auto-Reply</span><span style="font-size:10px;color:var(--text3)">Just now</span></div>'
+        +'<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;border-top-left-radius:2px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.6">'+answer+'</div>';
+      container.appendChild(div);
+      container.scrollTop=container.scrollHeight;
+    }
+  },1500);
 }
 
 function escapeHtml(t){
