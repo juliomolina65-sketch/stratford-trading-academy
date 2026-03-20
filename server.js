@@ -1390,6 +1390,65 @@ app.post('/api/admin/clear-trades', async (req, res) => {
   }
 });
 
+// ---- Admin: Delete a member completely (Auth + Firestore) ----
+app.post('/api/admin/delete-member', async (req, res) => {
+  if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });
+  const { uid, targetUid } = req.body;
+  if (!uid || !targetUid) return res.status(400).json({ error: 'Missing uid or targetUid' });
+
+  // Verify admin
+  try {
+    const adminDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!adminDoc.exists) return res.status(401).json({ error: 'Unauthorized' });
+    const email = (adminDoc.data().email || '').toLowerCase();
+    if (!ADMIN_EMAILS.includes(email)) return res.status(403).json({ error: 'Admin access required' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+
+  // Prevent admin from deleting themselves or other admins
+  try {
+    const targetDoc = await dbAdmin.collection('users').doc(targetUid).get();
+    if (targetDoc.exists) {
+      const targetEmail = (targetDoc.data().email || '').toLowerCase();
+      if (ADMIN_EMAILS.includes(targetEmail)) {
+        return res.status(403).json({ error: 'Cannot delete an admin account' });
+      }
+    }
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+
+  try {
+    // 1. Delete subcollections (trades, referrals, commissions)
+    const subcollections = ['trades', 'referrals', 'commissions'];
+    for (const sub of subcollections) {
+      const snap = await dbAdmin.collection('users').doc(targetUid).collection(sub).get();
+      if (!snap.empty) {
+        const batch = dbAdmin.batch();
+        snap.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+      }
+    }
+
+    // 2. Delete the Firestore user document
+    await dbAdmin.collection('users').doc(targetUid).delete();
+
+    // 3. Delete the Firebase Auth account
+    try {
+      await admin.auth().deleteUser(targetUid);
+    } catch (authErr) {
+      console.warn(`[ADMIN] Auth user ${targetUid} may not exist:`, authErr.code);
+    }
+
+    console.log(`[ADMIN] Deleted member: ${targetUid} (by ${uid})`);
+    res.json({ success: true, deleted: targetUid });
+  } catch (err) {
+    console.error('[ADMIN] Delete member error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ---- Admin: Set user tier (updates qty/ticker for contract sizing) ----
 app.post('/api/admin/set-tier', async (req, res) => {
   if (!dbAdmin) return res.status(500).json({ error: 'Firebase not initialized' });

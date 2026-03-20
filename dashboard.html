@@ -8862,6 +8862,7 @@ function buildMemberRows(members){
       +'<select onchange="adminGrantAccess(\''+m.uid+'\',this.value);this.value=\'\'" style="background:linear-gradient(135deg,rgba(0,184,230,.1),rgba(139,111,255,.1));border:1px solid rgba(0,184,230,.3);border-radius:6px;padding:5px 8px;color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;outline:none;width:100%"><option value="">🔑 Grant Access</option><option value="alpha">Alpha ($99/mo)</option><option value="pro">Pro ($189/mo)</option><option value="elite">Elite ($250/mo)</option>'+(plan!=='free'?'<option value="revoke">❌ Revoke Access</option>':'')+'</select>'
       +'<button class="btn sm '+(m.accountStatus==='paused'?'':'danger')+'" style="font-size:10px;padding:4px 10px;width:100%;justify-content:center" onclick="adminToggleMember(\''+m.uid+'\',\''+(m.accountStatus==='paused'?'resume':'pause')+'\')">'+(m.accountStatus==='paused'?'▶ Resume':'⏸ Pause')+'</button>'
       +'<button class="btn sm ghost" style="font-size:10px;padding:4px 10px;width:100%;justify-content:center;color:var(--purple)" onclick="adminAssignStrategy(\''+m.uid+'\',\''+escapeHtml(m.name||'User')+'\',\''+escapeHtml(m.email||'')+'\',\''+(strategies||'')+'\',\''+(m.tier||'')+'\')">⚙ Manage</button>'
+      +'<button class="btn sm ghost" style="font-size:10px;padding:4px 10px;width:100%;justify-content:center;color:var(--red);border-color:rgba(239,68,68,.3)" onclick="adminDeleteMember(\''+m.uid+'\',\''+escapeHtml(m.name||'User')+'\',\''+escapeHtml(m.email||'')+'\')">🗑 Delete</button>'
       +'</div>')
       +'</td></tr>'
       +'<tr id="md-'+idx+'" style="display:none"><td colspan="10" style="padding:0;border-bottom:1px solid var(--border)">'
@@ -9005,6 +9006,21 @@ async function adminGrantAccess(targetUid,value){
     var data=await res.json();
     if(!res.ok)throw new Error(data.error||'Failed');
     showToast(isRevoke?'Access revoked':'Granted '+value+' access','success');
+    loadAdminMembersFromServer();
+  }catch(err){
+    alert('Error: '+err.message);
+  }
+}
+async function adminDeleteMember(targetUid,name,email){
+  var user=auth.currentUser;
+  if(!user)return;
+  if(!confirm('⚠️ DELETE member "'+name+'" ('+email+')?\n\nThis will permanently remove:\n• Their account & login\n• All trades\n• All referral data\n\nThis cannot be undone!'))return;
+  if(!confirm('FINAL CONFIRMATION: Permanently delete '+email+'?'))return;
+  try{
+    var res=await fetch('/api/admin/delete-member',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:user.uid,targetUid:targetUid})});
+    var data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Failed to delete member');
+    showToast('Member "'+name+'" deleted successfully','success');
     loadAdminMembersFromServer();
   }catch(err){
     alert('Error: '+err.message);
