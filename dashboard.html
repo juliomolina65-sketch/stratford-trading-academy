@@ -235,6 +235,17 @@ select option{background:var(--bg3);}
 .strat-filter:hover{background:rgba(0,200,240,.08);border-color:rgba(0,200,240,.25);color:var(--text);}
 .strat-filter.active{background:rgba(0,200,240,.12);border-color:rgba(0,200,240,.4);color:var(--accent);font-weight:600;}
 .chevron.rot{transform:rotate(180deg);}
+.pine-code{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--text2);overflow-x:auto;white-space:pre;margin:12px 0;}
+.pine-code .cm{color:var(--text3);}
+.pine-code .kw{color:var(--purple);}
+.pine-code .fn{color:var(--accent);}
+.pine-code .st{color:var(--green);}
+.pine-code .num{color:var(--amber);}
+.pro-tip{background:rgba(139,111,255,.06);border:1px solid rgba(139,111,255,.15);border-radius:8px;padding:14px 16px;font-size:12px;color:var(--text2);line-height:1.6;margin:12px 0;}
+.pro-tip strong{color:var(--purple);}
+.module-num{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:14px;font-weight:700;flex-shrink:0;}
+.module-body{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+.module-body.open{max-height:5000px;}
 
 /* HAMBURGER */
 .hamburger{display:none;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;}
@@ -4818,6 +4829,496 @@ if(window.innerWidth <= 768 && !localStorage.getItem('sa_mobile_banner_dismissed
       </div>
     </div>
 
+    <!-- LEARN TO CREATE STRATEGIES (ELITE ONLY) -->
+    <div class="page" id="page-learn-strategies">
+      <div style="padding:28px 32px;max-width:820px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+          <div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+              <div class="page-title" style="margin:0">Learn to Create Strategies</div>
+              <span style="font-size:10px;padding:3px 10px;border-radius:5px;background:linear-gradient(135deg,rgba(255,215,0,.15),rgba(255,165,0,.15));color:#ffd700;border:1px solid rgba(255,215,0,.25);font-weight:700;letter-spacing:.06em">ELITE</span>
+            </div>
+            <div class="page-subtitle" style="margin:0">From zero to Pine Script — build your own TradingView strategies with AI</div>
+          </div>
+          <button class="btn ghost" style="font-size:12px;padding:6px 14px;flex-shrink:0" onclick="nav('account',document.querySelectorAll('.nav-item')[19],'Account')">← Back</button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:600;color:var(--text)">Course Progress</div>
+            <div id="course-progress-label" style="font-size:12px;color:var(--text3);font-family:var(--mono)">0 of 6 modules completed</div>
+          </div>
+          <div style="background:var(--bg);border-radius:6px;height:8px;overflow:hidden">
+            <div id="course-progress-bar" style="width:0%;height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:6px;transition:width .4s ease"></div>
+          </div>
+        </div>
+
+        <!-- MODULE 1: What is Pine Script? -->
+        <div class="panel" style="margin-bottom:12px">
+          <div onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.chevron').classList.toggle('rot')" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="module-num" style="background:rgba(0,200,240,.1);color:var(--accent)">1</div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600;color:var(--text)">What is Pine Script?</span><span id="mod-check-1" style="display:none;font-size:14px">✅</span></div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">The basics — TradingView editor, script structure</div>
+              </div>
+            </div>
+            <span class="chevron" style="color:var(--text3);font-size:12px;transition:transform .2s;display:inline-block">▼</span>
+          </div>
+          <div class="module-body">
+            <div style="padding:0 20px 20px">
+              <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:16px"><strong style="color:var(--text)">Pine Script</strong> is TradingView's built-in programming language that lets you create custom indicators, strategies, and alerts. It runs directly in your browser — no software to install.</p>
+
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">Where to Find the Editor</div>
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.7">
+                1. Open any chart on <strong style="color:var(--accent)">TradingView.com</strong><br>
+                2. At the bottom of the screen, click the <strong style="color:var(--accent)">Pine Editor</strong> tab<br>
+                3. This is where you write, edit, and run your scripts<br>
+                4. Click <strong style="color:var(--accent)">"Add to Chart"</strong> to test your script live
+              </div>
+
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">Script Structure</div>
+              <p style="font-size:12px;color:var(--text3);margin-bottom:8px">Every Pine Script starts with a version tag and a declaration:</p>
+              <pre class="pine-code"><span class="cm">// Version declaration — always use v6</span>
+<span class="kw">//@version=6</span>
+
+<span class="cm">// For indicators (visual overlays, no buy/sell):</span>
+<span class="fn">indicator</span>(<span class="st">"My Indicator"</span>, overlay=<span class="kw">true</span>)
+
+<span class="cm">// For strategies (buy/sell signals with backtesting):</span>
+<span class="fn">strategy</span>(<span class="st">"My Strategy"</span>, overlay=<span class="kw">true</span>)
+
+<span class="cm">// Plot a simple moving average</span>
+<span class="fn">plot</span>(<span class="fn">ta.sma</span>(close, <span class="num">20</span>), color=<span class="fn">color.blue</span>)</pre>
+
+              <div class="pro-tip">
+                <strong>Pro Tip:</strong> Always use <code>//@version=6</code> — it's the latest version with the most features and best performance. Older versions are missing critical functions.
+              </div>
+
+              <div style="text-align:right;margin-top:14px">
+                <button class="btn ghost" style="font-size:11px;padding:5px 14px" onclick="toggleModuleComplete(1)">✓ Mark Complete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODULE 2: Understanding Key Indicators -->
+        <div class="panel" style="margin-bottom:12px">
+          <div onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.chevron').classList.toggle('rot')" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="module-num" style="background:rgba(139,111,255,.1);color:var(--purple)">2</div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600;color:var(--text)">Understanding Key Indicators</span><span id="mod-check-2" style="display:none;font-size:14px">✅</span></div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">EMA, RSI, MACD, ATR, Supertrend — what they do and how to code them</div>
+              </div>
+            </div>
+            <span class="chevron" style="color:var(--text3);font-size:12px;transition:transform .2s;display:inline-block">▼</span>
+          </div>
+          <div class="module-body">
+            <div style="padding:0 20px 20px">
+              <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:16px">Indicators are math formulas applied to price data. They help you identify <strong style="color:var(--text)">trends</strong>, <strong style="color:var(--text)">momentum</strong>, and <strong style="color:var(--text)">volatility</strong> — the three building blocks of any strategy.</p>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px">
+                  <div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:6px">📈 EMA (Exponential Moving Average)</div>
+                  <div style="font-size:12px;color:var(--text2);line-height:1.6">Smooths price data to show trend direction. Faster EMAs (3, 8) react quickly; slower ones (20, 50) show the bigger picture. <strong style="color:var(--text)">Crossovers</strong> signal potential entries.</div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px">
+                  <div style="font-size:13px;font-weight:600;color:var(--purple);margin-bottom:6px">📊 RSI (Relative Strength Index)</div>
+                  <div style="font-size:12px;color:var(--text2);line-height:1.6">Measures momentum from 0-100. Above 70 = overbought (potential sell), below 30 = oversold (potential buy). Use as a <strong style="color:var(--text)">confirmation filter</strong>.</div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px">
+                  <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:6px">⚡ MACD</div>
+                  <div style="font-size:12px;color:var(--text2);line-height:1.6">Shows momentum shifts by comparing two EMAs. When the MACD line crosses above the signal line = bullish momentum. Below = bearish.</div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px">
+                  <div style="font-size:13px;font-weight:600;color:var(--amber);margin-bottom:6px">📏 ATR (Average True Range)</div>
+                  <div style="font-size:12px;color:var(--text2);line-height:1.6">Measures volatility — how much price moves per candle. Use it for <strong style="color:var(--text)">dynamic stop losses</strong> and take profits that adapt to market conditions.</div>
+                </div>
+              </div>
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px">
+                <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:6px">🛡 Supertrend</div>
+                <div style="font-size:12px;color:var(--text2);line-height:1.6">A trend-following indicator that combines ATR with a multiplier to create a dynamic support/resistance line. Price above = uptrend, price below = downtrend. Great as a <strong style="color:var(--text)">trend filter</strong> to avoid counter-trend trades.</div>
+              </div>
+
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">Pine Script Code for Each</div>
+              <pre class="pine-code"><span class="cm">// EMA — Exponential Moving Average</span>
+fastEMA = <span class="fn">ta.ema</span>(close, <span class="num">8</span>)
+slowEMA = <span class="fn">ta.ema</span>(close, <span class="num">21</span>)
+
+<span class="cm">// RSI — Relative Strength Index</span>
+rsi = <span class="fn">ta.rsi</span>(close, <span class="num">14</span>)
+
+<span class="cm">// MACD — Moving Average Convergence Divergence</span>
+[macdLine, signalLine, histogram] = <span class="fn">ta.macd</span>(close, <span class="num">12</span>, <span class="num">26</span>, <span class="num">9</span>)
+
+<span class="cm">// ATR — Average True Range</span>
+atr = <span class="fn">ta.atr</span>(<span class="num">14</span>)
+
+<span class="cm">// Supertrend</span>
+[supertrend, direction] = <span class="fn">ta.supertrend</span>(<span class="num">2.0</span>, <span class="num">10</span>)</pre>
+
+              <div class="pro-tip">
+                <strong>Pro Tip:</strong> ATR is the foundation of adaptive risk management — use it for dynamic stop losses instead of fixed point values. Markets like NQ can swing 200+ points some days and 80 points on others.
+              </div>
+
+              <div style="text-align:right;margin-top:14px">
+                <button class="btn ghost" style="font-size:11px;padding:5px 14px" onclick="toggleModuleComplete(2)">✓ Mark Complete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODULE 3: Building Your First Strategy -->
+        <div class="panel" style="margin-bottom:12px">
+          <div onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.chevron').classList.toggle('rot')" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="module-num" style="background:rgba(0,217,126,.1);color:var(--green)">3</div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600;color:var(--text)">Building Your First Strategy</span><span id="mod-check-3" style="display:none;font-size:14px">✅</span></div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Entry/exit logic, strategy() vs indicator(), your first working strategy</div>
+              </div>
+            </div>
+            <span class="chevron" style="color:var(--text3);font-size:12px;transition:transform .2s;display:inline-block">▼</span>
+          </div>
+          <div class="module-body">
+            <div style="padding:0 20px 20px">
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">indicator() vs strategy()</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px">
+                  <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:6px">indicator()</div>
+                  <div style="font-size:12px;color:var(--text2);line-height:1.6">Visual only — plots lines, colors candles, shows labels. <strong style="color:var(--text)">Cannot</strong> place buy/sell orders or run backtests.</div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px">
+                  <div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:6px">strategy()</div>
+                  <div style="font-size:12px;color:var(--text2);line-height:1.6">Places simulated trades, tracks P&L, shows backtest results. <strong style="color:var(--text)">This is what you want</strong> for automated trading.</div>
+                </div>
+              </div>
+
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">Key Functions</div>
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.8">
+                <code style="color:var(--accent)">strategy.entry("Long", strategy.long)</code> — Opens a long (buy) position<br>
+                <code style="color:var(--accent)">strategy.entry("Short", strategy.short)</code> — Opens a short (sell) position<br>
+                <code style="color:var(--accent)">strategy.close("Long")</code> — Closes an open long position<br>
+                <code style="color:var(--accent)">strategy.exit("Exit", stop=..., limit=...)</code> — Sets stop loss and take profit
+              </div>
+
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">Your First Strategy: EMA Crossover + RSI Filter</div>
+              <pre class="pine-code"><span class="kw">//@version=6</span>
+<span class="fn">strategy</span>(<span class="st">"My First Strategy"</span>, overlay=<span class="kw">true</span>)
+
+<span class="cm">// Define indicators</span>
+fastEMA = <span class="fn">ta.ema</span>(close, <span class="num">8</span>)
+slowEMA = <span class="fn">ta.ema</span>(close, <span class="num">21</span>)
+rsi     = <span class="fn">ta.rsi</span>(close, <span class="num">14</span>)
+
+<span class="cm">// Entry conditions</span>
+longCondition  = <span class="fn">ta.crossover</span>(fastEMA, slowEMA) <span class="kw">and</span> rsi > <span class="num">50</span>
+shortCondition = <span class="fn">ta.crossunder</span>(fastEMA, slowEMA) <span class="kw">and</span> rsi &lt; <span class="num">50</span>
+
+<span class="cm">// Place trades</span>
+<span class="kw">if</span> longCondition
+    <span class="fn">strategy.entry</span>(<span class="st">"Long"</span>, strategy.long)
+
+<span class="kw">if</span> shortCondition
+    <span class="fn">strategy.entry</span>(<span class="st">"Short"</span>, strategy.short)
+
+<span class="cm">// Plot EMAs on chart</span>
+<span class="fn">plot</span>(fastEMA, color=<span class="fn">color.blue</span>, title=<span class="st">"Fast EMA"</span>)
+<span class="fn">plot</span>(slowEMA, color=<span class="fn">color.red</span>, title=<span class="st">"Slow EMA"</span>)</pre>
+
+              <p style="font-size:12px;color:var(--text3);line-height:1.6;margin-top:8px">Copy this into TradingView's Pine Editor, click <strong style="color:var(--accent)">Add to Chart</strong>, then open the <strong style="color:var(--accent)">Strategy Tester</strong> tab to see backtest results.</p>
+
+              <div class="pro-tip">
+                <strong>Pro Tip:</strong> Start with ONE entry condition and ONE exit condition. Add complexity only after you understand how the base logic performs. Simple strategies are often the most robust.
+              </div>
+
+              <div style="text-align:right;margin-top:14px">
+                <button class="btn ghost" style="font-size:11px;padding:5px 14px" onclick="toggleModuleComplete(3)">✓ Mark Complete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODULE 4: Adding Risk Management -->
+        <div class="panel" style="margin-bottom:12px">
+          <div onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.chevron').classList.toggle('rot')" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="module-num" style="background:rgba(240,176,64,.1);color:var(--amber)">4</div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600;color:var(--text)">Adding Risk Management</span><span id="mod-check-4" style="display:none;font-size:14px">✅</span></div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Stop losses, take profits, ATR-based exits, position sizing</div>
+              </div>
+            </div>
+            <span class="chevron" style="color:var(--text3);font-size:12px;transition:transform .2s;display:inline-block">▼</span>
+          </div>
+          <div class="module-body">
+            <div style="padding:0 20px 20px">
+              <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:16px">A strategy without risk management is gambling. This module teaches you how to protect your capital with <strong style="color:var(--text)">stop losses</strong>, <strong style="color:var(--text)">take profits</strong>, and <strong style="color:var(--text)">proper position sizing</strong>.</p>
+
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">Fixed vs ATR-Based Stops</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+                <div style="background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.15);border-radius:8px;padding:14px 16px">
+                  <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:6px">❌ Fixed Stop (Not Ideal)</div>
+                  <div style="font-size:12px;color:var(--text2);line-height:1.6">stop = close - 40 points<br><br>Same distance every trade regardless of volatility. Gets stopped out too easily on volatile days, too far on quiet days.</div>
+                </div>
+                <div style="background:rgba(0,217,126,.04);border:1px solid rgba(0,217,126,.15);border-radius:8px;padding:14px 16px">
+                  <div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:6px">✅ ATR-Based Stop (Better)</div>
+                  <div style="font-size:12px;color:var(--text2);line-height:1.6">stop = close - (ATR * 1.5)<br><br>Adapts to current volatility. Tight on quiet days, wider on volatile days. Lets the trade breathe.</div>
+                </div>
+              </div>
+
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">strategy.exit() with ATR Stop Loss & Take Profit</div>
+              <pre class="pine-code"><span class="kw">//@version=6</span>
+<span class="fn">strategy</span>(<span class="st">"Risk Managed Strategy"</span>, overlay=<span class="kw">true</span>)
+
+fastEMA = <span class="fn">ta.ema</span>(close, <span class="num">8</span>)
+slowEMA = <span class="fn">ta.ema</span>(close, <span class="num">21</span>)
+rsi     = <span class="fn">ta.rsi</span>(close, <span class="num">14</span>)
+atr     = <span class="fn">ta.atr</span>(<span class="num">14</span>)
+
+<span class="cm">// ATR multipliers</span>
+slMultiplier = <span class="num">1.5</span>   <span class="cm">// Stop loss = 1.5x ATR</span>
+tpMultiplier = <span class="num">2.0</span>   <span class="cm">// Take profit = 2.0x ATR</span>
+
+<span class="cm">// Entry conditions</span>
+longCond  = <span class="fn">ta.crossover</span>(fastEMA, slowEMA) <span class="kw">and</span> rsi > <span class="num">50</span>
+shortCond = <span class="fn">ta.crossunder</span>(fastEMA, slowEMA) <span class="kw">and</span> rsi &lt; <span class="num">50</span>
+
+<span class="kw">if</span> longCond
+    <span class="fn">strategy.entry</span>(<span class="st">"Long"</span>, strategy.long)
+    <span class="fn">strategy.exit</span>(<span class="st">"Exit Long"</span>, from_entry=<span class="st">"Long"</span>,
+         stop  = close - (atr * slMultiplier),
+         limit = close + (atr * tpMultiplier))
+
+<span class="kw">if</span> shortCond
+    <span class="fn">strategy.entry</span>(<span class="st">"Short"</span>, strategy.short)
+    <span class="fn">strategy.exit</span>(<span class="st">"Exit Short"</span>, from_entry=<span class="st">"Short"</span>,
+         stop  = close + (atr * slMultiplier),
+         limit = close - (atr * tpMultiplier))</pre>
+
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;margin-top:16px">Position Sizing</div>
+              <pre class="pine-code"><span class="cm">// In your strategy() declaration, set default position size:</span>
+<span class="fn">strategy</span>(<span class="st">"My Strategy"</span>, overlay=<span class="kw">true</span>,
+     default_qty_type = strategy.fixed,
+     default_qty_value = <span class="num">1</span>,      <span class="cm">// 1 contract</span>
+     initial_capital   = <span class="num">50000</span>,  <span class="cm">// Starting capital</span>
+     commission_value  = <span class="num">4.00</span>)   <span class="cm">// $4 round-trip per contract</span></pre>
+
+              <div class="pro-tip">
+                <strong>Pro Tip:</strong> Never risk more than 1-2% of your account on a single trade. For a $50K account that's $500-$1,000 max risk per trade. Use ATR multiples (1.5x-2x) for stop losses on NQ/MNQ.
+              </div>
+
+              <div style="text-align:right;margin-top:14px">
+                <button class="btn ghost" style="font-size:11px;padding:5px 14px" onclick="toggleModuleComplete(4)">✓ Mark Complete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODULE 5: Backtesting & Optimization -->
+        <div class="panel" style="margin-bottom:12px">
+          <div onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.chevron').classList.toggle('rot')" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="module-num" style="background:rgba(0,200,240,.1);color:var(--accent)">5</div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600;color:var(--text)">Backtesting & Optimization</span><span id="mod-check-5" style="display:none;font-size:14px">✅</span></div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Strategy Tester, key metrics, adjustable inputs, avoiding overfitting</div>
+              </div>
+            </div>
+            <span class="chevron" style="color:var(--text3);font-size:12px;transition:transform .2s;display:inline-block">▼</span>
+          </div>
+          <div class="module-body">
+            <div style="padding:0 20px 20px">
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">How to Backtest in TradingView</div>
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.8">
+                1. Add your strategy script to the chart<br>
+                2. Click the <strong style="color:var(--accent)">Strategy Tester</strong> tab at the bottom<br>
+                3. Review the <strong style="color:var(--accent)">Overview</strong> tab for net profit, win rate, profit factor<br>
+                4. Check the <strong style="color:var(--accent)">List of Trades</strong> tab to see every individual trade<br>
+                5. Use the <strong style="color:var(--accent)">Performance Summary</strong> tab for detailed statistics
+              </div>
+
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">Key Metrics to Watch</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px">
+                  <div style="font-size:12px;font-weight:600;color:var(--accent)">Win Rate</div>
+                  <div style="font-size:11px;color:var(--text3);margin-top:4px">% of profitable trades. 40-60% is typical for good strategies. Don't chase 80%+ — it usually means overfitting.</div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px">
+                  <div style="font-size:12px;font-weight:600;color:var(--accent)">Profit Factor</div>
+                  <div style="font-size:11px;color:var(--text3);margin-top:4px">Gross profit / gross loss. Above 1.0 = profitable. Target 1.5-2.5 for realistic strategies.</div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px">
+                  <div style="font-size:12px;font-weight:600;color:var(--accent)">Max Drawdown</div>
+                  <div style="font-size:11px;color:var(--text3);margin-top:4px">Largest peak-to-trough decline. Keep this under 15-20% of your account. Lower = better.</div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px">
+                  <div style="font-size:12px;font-weight:600;color:var(--accent)">Sharpe Ratio</div>
+                  <div style="font-size:11px;color:var(--text3);margin-top:4px">Risk-adjusted return. Above 1.0 = good, above 2.0 = excellent. Measures consistency.</div>
+                </div>
+              </div>
+
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">Making Parameters Adjustable with input()</div>
+              <pre class="pine-code"><span class="kw">//@version=6</span>
+<span class="fn">strategy</span>(<span class="st">"Optimizable Strategy"</span>, overlay=<span class="kw">true</span>)
+
+<span class="cm">// These show up as sliders in the strategy settings!</span>
+fastLen  = <span class="fn">input.int</span>(<span class="num">8</span>,  <span class="st">"Fast EMA Length"</span>, minval=<span class="num">2</span>, maxval=<span class="num">50</span>)
+slowLen  = <span class="fn">input.int</span>(<span class="num">21</span>, <span class="st">"Slow EMA Length"</span>, minval=<span class="num">5</span>, maxval=<span class="num">100</span>)
+rsiLen   = <span class="fn">input.int</span>(<span class="num">14</span>, <span class="st">"RSI Length"</span>,     minval=<span class="num">2</span>, maxval=<span class="num">30</span>)
+rsiThresh = <span class="fn">input.int</span>(<span class="num">50</span>, <span class="st">"RSI Threshold"</span>,  minval=<span class="num">30</span>, maxval=<span class="num">70</span>)
+slMult   = <span class="fn">input.float</span>(<span class="num">1.5</span>, <span class="st">"SL ATR Multiplier"</span>, step=<span class="num">0.1</span>)
+tpMult   = <span class="fn">input.float</span>(<span class="num">2.0</span>, <span class="st">"TP ATR Multiplier"</span>, step=<span class="num">0.1</span>)
+
+<span class="cm">// Now use these variables instead of hardcoded numbers</span>
+fastEMA = <span class="fn">ta.ema</span>(close, fastLen)
+slowEMA = <span class="fn">ta.ema</span>(close, slowLen)
+rsi     = <span class="fn">ta.rsi</span>(close, rsiLen)</pre>
+
+              <div style="background:rgba(240,176,64,.06);border:1px solid rgba(240,176,64,.2);border-radius:8px;padding:14px 16px;margin:16px 0">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <span style="font-size:14px">⚠️</span>
+                  <span style="font-size:12px;font-weight:600;color:var(--amber)">Overfitting Warning</span>
+                </div>
+                <div style="font-size:12px;color:var(--text2);line-height:1.6">If your backtest looks too good to be true, it probably is. Overfitting means your strategy is tuned perfectly to <em>past</em> data but will fail on <em>future</em> data. Signs: Profit Factor above 3.0, Win Rate above 75%, or very few total trades.</div>
+              </div>
+
+              <div class="pro-tip">
+                <strong>Pro Tip:</strong> Always test on at least 200+ trades across different market conditions. A strategy that only works in trending markets will blow up during chop. Use TradingView's date range filter to test bull, bear, and sideways periods separately.
+              </div>
+
+              <div style="text-align:right;margin-top:14px">
+                <button class="btn ghost" style="font-size:11px;padding:5px 14px" onclick="toggleModuleComplete(5)">✓ Mark Complete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODULE 6: Using Claude AI to Code Strategies -->
+        <div class="panel" style="margin-bottom:12px">
+          <div onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.chevron').classList.toggle('rot')" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="module-num" style="background:rgba(139,111,255,.1);color:var(--purple)">6</div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600;color:var(--text)">Using Claude AI to Code Strategies</span><span id="mod-check-6" style="display:none;font-size:14px">✅</span></div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Prompt templates, iteration workflow, debugging with AI</div>
+              </div>
+            </div>
+            <span class="chevron" style="color:var(--text3);font-size:12px;transition:transform .2s;display:inline-block">▼</span>
+          </div>
+          <div class="module-body">
+            <div style="padding:0 20px 20px">
+              <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:16px">You don't need to memorize Pine Script. <strong style="color:var(--text)">Claude AI</strong> can write entire strategies from plain English descriptions. Here's how to use it effectively.</p>
+
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">The Workflow</div>
+              <div style="display:flex;flex-direction:column;gap:0;margin-bottom:16px">
+                <div style="display:flex;gap:14px;align-items:flex-start">
+                  <div style="display:flex;flex-direction:column;align-items:center">
+                    <div style="width:28px;height:28px;border-radius:50%;background:rgba(0,200,240,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:var(--mono);flex-shrink:0">1</div>
+                    <div style="width:2px;height:24px;background:var(--border)"></div>
+                  </div>
+                  <div style="padding-bottom:12px"><div style="font-size:13px;font-weight:600;color:var(--text)">Describe your idea in plain English</div><div style="font-size:12px;color:var(--text3);margin-top:2px">"I want a strategy that buys NQ when the 8 EMA crosses above the 21 EMA and RSI is above 50"</div></div>
+                </div>
+                <div style="display:flex;gap:14px;align-items:flex-start">
+                  <div style="display:flex;flex-direction:column;align-items:center">
+                    <div style="width:28px;height:28px;border-radius:50%;background:rgba(139,111,255,.12);color:var(--purple);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:var(--mono);flex-shrink:0">2</div>
+                    <div style="width:2px;height:24px;background:var(--border)"></div>
+                  </div>
+                  <div style="padding-bottom:12px"><div style="font-size:13px;font-weight:600;color:var(--text)">Ask Claude to write the Pine Script</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Claude generates the full script with proper syntax and best practices</div></div>
+                </div>
+                <div style="display:flex;gap:14px;align-items:flex-start">
+                  <div style="display:flex;flex-direction:column;align-items:center">
+                    <div style="width:28px;height:28px;border-radius:50%;background:rgba(0,217,126,.12);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:var(--mono);flex-shrink:0">3</div>
+                    <div style="width:2px;height:24px;background:var(--border)"></div>
+                  </div>
+                  <div style="padding-bottom:12px"><div style="font-size:13px;font-weight:600;color:var(--text)">Test in TradingView</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Copy the script into Pine Editor, add to chart, check the Strategy Tester results</div></div>
+                </div>
+                <div style="display:flex;gap:14px;align-items:flex-start">
+                  <div style="display:flex;flex-direction:column;align-items:center">
+                    <div style="width:28px;height:28px;border-radius:50%;background:rgba(240,176,64,.12);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:var(--mono);flex-shrink:0">4</div>
+                  </div>
+                  <div><div style="font-size:13px;font-weight:600;color:var(--text)">Iterate with Claude</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Ask Claude to fix errors, tweak parameters, add filters, or improve risk management</div></div>
+                </div>
+              </div>
+
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">Example Prompts You Can Use</div>
+              <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+                <div style="background:rgba(0,200,240,.04);border:1px solid rgba(0,200,240,.15);border-radius:8px;padding:12px 16px">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:4px;font-weight:600">Starting a New Strategy</div>
+                  <div style="font-size:12px;color:var(--text);font-style:italic">"Write a Pine Script v6 strategy for NQ futures on the 2-minute chart that goes long when the 8 EMA crosses above the 21 EMA, RSI(14) is above 50, and MACD is bullish. Use ATR-based stop loss at 1.5x and take profit at 2x ATR."</div>
+                </div>
+                <div style="background:rgba(139,111,255,.04);border:1px solid rgba(139,111,255,.15);border-radius:8px;padding:12px 16px">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--purple);margin-bottom:4px;font-weight:600">Adding a Filter</div>
+                  <div style="font-size:12px;color:var(--text);font-style:italic">"This strategy has too many false signals during ranging markets. Add a Supertrend filter so it only takes long trades when price is above the Supertrend line, and short trades when below."</div>
+                </div>
+                <div style="background:rgba(0,217,126,.04);border:1px solid rgba(0,217,126,.15);border-radius:8px;padding:12px 16px">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--green);margin-bottom:4px;font-weight:600">Fixing Errors</div>
+                  <div style="font-size:12px;color:var(--text);font-style:italic">"I'm getting this error in TradingView: 'Cannot call ta.ema with argument series=close'. Here's my full script: [paste script]. Can you fix it?"</div>
+                </div>
+                <div style="background:rgba(240,176,64,.04);border:1px solid rgba(240,176,64,.15);border-radius:8px;padding:12px 16px">
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);margin-bottom:4px;font-weight:600">Optimizing Performance</div>
+                  <div style="font-size:12px;color:var(--text);font-style:italic">"My strategy has a 55% win rate but profit factor is only 1.1. Can you adjust the risk/reward ratio so the take profit is wider? Also add a time filter so it only trades between 9:30 AM - 3:00 PM EST."</div>
+                </div>
+              </div>
+
+              <div class="pro-tip">
+                <strong>Pro Tip:</strong> Always paste the <em>full Pine Script</em> and the <em>exact error message</em> when asking Claude to debug. The more context you give, the better the fix. Don't just say "it doesn't work" — describe what you expected vs what happened.
+              </div>
+
+              <div style="text-align:right;margin-top:14px">
+                <button class="btn ghost" style="font-size:11px;padding:5px 14px" onclick="toggleModuleComplete(6)">✓ Mark Complete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pro Tips Grid -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-top:24px;margin-bottom:20px">
+          <div style="font-size:14px;font-weight:600;color:var(--purple);margin-bottom:14px">💡 Best Practices</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">Start Simple</div>
+              <div style="font-size:11px;color:var(--text3);line-height:1.5">Begin with one indicator and one timeframe. Master the basics before adding complexity.</div>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">Avoid Overfitting</div>
+              <div style="font-size:11px;color:var(--text3);line-height:1.5">Don't optimize to match past data perfectly. A good strategy works across different market conditions.</div>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">Test Multiple Instruments</div>
+              <div style="font-size:11px;color:var(--text3);line-height:1.5">Try your strategy on NQ, ES, MNQ, and MES. If it only works on one, it may be overfitted.</div>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">Use Realistic Commissions</div>
+              <div style="font-size:11px;color:var(--text3);line-height:1.5">Set commission_value in your strategy() declaration. $4 round-trip per contract is typical for futures.</div>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">Paper Trade First</div>
+              <div style="font-size:11px;color:var(--text3);line-height:1.5">Run any new strategy on paper for 2-4 weeks before going live. Backtests aren't guarantees.</div>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">Journal Everything</div>
+              <div style="font-size:11px;color:var(--text3);line-height:1.5">Track every change you make and why. Use the Calendar page to log your daily P&L and notes.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom CTA -->
+        <div style="background:linear-gradient(135deg,rgba(0,200,240,.06),rgba(139,111,255,.06));border:1px solid rgba(0,200,240,.15);border-radius:10px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="font-size:24px">📊</span>
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--text)">See Professional Strategies in Action</div>
+              <div style="font-size:12px;color:var(--text3)">Check out Stratford Alpha's backtest results to see how our strategies perform.</div>
+            </div>
+          </div>
+          <button class="btn" onclick="nav('backtest',document.querySelectorAll('.nav-item')[3],'Backtest Results')">View Backtests →</button>
+        </div>
+      </div>
+    </div>
+
     <!-- DISCLAIMER -->
     <div class="page" id="page-disclaimer">
       <div style="padding:28px 32px;max-width:800px">
@@ -8569,6 +9070,7 @@ function nav(id,el,crumb){
   if(id==='admin-support') loadAdminSupport();
   if(id==='coupons') renderUserCouponsFromData();
   if(id==='backtest') setTimeout(function(){ initBacktestCharts(); }, 50);
+  if(id==='learn-strategies') renderCourseProgress();
 }
 
 function renderAccountPage(){
@@ -11248,11 +11750,31 @@ function updateStrategyGating(){
 function gateEliteStrategyLearn(){
   const user=JSON.parse(localStorage.getItem('sa_user')||'null');
   if(user && user.plan==='elite'){
-    nav('howstrategies',document.querySelectorAll('.nav-item')[17],'How Strategies Work');
+    nav('learn-strategies',null,'Learn to Create Strategies');
   } else {
     alert('🧠 Learn to Create Strategies is an exclusive Elite perk.\n\nUpgrade to the Elite plan ($250/mo) to unlock strategy creation guides, Pine Script tutorials, and more!');
     openSubscribeModal();
   }
+}
+function toggleModuleComplete(n){
+  var progress=JSON.parse(localStorage.getItem('sa_course_progress')||'{}');
+  progress[n]=!progress[n];
+  localStorage.setItem('sa_course_progress',JSON.stringify(progress));
+  renderCourseProgress();
+  showToast(progress[n]?'Module '+n+' completed!':'Module '+n+' unmarked',progress[n]?'success':'info');
+}
+function renderCourseProgress(){
+  var progress=JSON.parse(localStorage.getItem('sa_course_progress')||'{}');
+  var completed=0;
+  for(var i=1;i<=6;i++){
+    var badge=document.getElementById('mod-check-'+i);
+    if(badge)badge.style.display=progress[i]?'inline-block':'none';
+    if(progress[i])completed++;
+  }
+  var bar=document.getElementById('course-progress-bar');
+  if(bar)bar.style.width=Math.round((completed/6)*100)+'%';
+  var label=document.getElementById('course-progress-label');
+  if(label)label.textContent=completed+' of 6 modules completed';
 }
 function gateAffiliate(el){
   const user=JSON.parse(localStorage.getItem('sa_user')||'null');
