@@ -1202,20 +1202,31 @@ function renderPaper() {
   if (acc.positions.length === 0) {
     posContainer.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3);font-size:13px;">No open positions. Buy an option to get started!</div>';
   } else {
-    posContainer.innerHTML = acc.positions.map(p => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
+    posContainer.innerHTML = acc.positions.map(p => {
+      const daysHeld = Math.floor((new Date() - new Date(p.entryDate)) / (1000 * 60 * 60 * 24));
+      return `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);font-size:13px;">
         <div>
-          <strong style="color:var(--accent);font-family:var(--mono);">${p.ticker}</strong>
-          <span class="badge-${p.type}" style="margin-left:6px;">${p.type.toUpperCase()}</span>
-          <span style="color:var(--text3);margin-left:6px;">$${p.strike} × ${p.contracts}</span>
+          <div>
+            <strong style="color:var(--accent);font-family:var(--mono);font-size:14px;">${p.ticker}</strong>
+            <span class="badge-${p.type}" style="margin-left:6px;">${p.type.toUpperCase()}</span>
+            <span style="color:var(--text3);margin-left:6px;">$${p.strike} × ${p.contracts}</span>
+          </div>
+          <div style="margin-top:4px;font-size:11px;color:var(--text3);">
+            📅 Opened: <strong style="color:var(--text2);">${p.entryDate}</strong>
+            <span style="margin-left:8px;">⏱ ${daysHeld === 0 ? 'Today' : daysHeld + ' day' + (daysHeld !== 1 ? 's' : '') + ' ago'}</span>
+            ${p.stockPriceAtEntry ? '<span style="margin-left:8px;">📈 Stock at entry: $' + parseFloat(p.stockPriceAtEntry).toFixed(2) + '</span>' : ''}
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-family:var(--mono);color:var(--text2);">$${p.premium.toFixed(2)} entry</span>
-          <span style="font-family:var(--mono);font-weight:600;">Cost: $${p.cost.toFixed(2)}</span>
-          <button onclick="openClosePosition('${p.id}')" style="background:var(--red);color:#fff;border:none;padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;">Close</button>
+          <div style="text-align:right;">
+            <div style="font-family:var(--mono);color:var(--text2);font-size:11px;">Entry: $${p.premium.toFixed(2)}/share</div>
+            <div style="font-family:var(--mono);font-weight:600;">Cost: $${p.cost.toFixed(2)}</div>
+          </div>
+          <button onclick="openClosePosition('${p.id}')" style="background:var(--red);color:#fff;border:none;padding:6px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;">Close</button>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
 
   // Trade History
