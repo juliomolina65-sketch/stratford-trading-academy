@@ -182,7 +182,7 @@ function normalPDF(x) {
 }
 
 function blackScholes(S, K, T, r, sigma, type) {
-  if (T <= 0 || sigma <= 0 || S <= 0 || K <= 0) return null;
+  if (T <= 0.0001 || sigma <= 0.001 || S <= 0 || K <= 0 || isNaN(S) || isNaN(K) || isNaN(T) || isNaN(sigma)) return null;
   const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
   const d2 = d1 - sigma * Math.sqrt(T);
 
@@ -660,10 +660,11 @@ function runSmartScan() {
       let results = data.results || [];
 
       // Apply filters
-      const capFilter = document.getElementById('scanMarketCap').value;
-      const signalFilter = document.getElementById('scanSignal').value;
-      const strategyFilter = document.getElementById('scanStrategy').value;
+      const capFilter = (document.getElementById('scanMarketCap') || {}).value || 'all';
+      const signalFilter = (document.getElementById('scanSignal') || {}).value || 'all';
+      const strategyFilter = (document.getElementById('scanStrategy') || {}).value || 'all';
       const priceFilter = (document.getElementById('scanPrice') || {}).value || 'all';
+      // All filter elements now have null safety checks
       const minScore = parseInt((document.getElementById('scanMinScore') || {}).value) || 1;
       const rsiFilter = (document.getElementById('scanRSI') || {}).value || 'all';
       const trendFilter = (document.getElementById('scanTrend') || {}).value || 'all';
@@ -1024,7 +1025,7 @@ function paperFetchPrice() {
   const ticker = document.getElementById('paperTicker').value.trim().toUpperCase();
   if (!ticker) return;
   const btn = document.querySelector('#tab-paper .btn-accent');
-  btn.textContent = '...'; btn.disabled = true;
+  if (btn) { btn.textContent = '...'; btn.disabled = true; }
   fetch('/api/chart/' + ticker + '?range=5d')
     .then(r => r.json())
     .then(data => {
@@ -1041,12 +1042,14 @@ function paperFetchPrice() {
       }
     })
     .catch(() => showToast('API error', 'error'))
-    .finally(() => { btn.textContent = 'Get Price'; btn.disabled = false; });
+    .finally(() => { if (btn) { btn.textContent = 'Get Price'; btn.disabled = false; } });
 }
 
 // Auto-calculate total cost
 ['paperPremium', 'paperContracts'].forEach(id => {
-  document.getElementById(id).addEventListener('input', () => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('input', () => {
     const prem = parseFloat(document.getElementById('paperPremium').value) || 0;
     const contracts = parseInt(document.getElementById('paperContracts').value) || 1;
     const cost = prem * 100 * contracts;
@@ -1313,18 +1316,21 @@ function openStockChart(symbol, name, price, changePct) {
   widget.innerHTML = '<div id="tv_chart_container"></div>';
   container.appendChild(widget);
 
-  const loadChart = function() {
-    if (typeof TradingView === 'undefined') {
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/tv.js';
-      script.onload = function() { createTVWidget(symbol); };
-      document.head.appendChild(script);
-    } else {
-      createTVWidget(symbol);
-    }
-  };
-
-  loadChart();
+  if (typeof TradingView === 'undefined' && !window._tvScriptLoading) {
+    window._tvScriptLoading = true;
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/tv.js';
+    script.onload = function() { window._tvScriptLoading = false; createTVWidget(symbol); };
+    document.head.appendChild(script);
+  } else if (typeof TradingView !== 'undefined') {
+    createTVWidget(symbol);
+  } else {
+    // Script is loading, wait for it
+    const waitForTV = setInterval(() => {
+      if (typeof TradingView !== 'undefined') { clearInterval(waitForTV); createTVWidget(symbol); }
+    }, 200);
+    setTimeout(() => clearInterval(waitForTV), 10000); // give up after 10s
+  }
 }
 
 function createTVWidget(symbol) {

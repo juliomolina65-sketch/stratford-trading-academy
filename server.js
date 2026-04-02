@@ -2498,8 +2498,7 @@ app.get('/api/scanner/scan', async (req, res) => {
       }
       const expDate = new Date();
       if (dteParam === 0) {
-        // 0DTE — today, find nearest Friday or today
-        while (expDate.getDay() !== 5 && expDate.getDay() !== 0) expDate.setDate(expDate.getDate());
+        // 0DTE — use today's date as-is (same day expiry)
       } else {
         expDate.setDate(expDate.getDate() + dteParam);
         while (expDate.getDay() !== 5) expDate.setDate(expDate.getDate() + 1); // snap to Friday
