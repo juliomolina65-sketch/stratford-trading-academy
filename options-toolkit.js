@@ -830,6 +830,346 @@ function renderWatchlist() {
 // Render watchlist on load
 renderWatchlist();
 
+function addToWatchlistFromInput() {
+  const input = document.getElementById('watchlistAddInput');
+  const sym = input.value.trim().toUpperCase();
+  if (!sym) return;
+  if (!isInWatchlist(sym)) {
+    toggleWatchlist(sym);
+  } else {
+    showToast(sym + ' already in watchlist');
+  }
+  input.value = '';
+  renderWatchlistTab();
+}
+
+function renderWatchlistTab() {
+  const wl = getWatchlist();
+  const grid = document.getElementById('watchlistGrid');
+  const empty = document.getElementById('watchlistEmpty');
+
+  if (wl.length === 0) {
+    grid.style.display = 'none';
+    empty.style.display = '';
+    return;
+  }
+
+  grid.style.display = 'grid';
+  empty.style.display = 'none';
+
+  grid.innerHTML = wl.map(sym => `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .15s;display:flex;justify-content:space-between;align-items:center;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'" onclick="openStockChart('${sym}','${sym}','','0')">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--accent);font-family:var(--mono);">${sym}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">Click to view chart</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="event.stopPropagation(); paperQuickBuy('${sym}')" style="background:var(--green);color:#000;border:none;padding:5px 10px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;" title="Paper trade this stock">🛒 Trade</button>
+        <button onclick="event.stopPropagation(); toggleWatchlist('${sym}'); renderWatchlistTab();" style="background:none;border:1px solid var(--border);color:var(--red);padding:5px 8px;border-radius:5px;font-size:11px;cursor:pointer;">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function paperQuickBuy(sym) {
+  // Switch to paper trading tab and pre-fill ticker
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-tab="paper"]').classList.add('active');
+  document.getElementById('tab-paper').classList.add('active');
+  document.getElementById('paperTicker').value = sym;
+  paperFetchPrice();
+}
+
+// Also render watchlist tab when switching to it
+const origTabClick = document.querySelectorAll('.tab-btn');
+origTabClick.forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.tab === 'watchlist') renderWatchlistTab();
+  });
+});
+
+// ═══════════════════════════════════════
+// TOOL 6: PAPER TRADING SIMULATOR
+// ═══════════════════════════════════════
+let paperType = 'call';
+let paperEquityChart = null;
+
+function setPaperType(type, btn) {
+  paperType = type;
+  btn.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function getPaperAccount() {
+  try {
+    const data = JSON.parse(localStorage.getItem('sa_paper_account'));
+    if (data && data.balance !== undefined) return data;
+  } catch {}
+  return { balance: 10000, startBalance: 10000, positions: [], history: [], equityCurve: [{ date: new Date().toISOString().split('T')[0], balance: 10000 }], createdAt: Date.now() };
+}
+
+function savePaperAccount(acc) {
+  localStorage.setItem('sa_paper_account', JSON.stringify(acc));
+}
+
+function paperFetchPrice() {
+  const ticker = document.getElementById('paperTicker').value.trim().toUpperCase();
+  if (!ticker) return;
+  const btn = document.querySelector('#tab-paper .btn-accent');
+  btn.textContent = '...'; btn.disabled = true;
+  fetch('/api/options/quote?symbol=' + ticker)
+    .then(r => r.json())
+    .then(data => {
+      if (data.price) {
+        document.getElementById('paperStockInfo').style.display = '';
+        document.getElementById('paperStockName').textContent = ticker;
+        document.getElementById('paperStockPrice').textContent = '$' + data.price;
+        // Auto-fill ATM strike
+        const price = parseFloat(data.price);
+        const atm = Math.round(price / 5) * 5 || Math.round(price);
+        document.getElementById('paperStrike').value = atm;
+        window._paperCurrentPrice = price;
+      } else {
+        showToast('Could not fetch ' + ticker, 'error');
+      }
+    })
+    .catch(() => showToast('API error', 'error'))
+    .finally(() => { btn.textContent = 'Get Price'; btn.disabled = false; });
+}
+
+// Auto-calculate total cost
+['paperPremium', 'paperContracts'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    const prem = parseFloat(document.getElementById('paperPremium').value) || 0;
+    const contracts = parseInt(document.getElementById('paperContracts').value) || 1;
+    const cost = prem * 100 * contracts;
+    document.getElementById('paperCostPreview').textContent = '$' + cost.toFixed(2);
+  });
+});
+
+function paperBuy() {
+  const ticker = document.getElementById('paperTicker').value.trim().toUpperCase();
+  const strike = parseFloat(document.getElementById('paperStrike').value);
+  const premium = parseFloat(document.getElementById('paperPremium').value);
+  const contracts = parseInt(document.getElementById('paperContracts').value) || 1;
+
+  if (!ticker || !strike || !premium) { showToast('Fill in all fields', 'error'); return; }
+
+  const cost = premium * 100 * contracts;
+  const acc = getPaperAccount();
+
+  if (cost > acc.balance) {
+    showToast('Not enough cash! You need $' + cost.toFixed(2) + ' but have $' + acc.balance.toFixed(2), 'error');
+    return;
+  }
+
+  acc.balance -= cost;
+  acc.positions.push({
+    id: 'P' + Date.now(),
+    ticker, type: paperType, strike, premium, contracts,
+    entryDate: new Date().toISOString().split('T')[0],
+    cost, stockPriceAtEntry: window._paperCurrentPrice || 0
+  });
+
+  // Update equity curve
+  const today = new Date().toISOString().split('T')[0];
+  const lastEntry = acc.equityCurve[acc.equityCurve.length - 1];
+  if (lastEntry && lastEntry.date === today) {
+    lastEntry.balance = acc.balance;
+  } else {
+    acc.equityCurve.push({ date: today, balance: acc.balance });
+  }
+
+  savePaperAccount(acc);
+  renderPaper();
+  showToast('Bought ' + contracts + 'x ' + ticker + ' $' + strike + ' ' + paperType.toUpperCase() + ' for $' + cost.toFixed(2));
+
+  // Reset form
+  document.getElementById('paperPremium').value = '';
+  document.getElementById('paperCostPreview').textContent = '$0.00';
+}
+
+function openClosePosition(posId) {
+  const acc = getPaperAccount();
+  const pos = acc.positions.find(p => p.id === posId);
+  if (!pos) return;
+
+  document.getElementById('closePosId').value = posId;
+  document.getElementById('closePosInfo').innerHTML = `
+    <div style="background:var(--bg3);padding:10px;border-radius:8px;font-size:13px;">
+      <strong>${pos.ticker}</strong> $${pos.strike} ${pos.type.toUpperCase()} × ${pos.contracts}<br>
+      <span style="color:var(--text3);">Entry: $${pos.premium.toFixed(2)} | Cost: $${pos.cost.toFixed(2)}</span>
+    </div>`;
+  document.getElementById('closeExitPremium').value = '';
+  document.getElementById('closePLPreview').textContent = '';
+  document.getElementById('closePositionModal').style.display = 'flex';
+
+  // Auto-calculate P&L on input
+  document.getElementById('closeExitPremium').oninput = function() {
+    const exitPrem = parseFloat(this.value) || 0;
+    const pl = (exitPrem - pos.premium) * 100 * pos.contracts;
+    const el = document.getElementById('closePLPreview');
+    el.textContent = (pl >= 0 ? '+' : '') + '$' + pl.toFixed(2);
+    el.style.color = pl >= 0 ? 'var(--green)' : 'var(--red)';
+  };
+}
+
+function paperClose() {
+  const posId = document.getElementById('closePosId').value;
+  const exitPremium = parseFloat(document.getElementById('closeExitPremium').value);
+  if (!exitPremium && exitPremium !== 0) { showToast('Enter exit premium', 'error'); return; }
+
+  const acc = getPaperAccount();
+  const posIdx = acc.positions.findIndex(p => p.id === posId);
+  if (posIdx < 0) return;
+
+  const pos = acc.positions[posIdx];
+  const pl = (exitPremium - pos.premium) * 100 * pos.contracts;
+  const proceeds = exitPremium * 100 * pos.contracts;
+
+  // Add proceeds to balance
+  acc.balance += proceeds;
+
+  // Move to history
+  acc.history.push({
+    id: pos.id, ticker: pos.ticker, type: pos.type, strike: pos.strike,
+    entryPremium: pos.premium, exitPremium, contracts: pos.contracts,
+    entryDate: pos.entryDate, exitDate: new Date().toISOString().split('T')[0],
+    pl, cost: pos.cost
+  });
+
+  // Remove from positions
+  acc.positions.splice(posIdx, 1);
+
+  // Update equity curve
+  const today = new Date().toISOString().split('T')[0];
+  const lastEntry = acc.equityCurve[acc.equityCurve.length - 1];
+  if (lastEntry && lastEntry.date === today) {
+    lastEntry.balance = acc.balance;
+  } else {
+    acc.equityCurve.push({ date: today, balance: acc.balance });
+  }
+
+  savePaperAccount(acc);
+  document.getElementById('closePositionModal').style.display = 'none';
+  renderPaper();
+
+  const plStr = (pl >= 0 ? '+' : '') + '$' + pl.toFixed(2);
+  showToast('Closed ' + pos.ticker + ' ' + pos.type.toUpperCase() + ' for ' + plStr);
+}
+
+function paperReset() {
+  if (!confirm('Reset your paper trading account? All positions and history will be cleared.')) return;
+  localStorage.removeItem('sa_paper_account');
+  renderPaper();
+  showToast('Account reset to $10,000');
+}
+
+function renderPaper() {
+  const acc = getPaperAccount();
+
+  // Stats
+  const portfolioValue = acc.positions.reduce((sum, p) => sum + p.cost, 0);
+  const totalValue = acc.balance + portfolioValue;
+  const totalPL = totalValue - acc.startBalance;
+  const returnPct = (totalPL / acc.startBalance * 100);
+
+  document.getElementById('paperCash').textContent = '$' + acc.balance.toFixed(2);
+  document.getElementById('paperPortfolio').textContent = '$' + portfolioValue.toFixed(2);
+  document.getElementById('paperTotal').textContent = '$' + totalValue.toFixed(2);
+
+  const plEl = document.getElementById('paperPL');
+  plEl.textContent = (totalPL >= 0 ? '+' : '') + '$' + totalPL.toFixed(2) + ' (' + (returnPct >= 0 ? '+' : '') + returnPct.toFixed(1) + '%)';
+  plEl.style.color = totalPL >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const plCard = document.getElementById('paperPLCard');
+  plCard.style.borderLeftColor = totalPL >= 0 ? 'var(--green)' : 'var(--red)';
+
+  document.getElementById('paperPosCount').textContent = acc.positions.length;
+
+  // Open Positions
+  const posContainer = document.getElementById('paperPositions');
+  if (acc.positions.length === 0) {
+    posContainer.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3);font-size:13px;">No open positions. Buy an option to get started!</div>';
+  } else {
+    posContainer.innerHTML = acc.positions.map(p => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
+        <div>
+          <strong style="color:var(--accent);font-family:var(--mono);">${p.ticker}</strong>
+          <span class="badge-${p.type}" style="margin-left:6px;">${p.type.toUpperCase()}</span>
+          <span style="color:var(--text3);margin-left:6px;">$${p.strike} × ${p.contracts}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-family:var(--mono);color:var(--text2);">$${p.premium.toFixed(2)} entry</span>
+          <span style="font-family:var(--mono);font-weight:600;">Cost: $${p.cost.toFixed(2)}</span>
+          <button onclick="openClosePosition('${p.id}')" style="background:var(--red);color:#fff;border:none;padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;">Close</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Trade History
+  const histContainer = document.getElementById('paperHistory');
+  if (acc.history.length === 0) {
+    histContainer.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3);font-size:13px;">No closed trades yet.</div>';
+  } else {
+    histContainer.innerHTML = [...acc.history].reverse().map(h => {
+      const plClass = h.pl >= 0 ? 'pl-positive' : 'pl-negative';
+      const plStr = (h.pl >= 0 ? '+' : '') + '$' + h.pl.toFixed(2);
+      return `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+          <div>
+            <strong style="color:var(--text);font-family:var(--mono);">${h.ticker}</strong>
+            <span class="badge-${h.type}" style="margin-left:4px;">${h.type.toUpperCase()}</span>
+            <span style="color:var(--text3);margin-left:4px;">$${h.strike} × ${h.contracts}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="color:var(--text3);">${h.entryDate} → ${h.exitDate}</span>
+            <span style="font-family:var(--mono);color:var(--text3);">$${h.entryPremium.toFixed(2)} → $${h.exitPremium.toFixed(2)}</span>
+            <span class="${plClass}" style="font-family:var(--mono);">${plStr}</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Equity Curve
+  if (acc.equityCurve.length > 1) {
+    document.getElementById('equityPlaceholder').style.display = 'none';
+    const labels = acc.equityCurve.map(e => e.date);
+    const data = acc.equityCurve.map(e => e.balance);
+    const isUp = data[data.length - 1] >= data[0];
+
+    if (paperEquityChart) paperEquityChart.destroy();
+    const ctx = document.getElementById('equityChart').getContext('2d');
+    paperEquityChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          borderColor: isUp ? '#00d97e' : '#ef4444',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: isUp ? '#00d97e' : '#ef4444',
+          fill: { target: 'origin', above: isUp ? 'rgba(0,217,126,0.08)' : 'rgba(239,68,68,0.08)' }
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { size: 10 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', callback: v => '$' + v.toLocaleString() } }
+        }
+      }
+    });
+  }
+}
+
+// Init paper trading on load
+renderPaper();
+
 // ═══════════════════════════════════════
 // STOCK CHART — FULLSCREEN TradingView
 // ═══════════════════════════════════════

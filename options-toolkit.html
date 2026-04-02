@@ -24,6 +24,8 @@
   <button class="tab-btn" data-tab="journal">📓 Trade Journal</button>
   <button class="tab-btn" data-tab="screener">🔍 Options Screener</button>
   <button class="tab-btn" data-tab="scanner">🎯 Smart Scanner</button>
+  <button class="tab-btn" data-tab="watchlist">★ Watchlist</button>
+  <button class="tab-btn" data-tab="paper">🎮 Paper Trading</button>
 </nav>
 
 <!-- ═══════════════════════════════════════ -->
@@ -521,6 +523,163 @@
 
   <div id="scanEmpty" style="display:none;" class="empty-journal">
     <p>No opportunities match your filters. Try adjusting the criteria.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- TAB 6: WATCHLIST                      -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-watchlist" class="tab-panel">
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div>
+        <h3 class="card-title">★ Your Watchlist</h3>
+        <p class="card-sub" style="margin:0;">Stocks you're tracking. Click any to view chart.</p>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div class="input-group" style="max-width:250px;">
+          <input type="text" id="watchlistAddInput" placeholder="Add ticker..." style="font-size:13px;" />
+          <button class="btn-sm btn-accent" onclick="addToWatchlistFromInput()">+ Add</button>
+        </div>
+        <button onclick="clearWatchlist()" style="background:none;border:1px solid var(--border);color:var(--text3);padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;">Clear All</button>
+      </div>
+    </div>
+    <div id="watchlistGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;"></div>
+    <div id="watchlistEmpty" style="text-align:center;padding:3rem;color:var(--text3);font-size:14px;">
+      <p style="font-size:2rem;margin-bottom:8px;">★</p>
+      <p>No stocks in your watchlist yet.</p>
+      <p style="font-size:12px;">Add tickers above or click "☆ Watch" on any stock in the Smart Scanner.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- TAB 7: PAPER TRADING SIMULATOR        -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-paper" class="tab-panel">
+
+  <!-- Account Stats -->
+  <div class="stats-row" style="margin-bottom:1rem;">
+    <div class="stat-card stat-green">
+      <span class="stat-label">Cash Balance</span>
+      <span class="stat-value" id="paperCash">$10,000.00</span>
+    </div>
+    <div class="stat-card stat-cyan">
+      <span class="stat-label">Portfolio Value</span>
+      <span class="stat-value" id="paperPortfolio">$0.00</span>
+    </div>
+    <div class="stat-card stat-purple">
+      <span class="stat-label">Total Value</span>
+      <span class="stat-value" id="paperTotal">$10,000.00</span>
+    </div>
+    <div class="stat-card" id="paperPLCard">
+      <span class="stat-label">Total P&L</span>
+      <span class="stat-value" id="paperPL">$0.00 (0.0%)</span>
+    </div>
+    <div class="stat-card stat-amber">
+      <span class="stat-label">Open Positions</span>
+      <span class="stat-value" id="paperPosCount">0</span>
+    </div>
+  </div>
+
+  <div class="panel-grid">
+    <!-- LEFT: Buy Form -->
+    <div class="panel-left" style="position:static;">
+      <div class="card">
+        <h3 class="card-title">🛒 Buy Options Contract</h3>
+        <p class="card-sub">Use your $10K paper money to practice trading options with real prices.</p>
+
+        <div class="fg" style="margin-bottom:12px;">
+          <label>Ticker Symbol</label>
+          <div class="input-group">
+            <input type="text" id="paperTicker" placeholder="AAPL" />
+            <button class="btn-sm btn-accent" onclick="paperFetchPrice()">Get Price</button>
+          </div>
+        </div>
+
+        <div id="paperStockInfo" style="display:none;background:var(--bg3);border-radius:8px;padding:10px 14px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span id="paperStockName" style="font-weight:600;"></span>
+            <span id="paperStockPrice" style="font-family:var(--mono);font-weight:700;font-size:16px;"></span>
+          </div>
+        </div>
+
+        <div class="fg" style="margin-bottom:12px;">
+          <label>Option Type</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setPaperType('call', this)">📈 CALL</button>
+            <button class="toggle-btn" onclick="setPaperType('put', this)">📉 PUT</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="fg">
+            <label>Strike Price ($)</label>
+            <input type="number" id="paperStrike" step="0.5" />
+          </div>
+          <div class="fg">
+            <label>Premium Per Share ($)</label>
+            <input type="number" id="paperPremium" step="0.01" placeholder="3.50" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="fg">
+            <label>Contracts</label>
+            <input type="number" id="paperContracts" value="1" min="1" max="100" />
+          </div>
+          <div class="fg">
+            <label>Total Cost</label>
+            <div id="paperCostPreview" style="background:var(--bg3);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-weight:700;font-size:16px;color:var(--accent);display:flex;align-items:center;">$0.00</div>
+          </div>
+        </div>
+
+        <button class="btn-primary btn-full" onclick="paperBuy()" style="margin-top:4px;">🛒 Buy Contract</button>
+      </div>
+
+      <!-- Reset -->
+      <div style="margin-top:12px;text-align:center;">
+        <button onclick="paperReset()" style="background:none;border:1px solid var(--border);color:var(--text3);padding:8px 16px;border-radius:6px;font-size:11px;cursor:pointer;">🔄 Reset Account to $10,000</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: Positions + History -->
+    <div class="panel-right">
+      <!-- Equity Curve -->
+      <div class="card chart-card" style="margin-bottom:1rem;min-height:200px;">
+        <h4>📈 Equity Curve</h4>
+        <canvas id="equityChart"></canvas>
+        <p class="chart-placeholder" id="equityPlaceholder">Make trades to see your equity curve</p>
+      </div>
+
+      <!-- Open Positions -->
+      <div class="card" style="margin-bottom:1rem;">
+        <h4 style="margin-bottom:12px;">📂 Open Positions</h4>
+        <div id="paperPositions"></div>
+      </div>
+
+      <!-- Trade History -->
+      <div class="card">
+        <h4 style="margin-bottom:12px;">📜 Trade History</h4>
+        <div id="paperHistory"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CLOSE POSITION MODAL -->
+<div id="closePositionModal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:400px;">
+    <button class="modal-close" onclick="document.getElementById('closePositionModal').style.display='none'">×</button>
+    <h3>Close Position</h3>
+    <input type="hidden" id="closePosId" />
+    <div id="closePosInfo" style="margin-bottom:12px;"></div>
+    <div class="fg" style="margin-bottom:12px;">
+      <label>Exit Premium ($)</label>
+      <input type="number" id="closeExitPremium" step="0.01" />
+    </div>
+    <div id="closePLPreview" style="font-family:var(--mono);font-size:16px;font-weight:700;margin-bottom:12px;"></div>
+    <button class="btn-primary btn-full" onclick="paperClose()">Close Position</button>
   </div>
 </div>
 
