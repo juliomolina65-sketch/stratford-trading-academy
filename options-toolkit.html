@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Options Trading Toolkit — Stratford Academy</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 48'%3E%3Cpath d='M20 2L4 8v14c0 10 6.5 19 16 22 9.5-3 16-12 16-22V8L20 2z' stroke='url(%23g)' stroke-width='1.5' fill='none'/%3E%3Ctext x='20' y='30' text-anchor='middle' font-family='sans-serif' font-size='12' font-weight='700' fill='url(%23g)'%3ESA%3C/text%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='40' y2='48'%3E%3Cstop stop-color='%2300b8e6'/%3E%3Cstop offset='1' stop-color='%238b6fff'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<link rel="stylesheet" href="options-toolkit.css">
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="/" class="topbar-back">← Back to Academy</a>
+  <span class="topbar-title">📊 Options Trading Toolkit</span>
+  <span class="topbar-badge">BETA</span>
+</header>
+
+<!-- TAB NAV -->
+<nav class="toolkit-tabs">
+  <button class="tab-btn active" data-tab="calculator">💰 Profit Calculator</button>
+  <button class="tab-btn" data-tab="greeks">📐 Greeks Calculator</button>
+  <button class="tab-btn" data-tab="journal">📓 Trade Journal</button>
+  <button class="tab-btn" data-tab="screener">🔍 Options Screener</button>
+  <button class="tab-btn" data-tab="scanner">🎯 Smart Scanner</button>
+</nav>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- TAB 1: PROFIT CALCULATOR              -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-calculator" class="tab-panel active">
+  <div class="panel-grid">
+    <div class="panel-left">
+      <div class="card">
+        <h3 class="card-title">📈 Options Profit Calculator</h3>
+        <p class="card-sub">Enter your trade details to see breakeven, max profit/loss, and a visual P&L chart.</p>
+
+        <div class="fg" style="margin-bottom:12px;">
+          <label>Ticker Symbol</label>
+          <div class="input-group">
+            <input type="text" id="calcTicker" value="AAPL" />
+            <button class="btn-sm btn-accent" onclick="fetchQuote()">Fetch Price</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="fg">
+            <label>Stock Price ($)</label>
+            <input type="number" id="calcPrice" value="175" step="0.01" />
+          </div>
+          <div class="fg">
+            <label>Strike Price ($)</label>
+            <input type="number" id="calcStrike" value="180" step="0.01" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="fg">
+            <label>Premium Paid ($)</label>
+            <input type="number" id="calcPremium" value="3.50" step="0.01" />
+          </div>
+          <div class="fg">
+            <label>Contracts</label>
+            <input type="number" id="calcContracts" value="1" min="1" />
+          </div>
+        </div>
+
+        <div class="fg" style="margin-bottom:16px;">
+          <label>Option Type</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setCalcType('call', this)">📈 CALL</button>
+            <button class="toggle-btn" onclick="setCalcType('put', this)">📉 PUT</button>
+          </div>
+        </div>
+
+        <button class="btn-primary btn-full" onclick="calculateProfit()">Calculate P&L →</button>
+      </div>
+    </div>
+
+    <div class="panel-right">
+      <div class="stats-row" id="calcStats" style="display:none;">
+        <div class="stat-card stat-cyan">
+          <span class="stat-label">Breakeven</span>
+          <span class="stat-value" id="statBreakeven">—</span>
+        </div>
+        <div class="stat-card stat-green">
+          <span class="stat-label">Max Profit</span>
+          <span class="stat-value" id="statMaxProfit">—</span>
+        </div>
+        <div class="stat-card stat-red">
+          <span class="stat-label">Max Loss</span>
+          <span class="stat-value" id="statMaxLoss">—</span>
+        </div>
+      </div>
+      <div class="card chart-card">
+        <h4>Profit / Loss Chart</h4>
+        <canvas id="plChart"></canvas>
+        <p class="chart-placeholder" id="chartPlaceholder">Enter trade details and click Calculate to see your P&L chart</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- TAB 2: GREEKS CALCULATOR              -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-greeks" class="tab-panel">
+  <div class="panel-grid">
+    <div class="panel-left">
+      <div class="card">
+        <h3 class="card-title">📐 Black-Scholes Greeks Calculator</h3>
+        <p class="card-sub">Calculate option Greeks using the Black-Scholes pricing model.</p>
+
+        <div class="form-row">
+          <div class="fg">
+            <label>Stock Price ($)</label>
+            <input type="number" id="grkStock" placeholder="100.00" step="0.01" />
+          </div>
+          <div class="fg">
+            <label>Strike Price ($)</label>
+            <input type="number" id="grkStrike" placeholder="100.00" step="0.01" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="fg">
+            <label>Days to Expiry</label>
+            <input type="number" id="grkDays" placeholder="30" min="1" />
+          </div>
+          <div class="fg">
+            <label>Implied Volatility (%)</label>
+            <input type="number" id="grkIV" placeholder="25" step="0.1" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="fg">
+            <label>Risk-Free Rate (%)</label>
+            <input type="number" id="grkRate" value="5.0" step="0.1" />
+          </div>
+          <div class="fg">
+            <label>Type</label>
+            <div class="toggle-group">
+              <button class="toggle-btn active" onclick="setGrkType('call', this)">📈 CALL</button>
+              <button class="toggle-btn" onclick="setGrkType('put', this)">📉 PUT</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-primary btn-full" onclick="calculateGreeks()">Calculate Greeks →</button>
+      </div>
+    </div>
+
+    <div class="panel-right">
+      <div class="stats-row greeks-stats" id="greekStats" style="display:none;">
+        <div class="stat-card stat-cyan">
+          <span class="stat-label">Theoretical Price</span>
+          <span class="stat-value" id="grkPrice">—</span>
+        </div>
+        <div class="stat-card stat-purple">
+          <span class="stat-label">Delta (Δ)</span>
+          <span class="stat-value" id="grkDelta">—</span>
+          <span class="stat-desc">Price change per $1 stock move</span>
+        </div>
+        <div class="stat-card stat-amber">
+          <span class="stat-label">Gamma (Γ)</span>
+          <span class="stat-value" id="grkGamma">—</span>
+          <span class="stat-desc">Delta change per $1 stock move</span>
+        </div>
+        <div class="stat-card stat-red">
+          <span class="stat-label">Theta (Θ)</span>
+          <span class="stat-value" id="grkTheta">—</span>
+          <span class="stat-desc">Daily time decay</span>
+        </div>
+        <div class="stat-card stat-green">
+          <span class="stat-label">Vega (ν)</span>
+          <span class="stat-value" id="grkVega">—</span>
+          <span class="stat-desc">Price change per 1% IV move</span>
+        </div>
+        <div class="stat-card stat-cyan">
+          <span class="stat-label">Rho (ρ)</span>
+          <span class="stat-value" id="grkRho">—</span>
+          <span class="stat-desc">Price change per 1% rate move</span>
+        </div>
+      </div>
+      <div class="card chart-card">
+        <h4>Greek Sensitivity</h4>
+        <div class="greeks-charts">
+          <div><canvas id="deltaChart"></canvas></div>
+          <div><canvas id="gammaChart"></canvas></div>
+          <div><canvas id="thetaChart"></canvas></div>
+          <div><canvas id="vegaChart"></canvas></div>
+        </div>
+        <p class="chart-placeholder" id="greeksPlaceholder">Enter values and click Calculate to see Greek sensitivity charts</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- TAB 3: TRADE JOURNAL                  -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-journal" class="tab-panel">
+  <div class="journal-header">
+    <div>
+      <h3 class="card-title">📓 Options Trade Journal</h3>
+      <p class="card-sub">Track your trades, monitor your P&L, and improve your win rate.</p>
+    </div>
+    <button class="btn-primary" onclick="openTradeForm()">+ New Trade</button>
+  </div>
+
+  <div class="stats-row" id="journalStats">
+    <div class="stat-card stat-green">
+      <span class="stat-label">Total P&L</span>
+      <span class="stat-value" id="jTotalPL">$0</span>
+    </div>
+    <div class="stat-card stat-cyan">
+      <span class="stat-label">Win Rate</span>
+      <span class="stat-value" id="jWinRate">0%</span>
+    </div>
+    <div class="stat-card stat-purple">
+      <span class="stat-label">Total Trades</span>
+      <span class="stat-value" id="jTotalTrades">0</span>
+    </div>
+    <div class="stat-card stat-amber">
+      <span class="stat-label">Best Trade</span>
+      <span class="stat-value" id="jBestTrade">—</span>
+    </div>
+    <div class="stat-card stat-red">
+      <span class="stat-label">Worst Trade</span>
+      <span class="stat-value" id="jWorstTrade">—</span>
+    </div>
+  </div>
+
+  <div class="card chart-card" style="margin-bottom:1.5rem;">
+    <h4>Cumulative P&L</h4>
+    <canvas id="journalChart"></canvas>
+    <p class="chart-placeholder" id="journalPlaceholder">Add trades to see your cumulative P&L chart</p>
+  </div>
+
+  <div class="card">
+    <div class="journal-filters">
+      <button class="filter-btn active" onclick="filterJournal('all', this)">All</button>
+      <button class="filter-btn" onclick="filterJournal('open', this)">Open</button>
+      <button class="filter-btn" onclick="filterJournal('closed', this)">Closed</button>
+      <button class="filter-btn" onclick="filterJournal('call', this)">Calls</button>
+      <button class="filter-btn" onclick="filterJournal('put', this)">Puts</button>
+    </div>
+    <div id="journalTable"></div>
+  </div>
+
+  <!-- Trade Form Modal -->
+  <div id="tradeModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeTradeForm()">×</button>
+      <h3 id="tradeFormTitle">New Trade</h3>
+      <input type="hidden" id="tradeEditId" />
+
+      <div class="form-row">
+        <div class="fg">
+          <label>Ticker</label>
+          <input type="text" id="tradeTicker" placeholder="SPY" />
+        </div>
+        <div class="fg">
+          <label>Type</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setTradeType('call', this)">CALL</button>
+            <button class="toggle-btn" onclick="setTradeType('put', this)">PUT</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="fg">
+          <label>Strike ($)</label>
+          <input type="number" id="tradeStrike" step="0.01" />
+        </div>
+        <div class="fg">
+          <label>Contracts</label>
+          <input type="number" id="tradeContracts" value="1" min="1" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="fg">
+          <label>Entry Premium ($)</label>
+          <input type="number" id="tradeEntry" step="0.01" />
+        </div>
+        <div class="fg">
+          <label>Entry Date</label>
+          <input type="date" id="tradeEntryDate" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="fg">
+          <label>Exit Premium ($) <small style="color:var(--text3);">leave blank if open</small></label>
+          <input type="number" id="tradeExit" step="0.01" />
+        </div>
+        <div class="fg">
+          <label>Exit Date</label>
+          <input type="date" id="tradeExitDate" />
+        </div>
+      </div>
+
+      <div class="fg" style="margin-bottom:1rem;">
+        <label>Notes</label>
+        <textarea id="tradeNotes" rows="2" placeholder="Strategy, reasoning, lessons learned..."></textarea>
+      </div>
+
+      <button class="btn-primary btn-full" onclick="saveTrade()">Save Trade</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- TAB 4: OPTIONS SCREENER               -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-screener" class="tab-panel">
+  <div class="card" style="margin-bottom:1.5rem;">
+    <h3 class="card-title">🔍 Options Chain Screener</h3>
+    <p class="card-sub">Look up any stock's options chain. See strikes, premiums, volume, IV, and spot unusual activity.</p>
+    <div class="form-row" style="max-width:500px;">
+      <div class="fg" style="flex:1;">
+        <div class="input-group">
+          <input type="text" id="screenerTicker" placeholder="Enter ticker (e.g. SPY, AAPL, TSLA)" />
+          <button class="btn-sm btn-accent" onclick="fetchChain()">Fetch Chain</button>
+        </div>
+      </div>
+    </div>
+    <div class="popular-tickers">
+      Popular:
+      <button onclick="quickFetch('SPY')">SPY</button>
+      <button onclick="quickFetch('QQQ')">QQQ</button>
+      <button onclick="quickFetch('AAPL')">AAPL</button>
+      <button onclick="quickFetch('TSLA')">TSLA</button>
+      <button onclick="quickFetch('NVDA')">NVDA</button>
+      <button onclick="quickFetch('AMZN')">AMZN</button>
+      <button onclick="quickFetch('META')">META</button>
+    </div>
+  </div>
+
+  <div id="screenerLoading" style="display:none;" class="loading-state">
+    <div class="spinner"></div>
+    <p>Fetching options chain...</p>
+  </div>
+
+  <div id="screenerResults" style="display:none;">
+    <div class="stats-row" style="margin-bottom:1rem;">
+      <div class="stat-card stat-cyan">
+        <span class="stat-label">Stock Price</span>
+        <span class="stat-value" id="scrPrice">—</span>
+      </div>
+      <div class="stat-card stat-green">
+        <span class="stat-label">Change</span>
+        <span class="stat-value" id="scrChange">—</span>
+      </div>
+      <div class="stat-card stat-purple">
+        <span class="stat-label">Volume</span>
+        <span class="stat-value" id="scrVolume">—</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="chain-header">
+        <h4>📞 Calls</h4>
+        <div id="expirationTabs" class="expiration-tabs"></div>
+        <h4>📉 Puts</h4>
+      </div>
+      <div class="chain-table-wrap">
+        <table class="chain-table" id="chainTable">
+          <thead>
+            <tr>
+              <th>Bid</th><th>Ask</th><th>Vol</th><th>OI</th><th>IV</th>
+              <th class="strike-col">Strike</th>
+              <th>IV</th><th>OI</th><th>Vol</th><th>Ask</th><th>Bid</th>
+            </tr>
+          </thead>
+          <tbody id="chainBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="screenerError" style="display:none;" class="error-state">
+    <p id="screenerErrorMsg">Could not fetch options chain. API limit may have been reached.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- TAB 5: SMART SCANNER                  -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-scanner" class="tab-panel">
+  <div class="card" style="margin-bottom:1.5rem;">
+    <h3 class="card-title">🎯 Smart Scanner — Find High-Probability Trades</h3>
+    <p class="card-sub">AI-powered scanner analyzes volume spikes, momentum, IV rank, and unusual activity to find the best options plays right now.</p>
+
+    <div class="scanner-controls">
+      <div class="form-row" style="max-width:700px;">
+        <div class="fg">
+          <label>Market Cap</label>
+          <select id="scanMarketCap">
+            <option value="all">All Sizes</option>
+            <option value="large" selected>Large Cap ($10B+)</option>
+            <option value="mid">Mid Cap ($2B-$10B)</option>
+            <option value="small">Small Cap (Under $2B)</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Signal Type</label>
+          <select id="scanSignal">
+            <option value="all" selected>All Signals</option>
+            <option value="volume">Volume Spike</option>
+            <option value="momentum">Momentum Breakout</option>
+            <option value="iv">Low IV (Cheap Options)</option>
+            <option value="unusual">Unusual Activity</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Strategy</label>
+          <select id="scanStrategy">
+            <option value="all" selected>All</option>
+            <option value="calls">Bullish (Calls)</option>
+            <option value="puts">Bearish (Puts)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="runSmartScan()" id="scanBtn">🔍 Run Scanner</button>
+    </div>
+  </div>
+
+  <div id="scanLoading" style="display:none;" class="loading-state">
+    <div class="spinner"></div>
+    <p>Scanning markets for opportunities...</p>
+  </div>
+
+  <div id="scanResults" style="display:none;">
+    <div class="stats-row" style="margin-bottom:1rem;">
+      <div class="stat-card stat-green">
+        <span class="stat-label">Opportunities Found</span>
+        <span class="stat-value" id="scanCount">0</span>
+      </div>
+      <div class="stat-card stat-cyan">
+        <span class="stat-label">Avg Confidence</span>
+        <span class="stat-value" id="scanAvgConf">—</span>
+      </div>
+      <div class="stat-card stat-purple">
+        <span class="stat-label">Top Signal</span>
+        <span class="stat-value" id="scanTopSignal">—</span>
+      </div>
+      <div class="stat-card stat-amber">
+        <span class="stat-label">Market Sentiment</span>
+        <span class="stat-value" id="scanSentiment">—</span>
+      </div>
+    </div>
+
+    <div id="scanCards"></div>
+  </div>
+
+  <div id="scanEmpty" style="display:none;" class="empty-journal">
+    <p>No opportunities match your filters. Try adjusting the criteria.</p>
+  </div>
+</div>
+
+<script src="options-toolkit.js"></script>
+</body>
+</html>

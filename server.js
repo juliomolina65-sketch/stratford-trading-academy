@@ -42,7 +42,7 @@ emailService.initEmail();
 if (dbAdmin && admin) emailService.setFirestore(dbAdmin, admin);
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Webhook secret — change this to your own secret
 const WEBHOOK_SECRET = 'SA_WEBHOOK_SECRET_2026';
@@ -2111,6 +2111,241 @@ if (dbAdmin) {
 
   console.log('[CRON] Weekly P&L summary active (every Monday at 9 AM ET)');
 }
+
+// ============================================
+// OPTIONS TOOLKIT — API PROXY ENDPOINTS
+// ============================================
+const quoteCache = new Map();
+const chainCache = new Map();
+
+app.get('/api/options/quote', async (req, res) => {
+  const symbol = (req.query.symbol || '').toUpperCase();
+  if (!symbol) return res.json({ error: 'Missing symbol' });
+
+  // Check cache (60s TTL)
+  const cached = quoteCache.get(symbol);
+  if (cached && Date.now() - cached.time < 60000) return res.json(cached.data);
+
+  try {
+    const apiKey = process.env.ALPHA_VANTAGE_API_KEY || 'demo';
+    const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`;
+    const response = await fetch(url);
+    const json = await response.json();
+    const quote = json['Global Quote'];
+    if (!quote || !quote['05. price']) {
+      return res.json({ error: 'No data found for ' + symbol });
+    }
+    const data = {
+      symbol: quote['01. symbol'],
+      price: parseFloat(quote['05. price']).toFixed(2),
+      change: parseFloat(quote['09. change']).toFixed(2),
+      changePercent: quote['10. change percent'],
+      volume: quote['06. volume']
+    };
+    quoteCache.set(symbol, { data, time: Date.now() });
+    res.json(data);
+  } catch (err) {
+    console.error('[OPTIONS] Quote fetch error:', err.message);
+    res.json({ error: 'Failed to fetch quote: ' + err.message });
+  }
+});
+
+app.get('/api/options/chain', async (req, res) => {
+  const symbol = (req.query.symbol || '').toUpperCase();
+  if (!symbol) return res.json({ error: 'Missing symbol' });
+
+  // Check cache (5min TTL)
+  const cached = chainCache.get(symbol);
+  if (cached && Date.now() - cached.time < 300000) return res.json(cached.data);
+
+  try {
+    const apiKey = process.env.ALPHA_VANTAGE_API_KEY || 'demo';
+
+    // Fetch quote first
+    const quoteUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`;
+    const quoteResp = await fetch(quoteUrl);
+    const quoteJson = await quoteResp.json();
+    const quote = quoteJson['Global Quote'] || {};
+
+    // Fetch options chain
+    const chainUrl = `https://www.alphavantage.co/query?function=HISTORICAL_OPTIONS&symbol=${symbol}&apikey=${apiKey}`;
+    const chainResp = await fetch(chainUrl);
+    const chainJson = await chainResp.json();
+
+    const options = chainJson.data || [];
+
+    // Group by strike, merge calls and puts
+    const strikeMap = {};
+    options.forEach(opt => {
+      const strike = opt.strike;
+      if (!strikeMap[strike]) strikeMap[strike] = {};
+      if (opt.type === 'call') {
+        strikeMap[strike].callBid = opt.bid;
+        strikeMap[strike].callAsk = opt.ask;
+        strikeMap[strike].callVol = opt.volume;
+        strikeMap[strike].callOI = opt.open_interest;
+        strikeMap[strike].callIV = opt.implied_volatility ? (parseFloat(opt.implied_volatility) * 100).toFixed(1) + '%' : '';
+      } else {
+        strikeMap[strike].putBid = opt.bid;
+        strikeMap[strike].putAsk = opt.ask;
+        strikeMap[strike].putVol = opt.volume;
+        strikeMap[strike].putOI = opt.open_interest;
+        strikeMap[strike].putIV = opt.implied_volatility ? (parseFloat(opt.implied_volatility) * 100).toFixed(1) + '%' : '';
+      }
+    });
+
+    const chain = Object.keys(strikeMap).sort((a, b) => parseFloat(a) - parseFloat(b)).map(strike => ({
+      strike,
+      ...strikeMap[strike]
+    }));
+
+    const data = {
+      symbol,
+      price: quote['05. price'] ? parseFloat(quote['05. price']).toFixed(2) : null,
+      change: quote['09. change'] ? parseFloat(quote['09. change']).toFixed(2) : null,
+      volume: quote['06. volume'] || null,
+      chain
+    };
+
+    chainCache.set(symbol, { data, time: Date.now() });
+    res.json(data);
+  } catch (err) {
+    console.error('[OPTIONS] Chain fetch error:', err.message);
+    res.json({ error: 'Failed to fetch options chain: ' + err.message });
+  }
+});
+
+// ============================================
+// SMART SCANNER — Yahoo Finance Proxy
+// ============================================
+const scanCache = new Map();
+
+// Watchlist of popular optionable stocks
+const SCAN_WATCHLIST = [
+  'AAPL','MSFT','NVDA','TSLA','AMZN','META','GOOGL','AMD','NFLX','SPY',
+  'QQQ','IWM','DIS','BA','JPM','GS','V','MA','PYPL','SQ',
+  'COIN','PLTR','SOFI','NIO','RIVN','MARA','RIOT','SNAP','UBER','ABNB',
+  'CRM','ORCL','INTC','MU','QCOM','AVGO','TSM','LLY','UNH','PFE',
+  'XOM','CVX','OXY','GOLD','SLV','GLD','TLT','VIX','BABA','JD'
+];
+
+app.get('/api/scanner/scan', async (req, res) => {
+  const cacheKey = 'smartscan';
+  const cached = scanCache.get(cacheKey);
+  if (cached && Date.now() - cached.time < 600000) { // 10 min cache
+    return res.json(cached.data);
+  }
+
+  try {
+    // Fetch quotes for all watchlist stocks via Yahoo Finance
+    const symbols = SCAN_WATCHLIST.join(',');
+    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}&fields=symbol,shortName,regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketVolume,averageDailyVolume3Month,fiftyDayAverage,twoHundredDayAverage,marketCap,trailingPE`;
+
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    const json = await response.json();
+    const quotes = json?.quoteResponse?.result || [];
+
+    const results = quotes.map(q => {
+      const price = q.regularMarketPrice || 0;
+      const change = q.regularMarketChange || 0;
+      const changePct = q.regularMarketChangePercent || 0;
+      const volume = q.regularMarketVolume || 0;
+      const avgVolume = q.averageDailyVolume3Month || 1;
+      const ma50 = q.fiftyDayAverage || price;
+      const ma200 = q.twoHundredDayAverage || price;
+      const marketCap = q.marketCap || 0;
+
+      // Volume ratio (how much above average)
+      const volRatio = volume / Math.max(avgVolume, 1);
+
+      // Momentum: price vs moving averages
+      const aboveMa50 = price > ma50;
+      const aboveMa200 = price > ma200;
+      const ma50Dist = ((price - ma50) / ma50 * 100);
+      const ma200Dist = ((price - ma200) / ma200 * 100);
+
+      // Signals
+      const signals = [];
+      if (volRatio > 1.5) signals.push('volume');
+      if (aboveMa50 && aboveMa200 && changePct > 1) signals.push('momentum');
+      if (!aboveMa50 && !aboveMa200 && changePct < -1) signals.push('momentum');
+      if (volRatio > 2.5) signals.push('unusual');
+
+      // Confidence score (1-10)
+      let score = 5;
+      if (volRatio > 2) score += 1;
+      if (volRatio > 3) score += 1;
+      if (Math.abs(changePct) > 2) score += 1;
+      if (aboveMa50 && aboveMa200) score += 1;
+      if (volRatio > 1.5 && Math.abs(changePct) > 1.5) score += 1;
+      score = Math.min(10, Math.max(1, score));
+
+      // Direction
+      const bullish = changePct > 0 && aboveMa50;
+      const direction = bullish ? 'bullish' : 'bearish';
+
+      // Suggested trade
+      const atm = Math.round(price / 5) * 5; // nearest $5 strike
+      const strike = bullish ? atm + 5 : atm - 5;
+      const type = bullish ? 'CALL' : 'PUT';
+
+      // Suggested expiry (2-4 weeks out)
+      const expDate = new Date();
+      expDate.setDate(expDate.getDate() + 21);
+      // Find next Friday
+      while (expDate.getDay() !== 5) expDate.setDate(expDate.getDate() + 1);
+      const expStr = expDate.toISOString().split('T')[0];
+
+      // Cap size
+      let capSize = 'small';
+      if (marketCap > 10e9) capSize = 'large';
+      else if (marketCap > 2e9) capSize = 'mid';
+
+      return {
+        symbol: q.symbol,
+        name: q.shortName || q.symbol,
+        price: price.toFixed(2),
+        change: change.toFixed(2),
+        changePct: changePct.toFixed(2),
+        volume: volume,
+        avgVolume: avgVolume,
+        volRatio: volRatio.toFixed(1),
+        ma50: ma50.toFixed(2),
+        ma200: ma200.toFixed(2),
+        ma50Dist: ma50Dist.toFixed(1),
+        ma200Dist: ma200Dist.toFixed(1),
+        marketCap: marketCap,
+        capSize,
+        signals,
+        score,
+        direction,
+        suggestedType: type,
+        suggestedStrike: strike,
+        suggestedExpiry: expStr
+      };
+    });
+
+    // Sort by score descending, then by volume ratio
+    results.sort((a, b) => b.score - a.score || parseFloat(b.volRatio) - parseFloat(a.volRatio));
+
+    // Only return stocks with signals
+    const filtered = results.filter(r => r.signals.length > 0 || r.score >= 6);
+
+    const data = {
+      timestamp: new Date().toISOString(),
+      total: filtered.length,
+      results: filtered
+    };
+
+    scanCache.set(cacheKey, { data, time: Date.now() });
+    res.json(data);
+  } catch (err) {
+    console.error('[SCANNER] Error:', err.message);
+    res.json({ error: 'Scanner failed: ' + err.message });
+  }
+});
 
 // ============================================
 // Start Server
