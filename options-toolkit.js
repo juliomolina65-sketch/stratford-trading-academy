@@ -730,6 +730,9 @@ function runSmartScan() {
 
       // Render cards
       const container = document.getElementById('scanCards');
+      // Store results globally for Trade button
+      window._scanResults = results;
+
       // Fetch real IV data for top 10 results (if Market Data API key is configured)
       const top10symbols = results.slice(0, 10).map(r => r.symbol).join(',');
       fetch('/api/options/iv-scan?symbols=' + top10symbols)
@@ -765,7 +768,7 @@ function runSmartScan() {
         const capFormatted = r.marketCap > 1e12 ? (r.marketCap / 1e12).toFixed(1) + 'T' : r.marketCap > 1e9 ? (r.marketCap / 1e9).toFixed(1) + 'B' : (r.marketCap / 1e6).toFixed(0) + 'M';
 
         return `
-          <div class="scan-card" style="cursor:pointer;" onclick="openStockChart('${r.symbol}', '${r.name.replace(/'/g, "\\'")}', '${r.price}', '${r.changePct}')">
+          <div class="scan-card" style="cursor:pointer;" onclick="chartFromScan(${results.indexOf(r)})">
             <div class="scan-score ${scoreClass}">${r.score}</div>
             <div class="scan-info">
               <h4><span class="ticker">${r.symbol}</span> ${r.name} <span style="font-size:13px;color:${changeColor};font-weight:600;">${changeSign}${r.changePct}%</span></h4>
@@ -805,7 +808,7 @@ function runSmartScan() {
               </div>
               <div style="font-size:10px;color:var(--accent);margin-top:4px;font-weight:600;">Risk: 1 contract max</div>
               <div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;">
-                <button onclick="event.stopPropagation(); paperQuickBuy('${r.symbol}', {name:'${r.name.replace(/'/g, "\\'")}', price:'${r.price}', strike:${r.suggestedStrike}, type:'${r.suggestedType}', direction:'${r.direction}', support:'${r.support}', resistance:'${r.resistance}'})" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:var(--green);color:#000;transition:all .15s;">🛒 Trade This</button>
+                <button onclick="event.stopPropagation(); tradeFromScan(${results.indexOf(r)})" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:var(--green);color:#000;transition:all .15s;">🛒 Trade This</button>
                 <button onclick="event.stopPropagation(); toggleWatchlist('${r.symbol}')" class="btn-watchlist" id="wl-${r.symbol}" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:${isInWatchlist(r.symbol) ? 'var(--amber)' : 'var(--bg3)'};color:${isInWatchlist(r.symbol) ? '#000' : 'var(--text2)'};transition:all .15s;">
                   ${isInWatchlist(r.symbol) ? '★ Watch' : '☆ Watch'}
                 </button>
@@ -977,6 +980,22 @@ function renderWatchlistTab() {
       </div>
     </div>
   `).join('');
+}
+
+function chartFromScan(idx) {
+  const r = window._scanResults && window._scanResults[idx];
+  if (!r) return;
+  openStockChart(r.symbol, r.name, r.price, r.changePct);
+}
+
+function tradeFromScan(idx) {
+  const r = window._scanResults && window._scanResults[idx];
+  if (!r) { showToast('Trade data not found', 'error'); return; }
+  paperQuickBuy(r.symbol, {
+    name: r.name, price: r.price, strike: r.suggestedStrike,
+    type: r.suggestedType, direction: r.direction,
+    support: r.support, resistance: r.resistance
+  });
 }
 
 function paperQuickBuy(sym, scanData) {
