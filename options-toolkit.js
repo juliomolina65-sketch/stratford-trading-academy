@@ -805,7 +805,7 @@ function runSmartScan() {
               </div>
               <div style="font-size:10px;color:var(--accent);margin-top:4px;font-weight:600;">Risk: 1 contract max</div>
               <div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;">
-                <button onclick="event.stopPropagation(); paperQuickBuy('${r.symbol}')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:var(--green);color:#000;transition:all .15s;">🛒 Trade</button>
+                <button onclick="event.stopPropagation(); paperQuickBuy('${r.symbol}', {name:'${r.name.replace(/'/g, "\\'")}', price:'${r.price}', strike:${r.suggestedStrike}, type:'${r.suggestedType}', direction:'${r.direction}', support:'${r.support}', resistance:'${r.resistance}'})" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:var(--green);color:#000;transition:all .15s;">🛒 Trade This</button>
                 <button onclick="event.stopPropagation(); toggleWatchlist('${r.symbol}')" class="btn-watchlist" id="wl-${r.symbol}" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:${isInWatchlist(r.symbol) ? 'var(--amber)' : 'var(--bg3)'};color:${isInWatchlist(r.symbol) ? '#000' : 'var(--text2)'};transition:all .15s;">
                   ${isInWatchlist(r.symbol) ? '★ Watch' : '☆ Watch'}
                 </button>
@@ -979,14 +979,37 @@ function renderWatchlistTab() {
   `).join('');
 }
 
-function paperQuickBuy(sym) {
-  // Switch to paper trading tab and pre-fill ticker
+function paperQuickBuy(sym, scanData) {
+  // Switch to paper trading tab
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelector('[data-tab="paper"]').classList.add('active');
   document.getElementById('tab-paper').classList.add('active');
   document.getElementById('paperTicker').value = sym;
-  paperFetchPrice();
+
+  // If we have scanner data, pre-fill everything
+  if (scanData) {
+    document.getElementById('paperStockInfo').style.display = '';
+    document.getElementById('paperStockName').textContent = scanData.name || sym;
+    document.getElementById('paperStockPrice').textContent = '$' + scanData.price;
+    document.getElementById('paperStrike').value = scanData.strike;
+    window._paperCurrentPrice = parseFloat(scanData.price);
+
+    // Set type (call/put)
+    paperType = scanData.type === 'PUT' ? 'put' : 'call';
+    document.querySelectorAll('#tab-paper .toggle-btn').forEach(b => {
+      b.classList.toggle('active', b.textContent.toLowerCase().includes(paperType));
+    });
+
+    // Auto-fill suggested SL/TP based on premium estimate
+    // SL at -30% of premium, TP at +100%
+    if (document.getElementById('paperStopLoss')) document.getElementById('paperStopLoss').value = '';
+    if (document.getElementById('paperTakeProfit')) document.getElementById('paperTakeProfit').value = '';
+
+    showToast('Pre-filled ' + sym + ' $' + scanData.strike + ' ' + scanData.type + ' — enter premium and buy!');
+  } else {
+    paperFetchPrice();
+  }
 }
 
 // Also render watchlist tab when switching to it
@@ -1045,8 +1068,8 @@ function paperFetchPrice() {
     .finally(() => { if (btn) { btn.textContent = 'Get Price'; btn.disabled = false; } });
 }
 
-// Auto-calculate total cost
-['paperPremium', 'paperContracts'].forEach(id => {
+// Auto-calculate total cost + SL/TP preview
+['paperPremium', 'paperContracts', 'paperStopLoss', 'paperTakeProfit'].forEach(id => {
   const el = document.getElementById(id);
   if (!el) return;
   el.addEventListener('input', () => {
@@ -1054,6 +1077,20 @@ function paperFetchPrice() {
     const contracts = parseInt(document.getElementById('paperContracts').value) || 1;
     const cost = prem * 100 * contracts;
     document.getElementById('paperCostPreview').textContent = '$' + cost.toFixed(2);
+
+    // SL/TP preview
+    const sl = parseFloat((document.getElementById('paperStopLoss') || {}).value) || 0;
+    const tp = parseFloat((document.getElementById('paperTakeProfit') || {}).value) || 0;
+    const previewEl = document.getElementById('paperSLTPPreview');
+    if (previewEl && prem > 0 && (sl > 0 || tp > 0)) {
+      previewEl.style.display = '';
+      const slEl = document.getElementById('paperSLPreview');
+      const tpEl = document.getElementById('paperTPPreview');
+      if (slEl) slEl.innerHTML = sl > 0 ? '🛑 Stop Loss at $' + sl.toFixed(2) + ' → Max loss: <strong>$' + ((prem - sl) * 100 * contracts).toFixed(2) + '</strong> (' + (((sl - prem) / prem * 100)).toFixed(0) + '%)' : '';
+      if (tpEl) tpEl.innerHTML = tp > 0 ? '🎯 Take Profit at $' + tp.toFixed(2) + ' → Profit: <strong>+$' + ((tp - prem) * 100 * contracts).toFixed(2) + '</strong> (+' + (((tp - prem) / prem * 100)).toFixed(0) + '%)' : '';
+    } else if (previewEl) {
+      previewEl.style.display = 'none';
+    }
   });
 });
 
@@ -1062,8 +1099,13 @@ function paperBuy() {
   const strike = parseFloat(document.getElementById('paperStrike').value);
   const premium = parseFloat(document.getElementById('paperPremium').value);
   const contracts = parseInt(document.getElementById('paperContracts').value) || 1;
+  const stopLoss = parseFloat((document.getElementById('paperStopLoss') || {}).value) || null;
+  const takeProfit = parseFloat((document.getElementById('paperTakeProfit') || {}).value) || null;
 
   if (!ticker || !strike || !premium) { showToast('Fill in all fields', 'error'); return; }
+
+  if (stopLoss && stopLoss >= premium) { showToast('Stop loss must be below entry premium ($' + premium.toFixed(2) + ')', 'error'); return; }
+  if (takeProfit && takeProfit <= premium) { showToast('Take profit must be above entry premium ($' + premium.toFixed(2) + ')', 'error'); return; }
 
   const cost = premium * 100 * contracts;
   const acc = getPaperAccount();
@@ -1078,7 +1120,8 @@ function paperBuy() {
     id: 'P' + Date.now(),
     ticker, type: paperType, strike, premium, contracts,
     entryDate: new Date().toISOString().split('T')[0],
-    cost, stockPriceAtEntry: window._paperCurrentPrice || 0
+    cost, stockPriceAtEntry: window._paperCurrentPrice || 0,
+    stopLoss, takeProfit
   });
 
   // Update equity curve
@@ -1205,26 +1248,32 @@ function renderPaper() {
     posContainer.innerHTML = acc.positions.map(p => {
       const daysHeld = Math.floor((new Date() - new Date(p.entryDate)) / (1000 * 60 * 60 * 24));
       return `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);font-size:13px;">
-        <div>
+      <div style="padding:12px 0;border-bottom:1px solid var(--border);font-size:13px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
           <div>
-            <strong style="color:var(--accent);font-family:var(--mono);font-size:14px;">${p.ticker}</strong>
-            <span class="badge-${p.type}" style="margin-left:6px;">${p.type.toUpperCase()}</span>
-            <span style="color:var(--text3);margin-left:6px;">$${p.strike} × ${p.contracts}</span>
+            <div>
+              <strong style="color:var(--accent);font-family:var(--mono);font-size:14px;">${p.ticker}</strong>
+              <span class="badge-${p.type}" style="margin-left:6px;">${p.type.toUpperCase()}</span>
+              <span style="color:var(--text3);margin-left:6px;">$${p.strike} × ${p.contracts}</span>
+            </div>
+            <div style="margin-top:4px;font-size:11px;color:var(--text3);">
+              📅 Opened: <strong style="color:var(--text2);">${p.entryDate}</strong>
+              <span style="margin-left:8px;">⏱ ${daysHeld === 0 ? 'Today' : daysHeld + ' day' + (daysHeld !== 1 ? 's' : '') + ' ago'}</span>
+              ${p.stockPriceAtEntry ? '<span style="margin-left:8px;">📈 Stock at entry: $' + parseFloat(p.stockPriceAtEntry).toFixed(2) + '</span>' : ''}
+            </div>
           </div>
-          <div style="margin-top:4px;font-size:11px;color:var(--text3);">
-            📅 Opened: <strong style="color:var(--text2);">${p.entryDate}</strong>
-            <span style="margin-left:8px;">⏱ ${daysHeld === 0 ? 'Today' : daysHeld + ' day' + (daysHeld !== 1 ? 's' : '') + ' ago'}</span>
-            ${p.stockPriceAtEntry ? '<span style="margin-left:8px;">📈 Stock at entry: $' + parseFloat(p.stockPriceAtEntry).toFixed(2) + '</span>' : ''}
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="text-align:right;">
+              <div style="font-family:var(--mono);color:var(--text2);font-size:11px;">Entry: $${p.premium.toFixed(2)}/share</div>
+              <div style="font-family:var(--mono);font-weight:600;">Cost: $${p.cost.toFixed(2)}</div>
+            </div>
+            <button onclick="openClosePosition('${p.id}')" style="background:var(--red);color:#fff;border:none;padding:6px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;">Close</button>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="text-align:right;">
-            <div style="font-family:var(--mono);color:var(--text2);font-size:11px;">Entry: $${p.premium.toFixed(2)}/share</div>
-            <div style="font-family:var(--mono);font-weight:600;">Cost: $${p.cost.toFixed(2)}</div>
-          </div>
-          <button onclick="openClosePosition('${p.id}')" style="background:var(--red);color:#fff;border:none;padding:6px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;">Close</button>
-        </div>
+        ${(p.stopLoss || p.takeProfit) ? '<div style="display:flex;gap:12px;margin-top:6px;padding:6px 10px;background:var(--bg3);border-radius:6px;font-size:11px;">' +
+          (p.stopLoss ? '<span style="color:var(--red);">🛑 Stop Loss: <strong style="font-family:var(--mono);">$' + p.stopLoss.toFixed(2) + '</strong> (' + ((((p.stopLoss - p.premium) / p.premium) * 100).toFixed(0)) + '%)</span>' : '') +
+          (p.takeProfit ? '<span style="color:var(--green);">🎯 Take Profit: <strong style="font-family:var(--mono);">$' + p.takeProfit.toFixed(2) + '</strong> (+' + ((((p.takeProfit - p.premium) / p.premium) * 100).toFixed(0)) + '%)</span>' : '') +
+          '</div>' : ''}
       </div>`;
     }).join('');
   }
