@@ -446,6 +446,19 @@
       </div>
       <div class="form-row" style="max-width:100%;margin-top:8px;">
         <div class="fg">
+          <label>Stock Price</label>
+          <select id="scanPrice">
+            <option value="all" selected>Any Price</option>
+            <option value="0-10">Under $10</option>
+            <option value="0-25">Under $25</option>
+            <option value="0-50">Under $50</option>
+            <option value="0-100">Under $100</option>
+            <option value="100-250">$100 - $250</option>
+            <option value="250-500">$250 - $500</option>
+            <option value="500-99999">$500+</option>
+          </select>
+        </div>
+        <div class="fg">
           <label>Min Confidence</label>
           <select id="scanMinScore">
             <option value="1">Any (1+)</option>

@@ -663,6 +663,7 @@ function runSmartScan() {
       const capFilter = document.getElementById('scanMarketCap').value;
       const signalFilter = document.getElementById('scanSignal').value;
       const strategyFilter = document.getElementById('scanStrategy').value;
+      const priceFilter = (document.getElementById('scanPrice') || {}).value || 'all';
       const minScore = parseInt((document.getElementById('scanMinScore') || {}).value) || 1;
       const rsiFilter = (document.getElementById('scanRSI') || {}).value || 'all';
       const trendFilter = (document.getElementById('scanTrend') || {}).value || 'all';
@@ -670,6 +671,10 @@ function runSmartScan() {
 
       // Apply all filters
       if (capFilter !== 'all') results = results.filter(r => r.capSize === capFilter);
+      if (priceFilter !== 'all') {
+        const [minP, maxP] = priceFilter.split('-').map(Number);
+        results = results.filter(r => { const p = parseFloat(r.price); return p >= minP && p <= maxP; });
+      }
       if (signalFilter !== 'all') results = results.filter(r => r.signals.includes(signalFilter));
       if (strategyFilter === 'calls') results = results.filter(r => r.direction === 'bullish');
       else if (strategyFilter === 'puts') results = results.filter(r => r.direction === 'bearish');
