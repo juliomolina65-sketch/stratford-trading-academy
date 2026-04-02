@@ -30,12 +30,12 @@ function fetchQuote() {
   const btn = document.querySelector('#tab-calculator .btn-accent');
   btn.textContent = 'Loading...';
   btn.disabled = true;
-  fetch('/api/options/quote?symbol=' + ticker)
+  fetch('/api/chart/' + ticker + '?range=5d')
     .then(r => r.json())
     .then(data => {
       if (data.price) {
-        document.getElementById('calcPrice').value = data.price;
-        showToast('Fetched ' + ticker + ': $' + data.price);
+        document.getElementById('calcPrice').value = parseFloat(data.price).toFixed(2);
+        showToast('Fetched ' + ticker + ': $' + parseFloat(data.price).toFixed(2));
       } else {
         showToast('Could not fetch price for ' + ticker, 'error');
       }
@@ -643,7 +643,8 @@ function runSmartScan() {
   document.getElementById('scanResults').style.display = 'none';
   document.getElementById('scanEmpty').style.display = 'none';
 
-  fetch('/api/scanner/scan')
+  const expiryDays = document.getElementById('scanExpiry').value || '21';
+  fetch('/api/scanner/scan?dte=' + expiryDays)
     .then(r => r.json())
     .then(data => {
       document.getElementById('scanLoading').style.display = 'none';
@@ -1011,14 +1012,13 @@ function paperFetchPrice() {
   if (!ticker) return;
   const btn = document.querySelector('#tab-paper .btn-accent');
   btn.textContent = '...'; btn.disabled = true;
-  fetch('/api/options/quote?symbol=' + ticker)
+  fetch('/api/chart/' + ticker + '?range=5d')
     .then(r => r.json())
     .then(data => {
       if (data.price) {
         document.getElementById('paperStockInfo').style.display = '';
-        document.getElementById('paperStockName').textContent = ticker;
-        document.getElementById('paperStockPrice').textContent = '$' + data.price;
-        // Auto-fill ATM strike
+        document.getElementById('paperStockName').textContent = data.name || ticker;
+        document.getElementById('paperStockPrice').textContent = '$' + parseFloat(data.price).toFixed(2);
         const price = parseFloat(data.price);
         const atm = Math.round(price / 5) * 5 || Math.round(price);
         document.getElementById('paperStrike').value = atm;
@@ -1328,18 +1328,30 @@ function createTVWidget(symbol) {
     "allow_symbol_change": true,
     "hide_top_toolbar": false,
     "hide_legend": false,
+    "hide_side_toolbar": false,
     "save_image": true,
     "container_id": "tv_chart_container",
     "backgroundColor": "#0a0e17",
     "gridColor": "rgba(255,255,255,0.04)",
     "studies": ["RSI@tv-basicstudies", "MASimple@tv-basicstudies", "Volume@tv-basicstudies"],
     "show_popup_button": true,
-    "popup_width": "1000",
-    "popup_height": "650",
+    "popup_width": "1200",
+    "popup_height": "800",
     "details": true,
     "hotlist": true,
     "calendar": false,
-    "withdateranges": true
+    "withdateranges": true,
+    "drawings_access": { "type": "all" },
+    "saved_data": localStorage.getItem('tv_chart_' + symbol) || undefined,
+    "auto_save_delay": 5,
+    "overrides": {
+      "mainSeriesProperties.candleStyle.upColor": "#00d97e",
+      "mainSeriesProperties.candleStyle.downColor": "#ef4444",
+      "mainSeriesProperties.candleStyle.borderUpColor": "#00d97e",
+      "mainSeriesProperties.candleStyle.borderDownColor": "#ef4444",
+      "mainSeriesProperties.candleStyle.wickUpColor": "#00d97e",
+      "mainSeriesProperties.candleStyle.wickDownColor": "#ef4444"
+    }
   });
 }
 

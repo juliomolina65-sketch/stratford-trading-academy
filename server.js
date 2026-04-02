@@ -2229,7 +2229,9 @@ const SCAN_WATCHLIST2 = [
 ];
 
 app.get('/api/scanner/scan', async (req, res) => {
-  const cached = scanCache2.get('scan');
+  const dteParam = parseInt(req.query.dte) || 21;
+  const cacheKey = 'scan_' + dteParam;
+  const cached = scanCache2.get(cacheKey);
   if (cached && Date.now() - cached.time < 600000) return res.json(cached.data);
   try {
     // Fetch each stock via Yahoo v8 chart API (more reliable)
@@ -2461,8 +2463,14 @@ app.get('/api/scanner/scan', async (req, res) => {
       const atm = Math.round(price / 5) * 5 || Math.round(price);
       const strike = bullish ? atm + 5 : atm - 5;
       const type = bullish ? 'CALL' : 'PUT';
-      const expDate = new Date(); expDate.setDate(expDate.getDate() + 21);
-      while (expDate.getDay() !== 5) expDate.setDate(expDate.getDate() + 1);
+      const expDate = new Date();
+      if (dteParam === 0) {
+        // 0DTE — today, find nearest Friday or today
+        while (expDate.getDay() !== 5 && expDate.getDay() !== 0) expDate.setDate(expDate.getDate());
+      } else {
+        expDate.setDate(expDate.getDate() + dteParam);
+        while (expDate.getDay() !== 5) expDate.setDate(expDate.getDate() + 1); // snap to Friday
+      }
 
       // ── TECHNICAL ANALYSIS SUMMARY ──
       let taNote = '';
@@ -2492,8 +2500,8 @@ app.get('/api/scanner/scan', async (req, res) => {
     });
     results.sort((a, b) => b.score - a.score || parseFloat(b.volRatio) - parseFloat(a.volRatio));
     // Show all stocks — let the frontend filter
-    const data = { timestamp: new Date().toISOString(), total: results.length, results: results };
-    scanCache2.set('scan', { data, time: Date.now() });
+    const data = { timestamp: new Date().toISOString(), total: results.length, results: results, dte: dteParam };
+    scanCache2.set(cacheKey, { data, time: Date.now() });
     res.json(data);
   } catch (err) { res.json({ error: 'Scanner failed: ' + err.message }); }
 });
