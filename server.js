@@ -1961,6 +1961,26 @@ app.get('/api/chart/:symbol', async (req, res) => {
         if (response.ok) { json = await response.json(); if (json?.chart?.result) break; }
       } catch {}
     }
+    // Fallback to Market Data API if Yahoo fails
+    if (!json && MD_API_KEY) {
+      try {
+        const daysMap = { '5d': 5, '1mo': 30, '3mo': 90, '6mo': 180, '1y': 365 };
+        const days = daysMap[range] || 90;
+        const fromDate = new Date(); fromDate.setDate(fromDate.getDate() - days);
+        const mdUrl = `https://api.marketdata.app/v1/stocks/candles/daily/${symbol}/?from=${fromDate.toISOString().split('T')[0]}`;
+        const mdR = await fetch(mdUrl, { headers: { 'Authorization': 'Bearer ' + MD_API_KEY, 'Accept': 'application/json' } });
+        const mdJ = await mdR.json();
+        if (mdJ.s === 'ok' && mdJ.c && mdJ.c.length > 0) {
+          const data = {
+            symbol, name: symbol, price: mdJ.c[mdJ.c.length - 1], prevClose: mdJ.c.length > 1 ? mdJ.c[mdJ.c.length - 2] : null,
+            high52w: Math.max(...mdJ.h || mdJ.c), low52w: Math.min(...mdJ.l || mdJ.c),
+            points: mdJ.t.map((t, i) => ({ time: t * 1000, close: mdJ.c[i], volume: mdJ.v ? mdJ.v[i] : 0, high: mdJ.h ? mdJ.h[i] : mdJ.c[i], low: mdJ.l ? mdJ.l[i] : mdJ.c[i] })).filter(p => p.close !== null)
+          };
+          chartDataCache.set(cacheKey, { data, time: Date.now() });
+          return res.json(data);
+        }
+      } catch {}
+    }
     if (!json) return res.json({ error: 'Could not fetch chart data' });
     const result = json?.chart?.result?.[0];
     if (!result) return res.json({ error: 'No data' });
@@ -2339,38 +2359,66 @@ app.get('/api/scanner/scan', async (req, res) => {
     // ── Fetch Stock with Full TA ──
     const fetchStock = async (sym) => {
       try {
-        // Try multiple Yahoo Finance endpoints (some get blocked on cloud servers)
+        let closes = [], highs = [], lows = [], volumes = [];
+        let price = 0, prevClose = 0, vol = 0, name = sym;
+
+        // Try Yahoo Finance first
+        let yahooWorked = false;
         const urls = [
           `https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=6mo`,
           `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=6mo`,
-          `https://finance-query.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=6mo`
         ];
-        let j = null;
         for (const url of urls) {
           try {
             const r = await fetch(url, {
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'application/json',
-                'Accept-Language': 'en-US,en;q=0.9'
-              }
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'application/json' }
             });
-            if (r.ok) { j = await r.json(); if (j?.chart?.result) break; }
+            if (r.ok) {
+              const j = await r.json();
+              const meta = j?.chart?.result?.[0]?.meta;
+              const quotes = j?.chart?.result?.[0]?.indicators?.quote?.[0];
+              if (meta && quotes) {
+                closes = (quotes.close || []).filter(v => v !== null);
+                highs = (quotes.high || []).filter(v => v !== null);
+                lows = (quotes.low || []).filter(v => v !== null);
+                volumes = (quotes.volume || []).filter(v => v !== null);
+                price = meta.regularMarketPrice || closes[closes.length - 1] || 0;
+                prevClose = meta.chartPreviousClose || closes[closes.length - 2] || price;
+                name = meta.shortName || meta.longName || sym;
+                vol = meta.regularMarketVolume || volumes[volumes.length - 1] || 0;
+                yahooWorked = true;
+                break;
+              }
+            }
           } catch {}
         }
-        if (!j) return null;
-        const meta = j?.chart?.result?.[0]?.meta;
-        const quotes = j?.chart?.result?.[0]?.indicators?.quote?.[0];
-        if (!meta || !quotes) return null;
-        const closes = (quotes.close || []).filter(v => v !== null);
-        const highs = (quotes.high || []).filter(v => v !== null);
-        const lows = (quotes.low || []).filter(v => v !== null);
-        const volumes = (quotes.volume || []).filter(v => v !== null);
-        const price = meta.regularMarketPrice || closes[closes.length - 1] || 0;
-        const prevClose = meta.chartPreviousClose || closes[closes.length - 2] || price;
+
+        // Fallback: Market Data API for stock candles
+        if (!yahooWorked && MD_API_KEY) {
+          try {
+            const sixMonthsAgo = new Date(); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+            const from = sixMonthsAgo.toISOString().split('T')[0];
+            const mdUrl = `https://api.marketdata.app/v1/stocks/candles/daily/${sym}/?from=${from}`;
+            const mdR = await fetch(mdUrl, { headers: { 'Authorization': 'Bearer ' + MD_API_KEY, 'Accept': 'application/json' } });
+            const mdJ = await mdR.json();
+            if (mdJ.s === 'ok' && mdJ.c && mdJ.c.length > 0) {
+              closes = mdJ.c;
+              highs = mdJ.h || closes;
+              lows = mdJ.l || closes;
+              volumes = mdJ.v || [];
+              price = closes[closes.length - 1];
+              prevClose = closes.length > 1 ? closes[closes.length - 2] : price;
+              vol = volumes.length ? volumes[volumes.length - 1] : 0;
+              yahooWorked = true; // flag as success
+            }
+          } catch {}
+        }
+
+        if (!yahooWorked || closes.length < 5) return null;
+
+        // Now we have closes/highs/lows/volumes from either Yahoo or Market Data API
         const change = price - prevClose;
         const changePct = prevClose ? (change / prevClose * 100) : 0;
-        const vol = meta.regularMarketVolume || volumes[volumes.length - 1] || 0;
         const avgVol = volumes.length > 5 ? volumes.slice(-20).reduce((s,v) => s+v, 0) / Math.min(20, volumes.length) : vol;
         const ma50 = closes.length >= 50 ? closes.slice(-50).reduce((s,v) => s+v, 0) / 50 : price;
         const ma200 = closes.length >= 120 ? closes.slice(-120).reduce((s,v) => s+v, 0) / 120 : price;
@@ -2394,9 +2442,9 @@ app.get('/api/scanner/scan', async (req, res) => {
         }
 
         return {
-          symbol: sym, name: meta.shortName || meta.longName || sym,
+          symbol: sym, name: name,
           price, change, changePct, volume: vol, avgVolume: avgVol,
-          ma20, ma50, ma200, marketCap: meta.marketCap || 0,
+          ma20, ma50, ma200, marketCap: 0,
           // TA data
           rsi, macd, bollinger, trend, support, resistance, maCross
         };
