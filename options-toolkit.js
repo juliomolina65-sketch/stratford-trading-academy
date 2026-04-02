@@ -643,7 +643,8 @@ function runSmartScan() {
   document.getElementById('scanResults').style.display = 'none';
   document.getElementById('scanEmpty').style.display = 'none';
 
-  const expiryDays = document.getElementById('scanExpiry').value || '21';
+  const expiryEl = document.getElementById('scanExpiry');
+  const expiryDays = expiryEl ? expiryEl.value : '21';
   fetch('/api/scanner/scan?dte=' + expiryDays)
     .then(r => r.json())
     .then(data => {
@@ -662,10 +663,10 @@ function runSmartScan() {
       const capFilter = document.getElementById('scanMarketCap').value;
       const signalFilter = document.getElementById('scanSignal').value;
       const strategyFilter = document.getElementById('scanStrategy').value;
-      const minScore = parseInt(document.getElementById('scanMinScore').value) || 1;
-      const rsiFilter = document.getElementById('scanRSI').value;
-      const trendFilter = document.getElementById('scanTrend').value;
-      const sortBy = document.getElementById('scanSort').value;
+      const minScore = parseInt((document.getElementById('scanMinScore') || {}).value) || 1;
+      const rsiFilter = (document.getElementById('scanRSI') || {}).value || 'all';
+      const trendFilter = (document.getElementById('scanTrend') || {}).value || 'all';
+      const sortBy = (document.getElementById('scanSort') || {}).value || 'score';
 
       // Apply all filters
       if (capFilter !== 'all') results = results.filter(r => r.capSize === capFilter);
