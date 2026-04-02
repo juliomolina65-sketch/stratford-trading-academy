@@ -2049,15 +2049,110 @@ app.get('/api/scanner/scan', async (req, res) => {
   if (cached && Date.now() - cached.time < 600000) return res.json(cached.data);
   try {
     // Fetch each stock via Yahoo v8 chart API (more reliable)
+    // ── Technical Analysis Helper Functions ──
+    function calcRSI(closes, period = 14) {
+      if (closes.length < period + 1) return 50;
+      let gains = 0, losses = 0;
+      for (let i = closes.length - period; i < closes.length; i++) {
+        const diff = closes[i] - closes[i - 1];
+        if (diff > 0) gains += diff; else losses -= diff;
+      }
+      const avgGain = gains / period;
+      const avgLoss = losses / period;
+      if (avgLoss === 0) return 100;
+      const rs = avgGain / avgLoss;
+      return 100 - (100 / (1 + rs));
+    }
+
+    function calcEMA(data, period) {
+      const k = 2 / (period + 1);
+      let ema = data[0];
+      for (let i = 1; i < data.length; i++) ema = data[i] * k + ema * (1 - k);
+      return ema;
+    }
+
+    function calcMACD(closes) {
+      if (closes.length < 26) return { macd: 0, signal: 0, histogram: 0, crossover: 'none' };
+      const ema12vals = []; const ema26vals = [];
+      let ema12 = closes.slice(0, 12).reduce((s, v) => s + v, 0) / 12;
+      let ema26 = closes.slice(0, 26).reduce((s, v) => s + v, 0) / 26;
+      const k12 = 2 / 13, k26 = 2 / 27;
+      for (let i = 1; i < closes.length; i++) {
+        ema12 = closes[i] * k12 + ema12 * (1 - k12);
+        ema26 = closes[i] * k26 + ema26 * (1 - k26);
+        if (i >= 25) { ema12vals.push(ema12); ema26vals.push(ema26); }
+      }
+      const macdLine = ema12vals.map((v, i) => v - ema26vals[i]);
+      if (macdLine.length < 9) return { macd: 0, signal: 0, histogram: 0, crossover: 'none' };
+      let signal = macdLine.slice(0, 9).reduce((s, v) => s + v, 0) / 9;
+      const k9 = 2 / 10;
+      const prevSignals = [];
+      for (let i = 1; i < macdLine.length; i++) {
+        signal = macdLine[i] * k9 + signal * (1 - k9);
+        prevSignals.push({ macd: macdLine[i], signal });
+      }
+      const last = prevSignals[prevSignals.length - 1] || { macd: 0, signal: 0 };
+      const prev = prevSignals[prevSignals.length - 2] || last;
+      let crossover = 'none';
+      if (prev.macd <= prev.signal && last.macd > last.signal) crossover = 'bullish';
+      if (prev.macd >= prev.signal && last.macd < last.signal) crossover = 'bearish';
+      return { macd: last.macd, signal: last.signal, histogram: last.macd - last.signal, crossover };
+    }
+
+    function calcBollinger(closes, period = 20) {
+      if (closes.length < period) return { upper: 0, middle: 0, lower: 0, percentB: 50 };
+      const slice = closes.slice(-period);
+      const middle = slice.reduce((s, v) => s + v, 0) / period;
+      const stdDev = Math.sqrt(slice.reduce((s, v) => s + (v - middle) ** 2, 0) / period);
+      const upper = middle + 2 * stdDev;
+      const lower = middle - 2 * stdDev;
+      const price = closes[closes.length - 1];
+      const percentB = stdDev > 0 ? ((price - lower) / (upper - lower)) * 100 : 50;
+      return { upper, middle, lower, percentB };
+    }
+
+    function detectTrend(closes) {
+      if (closes.length < 20) return 'neutral';
+      const recent10 = closes.slice(-10);
+      const prev10 = closes.slice(-20, -10);
+      const recentAvg = recent10.reduce((s, v) => s + v, 0) / 10;
+      const prevAvg = prev10.reduce((s, v) => s + v, 0) / 10;
+      const diff = ((recentAvg - prevAvg) / prevAvg) * 100;
+      if (diff > 3) return 'strong uptrend';
+      if (diff > 1) return 'uptrend';
+      if (diff < -3) return 'strong downtrend';
+      if (diff < -1) return 'downtrend';
+      return 'consolidating';
+    }
+
+    function findSupport(closes) {
+      const lows = [];
+      for (let i = 2; i < closes.length - 2; i++) {
+        if (closes[i] < closes[i-1] && closes[i] < closes[i-2] && closes[i] < closes[i+1] && closes[i] < closes[i+2]) lows.push(closes[i]);
+      }
+      return lows.length ? lows[lows.length - 1] : closes[Math.floor(closes.length * 0.1)];
+    }
+
+    function findResistance(closes) {
+      const highs = [];
+      for (let i = 2; i < closes.length - 2; i++) {
+        if (closes[i] > closes[i-1] && closes[i] > closes[i-2] && closes[i] > closes[i+1] && closes[i] > closes[i+2]) highs.push(closes[i]);
+      }
+      return highs.length ? highs[highs.length - 1] : closes[Math.floor(closes.length * 0.9)];
+    }
+
+    // ── Fetch Stock with Full TA ──
     const fetchStock = async (sym) => {
       try {
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3mo`;
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=6mo`;
         const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         const j = await r.json();
         const meta = j?.chart?.result?.[0]?.meta;
         const quotes = j?.chart?.result?.[0]?.indicators?.quote?.[0];
         if (!meta || !quotes) return null;
         const closes = (quotes.close || []).filter(v => v !== null);
+        const highs = (quotes.high || []).filter(v => v !== null);
+        const lows = (quotes.low || []).filter(v => v !== null);
         const volumes = (quotes.volume || []).filter(v => v !== null);
         const price = meta.regularMarketPrice || closes[closes.length - 1] || 0;
         const prevClose = meta.chartPreviousClose || closes[closes.length - 2] || price;
@@ -2065,10 +2160,34 @@ app.get('/api/scanner/scan', async (req, res) => {
         const changePct = prevClose ? (change / prevClose * 100) : 0;
         const vol = meta.regularMarketVolume || volumes[volumes.length - 1] || 0;
         const avgVol = volumes.length > 5 ? volumes.slice(-20).reduce((s,v) => s+v, 0) / Math.min(20, volumes.length) : vol;
-        // Calculate 50 & 200 day MAs from closes
         const ma50 = closes.length >= 50 ? closes.slice(-50).reduce((s,v) => s+v, 0) / 50 : price;
-        const ma200 = closes.length >= 60 ? closes.slice(-60).reduce((s,v) => s+v, 0) / 60 : price; // approx with available data
-        return { symbol: sym, name: meta.shortName || meta.longName || sym, price, change, changePct, volume: vol, avgVolume: avgVol, ma50, ma200, marketCap: meta.marketCap || 0 };
+        const ma200 = closes.length >= 120 ? closes.slice(-120).reduce((s,v) => s+v, 0) / 120 : price;
+        const ma20 = closes.length >= 20 ? closes.slice(-20).reduce((s,v) => s+v, 0) / 20 : price;
+
+        // Technical Analysis
+        const rsi = calcRSI(closes);
+        const macd = calcMACD(closes);
+        const bollinger = calcBollinger(closes);
+        const trend = detectTrend(closes);
+        const support = findSupport(closes);
+        const resistance = findResistance(closes);
+
+        // MA crossover detection
+        let maCross = 'none';
+        if (closes.length >= 50) {
+          const prevMa20 = closes.slice(-21, -1).reduce((s,v) => s+v, 0) / 20;
+          const prevMa50 = closes.slice(-51, -1).reduce((s,v) => s+v, 0) / 50;
+          if (prevMa20 <= prevMa50 && ma20 > ma50) maCross = 'golden_cross';
+          if (prevMa20 >= prevMa50 && ma20 < ma50) maCross = 'death_cross';
+        }
+
+        return {
+          symbol: sym, name: meta.shortName || meta.longName || sym,
+          price, change, changePct, volume: vol, avgVolume: avgVol,
+          ma20, ma50, ma200, marketCap: meta.marketCap || 0,
+          // TA data
+          rsi, macd, bollinger, trend, support, resistance, maCross
+        };
       } catch { return null; }
     };
     // Fetch in batches of 10
@@ -2079,48 +2198,110 @@ app.get('/api/scanner/scan', async (req, res) => {
       allResults.push(...batchResults.filter(Boolean));
     }
     const quotes = allResults;
+    const LARGE_CAPS = ['AAPL','MSFT','NVDA','TSLA','AMZN','META','GOOGL','NFLX','SPY','QQQ','V','MA','JPM','GS','LLY','UNH','AVGO','CRM','ORCL','XOM','CVX','TSM','QCOM','BA','DIS','IWM','GLD','TLT','SLV'];
+    const MID_CAPS = ['AMD','PYPL','SQ','COIN','UBER','ABNB','INTC','MU','PFE','SNAP','BABA','JD','OXY'];
+
     const results = quotes.map(q => {
       const price = q.price || 0;
       const change = q.change || 0;
       const changePct = q.changePct || 0;
       const volume = q.volume || 0;
       const avgVolume = q.avgVolume || 1;
+      const ma20 = q.ma20 || price;
       const ma50 = q.ma50 || price;
       const ma200 = q.ma200 || price;
+      const rsi = q.rsi || 50;
+      const macd = q.macd || { macd: 0, signal: 0, histogram: 0, crossover: 'none' };
+      const bollinger = q.bollinger || { percentB: 50 };
+      const trend = q.trend || 'neutral';
+      const support = q.support || 0;
+      const resistance = q.resistance || 0;
+      const maCross = q.maCross || 'none';
       const marketCap = q.marketCap || 0;
       const volRatio = volume / Math.max(avgVolume, 1);
       const aboveMa50 = price > ma50;
       const aboveMa200 = price > ma200;
-      const ma50Dist = ((price - ma50) / ma50 * 100);
-      const ma200Dist = ((price - ma200) / ma200 * 100);
+      const ma50Dist = ma50 ? ((price - ma50) / ma50 * 100) : 0;
+      const ma200Dist = ma200 ? ((price - ma200) / ma200 * 100) : 0;
+
+      // ── SIGNALS based on TA ──
       const signals = [];
       if (volRatio > 1.5) signals.push('volume');
-      if (aboveMa50 && aboveMa200 && changePct > 1) signals.push('momentum');
-      if (!aboveMa50 && !aboveMa200 && changePct < -1) signals.push('momentum');
+      if (rsi < 30) signals.push('oversold');
+      if (rsi > 70) signals.push('overbought');
+      if (macd.crossover === 'bullish') signals.push('macd_buy');
+      if (macd.crossover === 'bearish') signals.push('macd_sell');
+      if (bollinger.percentB < 10) signals.push('bb_oversold');
+      if (bollinger.percentB > 90) signals.push('bb_overbought');
+      if (trend.includes('strong')) signals.push('momentum');
+      if (maCross === 'golden_cross') signals.push('golden_cross');
+      if (maCross === 'death_cross') signals.push('death_cross');
       if (volRatio > 2.5) signals.push('unusual');
-      let score = 5;
-      if (volRatio > 2) score += 1;
-      if (volRatio > 3) score += 1;
-      if (Math.abs(changePct) > 2) score += 1;
-      if (aboveMa50 && aboveMa200) score += 1;
-      if (volRatio > 1.5 && Math.abs(changePct) > 1.5) score += 1;
-      score = Math.min(10, Math.max(1, score));
-      const bullish = changePct > 0 && aboveMa50;
+
+      // ── SMART SCORE (1-10) based on TA confluence ──
+      let score = 3; // base
+      // Volume
+      if (volRatio > 1.5) score += 1;
+      if (volRatio > 2.5) score += 1;
+      // RSI
+      if (rsi < 35 || rsi > 65) score += 1; // clear direction
+      if (rsi < 25 || rsi > 75) score += 1; // extreme
+      // MACD
+      if (macd.crossover !== 'none') score += 1;
+      if (Math.abs(macd.histogram) > 0.5) score += 0.5;
+      // Trend
+      if (trend.includes('strong')) score += 1;
+      if (trend !== 'consolidating' && trend !== 'neutral') score += 0.5;
+      // MA alignment
+      if (aboveMa50 && aboveMa200) score += 1; // all bullish
+      if (!aboveMa50 && !aboveMa200) score += 1; // all bearish (clear direction)
+      // Crossovers
+      if (maCross !== 'none') score += 1;
+      // Bollinger
+      if (bollinger.percentB < 15 || bollinger.percentB > 85) score += 0.5;
+      score = Math.min(10, Math.max(1, Math.round(score)));
+
+      // ── DIRECTION ──
+      let bullPoints = 0, bearPoints = 0;
+      if (aboveMa50) bullPoints += 1; else bearPoints += 1;
+      if (aboveMa200) bullPoints += 1; else bearPoints += 1;
+      if (rsi > 50) bullPoints += 1; else bearPoints += 1;
+      if (macd.histogram > 0) bullPoints += 1; else bearPoints += 1;
+      if (trend.includes('uptrend')) bullPoints += 1;
+      if (trend.includes('downtrend')) bearPoints += 1;
+      if (changePct > 0) bullPoints += 0.5; else bearPoints += 0.5;
+      const bullish = bullPoints > bearPoints;
       const direction = bullish ? 'bullish' : 'bearish';
-      const atm = Math.round(price / 5) * 5;
+
+      // ── SUGGESTED TRADE ──
+      const atm = Math.round(price / 5) * 5 || Math.round(price);
       const strike = bullish ? atm + 5 : atm - 5;
       const type = bullish ? 'CALL' : 'PUT';
       const expDate = new Date(); expDate.setDate(expDate.getDate() + 21);
       while (expDate.getDay() !== 5) expDate.setDate(expDate.getDate() + 1);
-      // Known cap sizes for watchlist (v8 API doesn't return marketCap)
-      const LARGE_CAPS = ['AAPL','MSFT','NVDA','TSLA','AMZN','META','GOOGL','NFLX','SPY','QQQ','V','MA','JPM','GS','LLY','UNH','AVGO','CRM','ORCL','XOM','CVX','TSM','QCOM','BA','DIS','IWM','GLD','TLT','SLV'];
-      const MID_CAPS = ['AMD','PYPL','SQ','COIN','UBER','ABNB','INTC','MU','PFE','SNAP','BABA','JD','OXY'];
+
+      // ── TECHNICAL ANALYSIS SUMMARY ──
+      let taNote = '';
+      if (rsi < 30) taNote = 'RSI oversold (' + rsi.toFixed(0) + ') — potential bounce. ';
+      else if (rsi > 70) taNote = 'RSI overbought (' + rsi.toFixed(0) + ') — potential pullback. ';
+      else taNote = 'RSI neutral (' + rsi.toFixed(0) + '). ';
+
+      if (macd.crossover === 'bullish') taNote += 'MACD bullish crossover! ';
+      else if (macd.crossover === 'bearish') taNote += 'MACD bearish crossover. ';
+
+      if (maCross === 'golden_cross') taNote += '🔥 GOLDEN CROSS (20MA crossed above 50MA). ';
+      else if (maCross === 'death_cross') taNote += '☠️ DEATH CROSS (20MA crossed below 50MA). ';
+
+      taNote += 'Trend: ' + trend + '. ';
+      if (support) taNote += 'Support: $' + support.toFixed(2) + '. ';
+      if (resistance) taNote += 'Resistance: $' + resistance.toFixed(2) + '.';
+
       let capSize = 'small';
       if (LARGE_CAPS.includes(q.symbol)) capSize = 'large';
       else if (MID_CAPS.includes(q.symbol)) capSize = 'mid';
-      return { symbol: q.symbol, name: q.name || q.symbol, price: price.toFixed(2), change: change.toFixed(2), changePct: changePct.toFixed(2), volume, avgVolume, volRatio: volRatio.toFixed(1), ma50: ma50.toFixed(2), ma200: ma200.toFixed(2), ma50Dist: ma50Dist.toFixed(1), ma200Dist: ma200Dist.toFixed(1), marketCap, capSize, signals, score, direction, suggestedType: type, suggestedStrike: strike, suggestedExpiry: expDate.toISOString().split('T')[0] };
+      return { symbol: q.symbol, name: q.name || q.symbol, price: price.toFixed(2), change: change.toFixed(2), changePct: changePct.toFixed(2), volume, avgVolume, volRatio: volRatio.toFixed(1), ma50: ma50.toFixed(2), ma200: ma200.toFixed(2), ma50Dist: ma50Dist.toFixed(1), ma200Dist: ma200Dist.toFixed(1), marketCap, capSize, signals, score, direction, suggestedType: type, suggestedStrike: strike, suggestedExpiry: expDate.toISOString().split('T')[0], rsi: rsi.toFixed(1), macdCross: macd.crossover, macdHist: macd.histogram.toFixed(3), bbPercent: bollinger.percentB.toFixed(0), trend, support: support.toFixed(2), resistance: resistance.toFixed(2), maCross, taNote };
     });
-    // Also add signals for stocks above both MAs (strong trend) even without volume spike
+    // Already handled signals in TA section above
     results.forEach(r => {
       if (parseFloat(r.ma50Dist) > 3 && parseFloat(r.ma200Dist) > 5 && !r.signals.includes('momentum')) r.signals.push('momentum');
       if (parseFloat(r.ma50Dist) < -3 && parseFloat(r.ma200Dist) < -5 && !r.signals.includes('momentum')) r.signals.push('momentum');

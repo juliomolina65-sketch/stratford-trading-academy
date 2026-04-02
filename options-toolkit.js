@@ -666,7 +666,7 @@ function runSmartScan() {
       const signalCounts = {};
       results.forEach(r => r.signals.forEach(s => { signalCounts[s] = (signalCounts[s] || 0) + 1; }));
       const topSignal = Object.entries(signalCounts).sort((a, b) => b[1] - a[1])[0];
-      const signalNames = { volume: 'Volume Spike', momentum: 'Momentum', iv: 'Low IV', unusual: 'Unusual Activity' };
+      const signalNames = { volume: 'Volume Spike', momentum: 'Momentum', iv: 'Low IV', unusual: 'Unusual Activity', oversold: 'RSI Oversold', overbought: 'RSI Overbought', macd_buy: 'MACD Buy', macd_sell: 'MACD Sell', bb_oversold: 'BB Oversold', bb_overbought: 'BB Overbought', golden_cross: 'Golden Cross', death_cross: 'Death Cross' };
       document.getElementById('scanTopSignal').textContent = topSignal ? (signalNames[topSignal[0]] || topSignal[0]) : '—';
 
       // Sentiment
@@ -698,22 +698,26 @@ function runSmartScan() {
               <div style="font-size:14px;font-weight:600;font-family:var(--mono);color:var(--text);">$${r.price} <span style="font-size:12px;color:${changeColor};">${changeSign}$${r.change}</span></div>
               <div class="scan-tags">${tags}</div>
               <div class="scan-details">
-                <span>Vol: <strong>${volFormatted}</strong> (${r.volRatio}x avg)</span>
-                <span>Avg Vol: <strong>${avgVolFormatted}</strong></span>
-                <span>50 MA: <strong>$${r.ma50}</strong> (${r.ma50Dist > 0 ? '+' : ''}${r.ma50Dist}%)</span>
-                <span>200 MA: <strong>$${r.ma200}</strong> (${r.ma200Dist > 0 ? '+' : ''}${r.ma200Dist}%)</span>
-                <span>Market Cap: <strong>$${capFormatted}</strong></span>
+                <span>RSI: <strong style="color:${parseFloat(r.rsi) < 30 ? 'var(--green)' : parseFloat(r.rsi) > 70 ? 'var(--red)' : 'var(--text)'}">${r.rsi}</strong></span>
+                <span>MACD: <strong style="color:${r.macdCross === 'bullish' ? 'var(--green)' : r.macdCross === 'bearish' ? 'var(--red)' : 'var(--text3)'}">${r.macdCross === 'none' ? 'Neutral' : r.macdCross}</strong></span>
+                <span>BB%: <strong>${r.bbPercent}%</strong></span>
+                <span>Trend: <strong style="color:${r.trend.includes('up') ? 'var(--green)' : r.trend.includes('down') ? 'var(--red)' : 'var(--text3)'}">${r.trend}</strong></span>
+                <span>Vol: <strong>${volFormatted}</strong> (${r.volRatio}x)</span>
+                <span>50 MA: <strong>$${r.ma50}</strong></span>
+                <span>Support: <strong style="color:var(--green);">$${r.support}</strong></span>
+                <span>Resistance: <strong style="color:var(--red);">$${r.resistance}</strong></span>
               </div>
+              ${r.taNote ? '<div style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.4;padding:6px 8px;background:var(--bg3);border-radius:6px;border-left:2px solid var(--accent);">📊 ' + r.taNote + '</div>' : ''}
             </div>
             <div class="scan-trade">
               <div class="suggested">🎯 ACTION PLAN</div>
               <div class="direction ${r.direction}" style="margin-bottom:6px;">${r.direction === 'bullish' ? '📈 BUY CALL' : '📉 BUY PUT'}</div>
               <div class="contract">${r.symbol} $${r.suggestedStrike} ${r.suggestedType}</div>
               <div class="expiry">Exp: ${r.suggestedExpiry}</div>
-              <div style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.4;max-width:160px;">
+              <div style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.4;max-width:170px;">
                 ${r.direction === 'bullish'
-                  ? 'Stock trending up — above 50MA. Buy call, target +50% gain, stop at -30%.'
-                  : 'Stock trending down — below 50MA. Buy put, target +50% gain, stop at -30%.'}
+                  ? 'RSI: ' + r.rsi + ' | Trend: ' + r.trend + '. Buy above $' + r.support + ', target $' + r.resistance + '.'
+                  : 'RSI: ' + r.rsi + ' | Trend: ' + r.trend + '. Sell below $' + r.resistance + ', target $' + r.support + '.'}
               </div>
               <div style="font-size:10px;color:var(--accent);margin-top:4px;font-weight:600;">Risk: 1 contract max</div>
               <button onclick="event.stopPropagation(); toggleWatchlist('${r.symbol}')" class="btn-watchlist" id="wl-${r.symbol}" style="margin-top:8px;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:${isInWatchlist(r.symbol) ? 'var(--amber)' : 'var(--bg3)'};color:${isInWatchlist(r.symbol) ? '#000' : 'var(--text2)'};transition:all .15s;">
