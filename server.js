@@ -1976,6 +1976,169 @@ app.get('/api/chart/:symbol', async (req, res) => {
 });
 
 // ============================================
+// MARKET DATA API — Real Options Data (IV, Greeks, chains)
+// ============================================
+const MD_API_KEY = process.env.MARKETDATA_API_KEY || '';
+const mdCache = new Map();
+
+// Real options chain with IV + Greeks
+app.get('/api/options/realchain/:symbol', async (req, res) => {
+  const symbol = req.params.symbol.toUpperCase();
+  const dte = req.query.dte || '21'; // default 3 weeks out
+  const side = req.query.side || ''; // call, put, or both
+  const cacheKey = symbol + '_' + dte + '_' + side;
+
+  const cached = mdCache.get(cacheKey);
+  if (cached && Date.now() - cached.time < 300000) return res.json(cached.data);
+
+  if (!MD_API_KEY) {
+    return res.json({ error: 'Market Data API key not configured. Add MARKETDATA_API_KEY to .env', fallback: true });
+  }
+
+  try {
+    let url = `https://api.marketdata.app/v1/options/chain/${symbol}/?dte=${dte}&strikeLimit=20&range=all`;
+    if (side) url += '&side=' + side;
+
+    const response = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + MD_API_KEY, 'Accept': 'application/json' }
+    });
+    const json = await response.json();
+
+    if (json.s !== 'ok' || !json.optionSymbol) {
+      return res.json({ error: 'No options data for ' + symbol, raw: json.s });
+    }
+
+    // Parse into clean format
+    const count = json.optionSymbol.length;
+    const options = [];
+    for (let i = 0; i < count; i++) {
+      options.push({
+        symbol: json.optionSymbol[i],
+        underlying: json.underlying[i],
+        strike: json.strike[i],
+        side: json.side[i],
+        expiration: json.expiration[i],
+        dte: json.dte[i],
+        bid: json.bid[i],
+        ask: json.ask[i],
+        mid: json.mid[i],
+        last: json.last[i],
+        volume: json.volume[i],
+        openInterest: json.openInterest[i],
+        iv: json.iv[i],
+        delta: json.delta[i],
+        gamma: json.gamma[i],
+        theta: json.theta[i],
+        vega: json.vega[i],
+        underlyingPrice: json.underlyingPrice[i],
+        inTheMoney: json.inTheMoney[i],
+        intrinsicValue: json.intrinsicValue[i],
+        extrinsicValue: json.extrinsicValue[i]
+      });
+    }
+
+    // Separate calls and puts
+    const calls = options.filter(o => o.side === 'call').sort((a, b) => a.strike - b.strike);
+    const puts = options.filter(o => o.side === 'put').sort((a, b) => a.strike - b.strike);
+
+    // Find best contracts (highest volume, good delta range)
+    const bestCall = calls.filter(c => c.delta > 0.3 && c.delta < 0.7 && c.volume > 0)
+      .sort((a, b) => b.volume - a.volume)[0] || calls[Math.floor(calls.length / 2)] || null;
+    const bestPut = puts.filter(p => p.delta < -0.3 && p.delta > -0.7 && p.volume > 0)
+      .sort((a, b) => b.volume - a.volume)[0] || puts[Math.floor(puts.length / 2)] || null;
+
+    // Average IV for the chain
+    const allIVs = options.filter(o => o.iv > 0).map(o => o.iv);
+    const avgIV = allIVs.length ? (allIVs.reduce((s, v) => s + v, 0) / allIVs.length) : 0;
+
+    // IV rank approximation (compare to range)
+    const ivMin = Math.min(...allIVs.filter(v => v > 0));
+    const ivMax = Math.max(...allIVs.filter(v => v > 0));
+    const ivRank = ivMax > ivMin ? ((avgIV - ivMin) / (ivMax - ivMin) * 100) : 50;
+
+    const data = {
+      symbol,
+      underlyingPrice: options[0]?.underlyingPrice || null,
+      expiration: options[0]?.expiration || null,
+      dte: options[0]?.dte || null,
+      avgIV: (avgIV * 100).toFixed(1),
+      ivRank: ivRank.toFixed(0),
+      totalContracts: count,
+      calls, puts,
+      bestCall: bestCall ? {
+        strike: bestCall.strike, bid: bestCall.bid, ask: bestCall.ask, mid: bestCall.mid,
+        iv: (bestCall.iv * 100).toFixed(1), delta: bestCall.delta?.toFixed(3),
+        theta: bestCall.theta?.toFixed(4), volume: bestCall.volume, oi: bestCall.openInterest
+      } : null,
+      bestPut: bestPut ? {
+        strike: bestPut.strike, bid: bestPut.bid, ask: bestPut.ask, mid: bestPut.mid,
+        iv: (bestPut.iv * 100).toFixed(1), delta: bestPut.delta?.toFixed(3),
+        theta: bestPut.theta?.toFixed(4), volume: bestPut.volume, oi: bestPut.openInterest
+      } : null
+    };
+
+    mdCache.set(cacheKey, { data, time: Date.now() });
+    res.json(data);
+  } catch (err) {
+    console.error('[MARKETDATA] Error:', err.message);
+    res.json({ error: 'Failed to fetch options data: ' + err.message });
+  }
+});
+
+// Scanner enhancement — fetch IV data for top scanner picks
+app.get('/api/options/iv-scan', async (req, res) => {
+  if (!MD_API_KEY) return res.json({ error: 'No API key', results: [] });
+
+  const symbols = (req.query.symbols || '').split(',').filter(Boolean).slice(0, 15);
+  if (!symbols.length) return res.json({ error: 'No symbols', results: [] });
+
+  try {
+    const results = [];
+    for (const sym of symbols) {
+      try {
+        const url = `https://api.marketdata.app/v1/options/chain/${sym}/?dte=21&strikeLimit=10&range=all`;
+        const r = await fetch(url, {
+          headers: { 'Authorization': 'Bearer ' + MD_API_KEY, 'Accept': 'application/json' }
+        });
+        const json = await r.json();
+        if (json.s !== 'ok' || !json.iv) continue;
+
+        const ivs = json.iv.filter(v => v > 0);
+        const avgIV = ivs.length ? ivs.reduce((s, v) => s + v, 0) / ivs.length : 0;
+        const vols = json.volume || [];
+        const totalOptVol = vols.reduce((s, v) => s + (v || 0), 0);
+        const ois = json.openInterest || [];
+        const totalOI = ois.reduce((s, v) => s + (v || 0), 0);
+
+        // Find ATM options for best premium estimate
+        const price = json.underlyingPrice ? json.underlyingPrice[0] : 0;
+        let bestCallIdx = -1, bestPutIdx = -1, minCallDist = Infinity, minPutDist = Infinity;
+        for (let i = 0; i < (json.strike || []).length; i++) {
+          const dist = Math.abs(json.strike[i] - price);
+          if (json.side[i] === 'call' && dist < minCallDist) { minCallDist = dist; bestCallIdx = i; }
+          if (json.side[i] === 'put' && dist < minPutDist) { minPutDist = dist; bestPutIdx = i; }
+        }
+
+        results.push({
+          symbol: sym,
+          avgIV: (avgIV * 100).toFixed(1),
+          totalOptVolume: totalOptVol,
+          totalOI: totalOI,
+          putCallRatio: totalOI > 0 ? (ois.filter((_, i) => json.side[i] === 'put').reduce((s, v) => s + (v || 0), 0) / Math.max(1, ois.filter((_, i) => json.side[i] === 'call').reduce((s, v) => s + (v || 0), 0))).toFixed(2) : '1.00',
+          atmCallPremium: bestCallIdx >= 0 ? json.mid[bestCallIdx]?.toFixed(2) : null,
+          atmPutPremium: bestPutIdx >= 0 ? json.mid[bestPutIdx]?.toFixed(2) : null,
+          atmCallDelta: bestCallIdx >= 0 ? json.delta[bestCallIdx]?.toFixed(3) : null,
+          atmPutDelta: bestPutIdx >= 0 ? json.delta[bestPutIdx]?.toFixed(3) : null
+        });
+      } catch {}
+    }
+    res.json({ results });
+  } catch (err) {
+    res.json({ error: err.message, results: [] });
+  }
+});
+
+// ============================================
 // OPTIONS TOOLKIT — API PROXY ENDPOINTS
 // ============================================
 const quoteCache2 = new Map();
@@ -2042,7 +2205,28 @@ app.get('/api/options/chain', async (req, res) => {
   } catch (err) { res.json({ error: 'Failed to fetch options chain: ' + err.message }); }
 });
 
-const SCAN_WATCHLIST2 = ['AAPL','MSFT','NVDA','TSLA','AMZN','META','GOOGL','AMD','NFLX','SPY','QQQ','IWM','DIS','BA','JPM','GS','V','MA','PYPL','SQ','COIN','PLTR','SOFI','NIO','RIVN','MARA','RIOT','SNAP','UBER','ABNB','CRM','ORCL','INTC','MU','QCOM','AVGO','TSM','LLY','UNH','PFE','XOM','CVX','OXY','GOLD','SLV','GLD','TLT','BABA','JD'];
+const SCAN_WATCHLIST2 = [
+  // Mega Cap Tech
+  'AAPL','MSFT','NVDA','TSLA','AMZN','META','GOOGL','NFLX','AMD','AVGO','CRM','ORCL','ADBE','CSCO','QCOM','INTC','MU','TSM','AMAT','LRCX',
+  // Finance
+  'JPM','GS','V','MA','PYPL','SQ','COIN','BAC','WFC','C','AXP','BLK','SCHW',
+  // Healthcare
+  'LLY','UNH','JNJ','PFE','ABBV','MRK','BMY','AMGN','GILD','MRNA','BNTX',
+  // Energy
+  'XOM','CVX','OXY','COP','SLB','HAL','DVN','EOG',
+  // Consumer
+  'DIS','SBUX','NKE','MCD','WMT','COST','TGT','HD','LOW','ABNB','UBER','DASH','DKNG',
+  // ETFs & Indices
+  'SPY','QQQ','IWM','DIA','GLD','SLV','TLT','XLF','XLE','XLK','ARKK','SOXL',
+  // High Volume Options / Meme
+  'PLTR','SOFI','NIO','RIVN','MARA','RIOT','SNAP','HOOD','LCID','RBLX','ROKU','SHOP','SE',
+  // China Tech
+  'BABA','JD','PDD','LI','XPEV',
+  // Aerospace & Defense
+  'BA','LMT','RTX','NOC','GD',
+  // Other
+  'SMCI','ARM','PANW','CRWD','ZS','NET','SNOW','DDOG','MDB','TWLO'
+];
 
 app.get('/api/scanner/scan', async (req, res) => {
   const cached = scanCache2.get('scan');
@@ -2198,8 +2382,8 @@ app.get('/api/scanner/scan', async (req, res) => {
       allResults.push(...batchResults.filter(Boolean));
     }
     const quotes = allResults;
-    const LARGE_CAPS = ['AAPL','MSFT','NVDA','TSLA','AMZN','META','GOOGL','NFLX','SPY','QQQ','V','MA','JPM','GS','LLY','UNH','AVGO','CRM','ORCL','XOM','CVX','TSM','QCOM','BA','DIS','IWM','GLD','TLT','SLV'];
-    const MID_CAPS = ['AMD','PYPL','SQ','COIN','UBER','ABNB','INTC','MU','PFE','SNAP','BABA','JD','OXY'];
+    const LARGE_CAPS = ['AAPL','MSFT','NVDA','TSLA','AMZN','META','GOOGL','NFLX','SPY','QQQ','V','MA','JPM','GS','LLY','UNH','AVGO','CRM','ORCL','XOM','CVX','TSM','QCOM','BA','DIS','IWM','GLD','TLT','SLV','JNJ','ABBV','MRK','WMT','COST','HD','LOW','BAC','WFC','C','BLK','AXP','MCD','NKE','SBUX','ADBE','CSCO','AMAT','LRCX','COP','BMY','AMGN','GILD','DIA','XLF','XLE','XLK','LMT','RTX','NOC','GD','TGT','SCHW'];
+    const MID_CAPS = ['AMD','PYPL','SQ','COIN','UBER','ABNB','INTC','MU','PFE','SNAP','BABA','JD','OXY','SLB','HAL','DVN','EOG','MRNA','BNTX','DKNG','DASH','ARKK','SOXL','PLTR','SHOP','SE','PANW','CRWD','ZS','NET','SNOW','DDOG','MDB','TWLO','SMCI','ARM','ROKU','RBLX','PDD','LI','XPEV'];
 
     const results = quotes.map(q => {
       const price = q.price || 0;

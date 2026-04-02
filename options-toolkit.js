@@ -523,8 +523,32 @@ function fetchChain() {
   document.getElementById('screenerResults').style.display = 'none';
   document.getElementById('screenerError').style.display = 'none';
 
-  fetch('/api/options/chain?symbol=' + ticker)
+  // Try real Market Data API first, fall back to Alpha Vantage
+  fetch('/api/options/realchain/' + ticker + '?dte=21')
     .then(r => r.json())
+    .then(data => {
+      if (data.error || data.fallback) {
+        // Fallback to old endpoint
+        return fetch('/api/options/chain?symbol=' + ticker).then(r => r.json());
+      }
+      // Convert real chain data to screener format
+      const chainRows = [];
+      const allStrikes = new Set([...data.calls.map(c => c.strike), ...data.puts.map(p => p.strike)]);
+      [...allStrikes].sort((a, b) => a - b).forEach(strike => {
+        const call = data.calls.find(c => c.strike === strike) || {};
+        const put = data.puts.find(p => p.strike === strike) || {};
+        chainRows.push({
+          strike,
+          callBid: call.bid?.toFixed(2) || '—', callAsk: call.ask?.toFixed(2) || '—',
+          callVol: call.volume || '—', callOI: call.openInterest || '—',
+          callIV: call.iv ? (call.iv * 100).toFixed(1) + '%' : '—',
+          putBid: put.bid?.toFixed(2) || '—', putAsk: put.ask?.toFixed(2) || '—',
+          putVol: put.volume || '—', putOI: put.openInterest || '—',
+          putIV: put.iv ? (put.iv * 100).toFixed(1) + '%' : '—'
+        });
+      });
+      return { symbol: data.symbol, price: data.underlyingPrice, change: null, volume: null, chain: chainRows, realData: true, avgIV: data.avgIV, ivRank: data.ivRank, bestCall: data.bestCall, bestPut: data.bestPut };
+    })
     .then(data => {
       document.getElementById('screenerLoading').style.display = 'none';
       if (data.error) {
@@ -698,6 +722,28 @@ function runSmartScan() {
 
       // Render cards
       const container = document.getElementById('scanCards');
+      // Fetch real IV data for top 10 results (if Market Data API key is configured)
+      const top10symbols = results.slice(0, 10).map(r => r.symbol).join(',');
+      fetch('/api/options/iv-scan?symbols=' + top10symbols)
+        .then(r2 => r2.json())
+        .then(ivData => {
+          if (ivData.results && ivData.results.length > 0) {
+            ivData.results.forEach(iv => {
+              const badge = document.getElementById('iv-badge-' + iv.symbol);
+              if (badge) {
+                badge.innerHTML = `
+                  <span style="font-size:10px;color:var(--amber);font-weight:600;">IV: ${iv.avgIV}%</span>
+                  ${iv.atmCallPremium ? '<span style="font-size:10px;color:var(--text3);">Call: $' + iv.atmCallPremium + '</span>' : ''}
+                  ${iv.atmPutPremium ? '<span style="font-size:10px;color:var(--text3);">Put: $' + iv.atmPutPremium + '</span>' : ''}
+                  <span style="font-size:10px;color:var(--text3);">P/C: ${iv.putCallRatio}</span>
+                  <span style="font-size:10px;color:var(--text3);">OptVol: ${iv.totalOptVolume > 1e3 ? (iv.totalOptVolume/1e3).toFixed(0) + 'K' : iv.totalOptVolume}</span>
+                `;
+                badge.style.display = 'flex';
+              }
+            });
+          }
+        }).catch(() => {}); // Silently fail if no API key
+
       container.innerHTML = results.map(r => {
         const scoreClass = r.score >= 8 ? 'score-high' : r.score >= 6 ? 'score-mid' : 'score-low';
         const changePctNum = parseFloat(r.changePct);
@@ -728,6 +774,9 @@ function runSmartScan() {
                 <span>Resistance: <strong style="color:var(--red);">$${r.resistance}</strong></span>
               </div>
               ${r.taNote ? '<div style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.4;padding:6px 8px;background:var(--bg3);border-radius:6px;border-left:2px solid var(--accent);">📊 ' + r.taNote + '</div>' : ''}
+              <div id="iv-badge-${r.symbol}" style="display:none;gap:8px;margin-top:6px;padding:6px 8px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:6px;flex-wrap:wrap;align-items:center;">
+                <span style="font-size:10px;color:var(--text3);">Loading IV data...</span>
+              </div>
             </div>
             <div class="scan-trade">
               <div class="suggested">🎯 ACTION PLAN</div>
