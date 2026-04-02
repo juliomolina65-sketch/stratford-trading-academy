@@ -1937,6 +1937,161 @@ app.post('/api/admin/assign-strategy', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ============================================
+// OPTIONS TOOLKIT — API PROXY ENDPOINTS
+// ============================================
+const quoteCache2 = new Map();
+const chainCache2 = new Map();
+const scanCache2 = new Map();
+
+app.get('/api/options/quote', async (req, res) => {
+  const symbol = (req.query.symbol || '').toUpperCase();
+  if (!symbol) return res.json({ error: 'Missing symbol' });
+  const cached = quoteCache2.get(symbol);
+  if (cached && Date.now() - cached.time < 60000) return res.json(cached.data);
+  try {
+    const apiKey = process.env.ALPHA_VANTAGE_API_KEY || 'demo';
+    const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`;
+    const response = await fetch(url);
+    const json = await response.json();
+    const quote = json['Global Quote'];
+    if (!quote || !quote['05. price']) return res.json({ error: 'No data found for ' + symbol });
+    const data = {
+      symbol: quote['01. symbol'],
+      price: parseFloat(quote['05. price']).toFixed(2),
+      change: parseFloat(quote['09. change']).toFixed(2),
+      changePercent: quote['10. change percent'],
+      volume: quote['06. volume']
+    };
+    quoteCache2.set(symbol, { data, time: Date.now() });
+    res.json(data);
+  } catch (err) { res.json({ error: 'Failed to fetch quote: ' + err.message }); }
+});
+
+app.get('/api/options/chain', async (req, res) => {
+  const symbol = (req.query.symbol || '').toUpperCase();
+  if (!symbol) return res.json({ error: 'Missing symbol' });
+  const cached = chainCache2.get(symbol);
+  if (cached && Date.now() - cached.time < 300000) return res.json(cached.data);
+  try {
+    const apiKey = process.env.ALPHA_VANTAGE_API_KEY || 'demo';
+    const quoteUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`;
+    const quoteResp = await fetch(quoteUrl);
+    const quoteJson = await quoteResp.json();
+    const quote = quoteJson['Global Quote'] || {};
+    const chainUrl = `https://www.alphavantage.co/query?function=HISTORICAL_OPTIONS&symbol=${symbol}&apikey=${apiKey}`;
+    const chainResp = await fetch(chainUrl);
+    const chainJson = await chainResp.json();
+    const options = chainJson.data || [];
+    const strikeMap = {};
+    options.forEach(opt => {
+      const strike = opt.strike;
+      if (!strikeMap[strike]) strikeMap[strike] = {};
+      if (opt.type === 'call') {
+        strikeMap[strike].callBid = opt.bid; strikeMap[strike].callAsk = opt.ask;
+        strikeMap[strike].callVol = opt.volume; strikeMap[strike].callOI = opt.open_interest;
+        strikeMap[strike].callIV = opt.implied_volatility ? (parseFloat(opt.implied_volatility) * 100).toFixed(1) + '%' : '';
+      } else {
+        strikeMap[strike].putBid = opt.bid; strikeMap[strike].putAsk = opt.ask;
+        strikeMap[strike].putVol = opt.volume; strikeMap[strike].putOI = opt.open_interest;
+        strikeMap[strike].putIV = opt.implied_volatility ? (parseFloat(opt.implied_volatility) * 100).toFixed(1) + '%' : '';
+      }
+    });
+    const chain = Object.keys(strikeMap).sort((a, b) => parseFloat(a) - parseFloat(b)).map(strike => ({ strike, ...strikeMap[strike] }));
+    const data = { symbol, price: quote['05. price'] ? parseFloat(quote['05. price']).toFixed(2) : null, change: quote['09. change'] ? parseFloat(quote['09. change']).toFixed(2) : null, volume: quote['06. volume'] || null, chain };
+    chainCache2.set(symbol, { data, time: Date.now() });
+    res.json(data);
+  } catch (err) { res.json({ error: 'Failed to fetch options chain: ' + err.message }); }
+});
+
+const SCAN_WATCHLIST2 = ['AAPL','MSFT','NVDA','TSLA','AMZN','META','GOOGL','AMD','NFLX','SPY','QQQ','IWM','DIS','BA','JPM','GS','V','MA','PYPL','SQ','COIN','PLTR','SOFI','NIO','RIVN','MARA','RIOT','SNAP','UBER','ABNB','CRM','ORCL','INTC','MU','QCOM','AVGO','TSM','LLY','UNH','PFE','XOM','CVX','OXY','GOLD','SLV','GLD','TLT','BABA','JD'];
+
+app.get('/api/scanner/scan', async (req, res) => {
+  const cached = scanCache2.get('scan');
+  if (cached && Date.now() - cached.time < 600000) return res.json(cached.data);
+  try {
+    // Fetch each stock via Yahoo v8 chart API (more reliable)
+    const fetchStock = async (sym) => {
+      try {
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3mo`;
+        const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const j = await r.json();
+        const meta = j?.chart?.result?.[0]?.meta;
+        const quotes = j?.chart?.result?.[0]?.indicators?.quote?.[0];
+        if (!meta || !quotes) return null;
+        const closes = (quotes.close || []).filter(v => v !== null);
+        const volumes = (quotes.volume || []).filter(v => v !== null);
+        const price = meta.regularMarketPrice || closes[closes.length - 1] || 0;
+        const prevClose = meta.chartPreviousClose || closes[closes.length - 2] || price;
+        const change = price - prevClose;
+        const changePct = prevClose ? (change / prevClose * 100) : 0;
+        const vol = meta.regularMarketVolume || volumes[volumes.length - 1] || 0;
+        const avgVol = volumes.length > 5 ? volumes.slice(-20).reduce((s,v) => s+v, 0) / Math.min(20, volumes.length) : vol;
+        // Calculate 50 & 200 day MAs from closes
+        const ma50 = closes.length >= 50 ? closes.slice(-50).reduce((s,v) => s+v, 0) / 50 : price;
+        const ma200 = closes.length >= 60 ? closes.slice(-60).reduce((s,v) => s+v, 0) / 60 : price; // approx with available data
+        return { symbol: sym, name: meta.shortName || meta.longName || sym, price, change, changePct, volume: vol, avgVolume: avgVol, ma50, ma200, marketCap: meta.marketCap || 0 };
+      } catch { return null; }
+    };
+    // Fetch in batches of 10
+    const allResults = [];
+    for (let i = 0; i < SCAN_WATCHLIST2.length; i += 10) {
+      const batch = SCAN_WATCHLIST2.slice(i, i + 10);
+      const batchResults = await Promise.all(batch.map(fetchStock));
+      allResults.push(...batchResults.filter(Boolean));
+    }
+    const quotes = allResults;
+    const results = quotes.map(q => {
+      const price = q.price || 0;
+      const change = q.change || 0;
+      const changePct = q.changePct || 0;
+      const volume = q.volume || 0;
+      const avgVolume = q.avgVolume || 1;
+      const ma50 = q.ma50 || price;
+      const ma200 = q.ma200 || price;
+      const marketCap = q.marketCap || 0;
+      const volRatio = volume / Math.max(avgVolume, 1);
+      const aboveMa50 = price > ma50;
+      const aboveMa200 = price > ma200;
+      const ma50Dist = ((price - ma50) / ma50 * 100);
+      const ma200Dist = ((price - ma200) / ma200 * 100);
+      const signals = [];
+      if (volRatio > 1.5) signals.push('volume');
+      if (aboveMa50 && aboveMa200 && changePct > 1) signals.push('momentum');
+      if (!aboveMa50 && !aboveMa200 && changePct < -1) signals.push('momentum');
+      if (volRatio > 2.5) signals.push('unusual');
+      let score = 5;
+      if (volRatio > 2) score += 1;
+      if (volRatio > 3) score += 1;
+      if (Math.abs(changePct) > 2) score += 1;
+      if (aboveMa50 && aboveMa200) score += 1;
+      if (volRatio > 1.5 && Math.abs(changePct) > 1.5) score += 1;
+      score = Math.min(10, Math.max(1, score));
+      const bullish = changePct > 0 && aboveMa50;
+      const direction = bullish ? 'bullish' : 'bearish';
+      const atm = Math.round(price / 5) * 5;
+      const strike = bullish ? atm + 5 : atm - 5;
+      const type = bullish ? 'CALL' : 'PUT';
+      const expDate = new Date(); expDate.setDate(expDate.getDate() + 21);
+      while (expDate.getDay() !== 5) expDate.setDate(expDate.getDate() + 1);
+      let capSize = 'small';
+      if (marketCap > 10e9) capSize = 'large';
+      else if (marketCap > 2e9) capSize = 'mid';
+      return { symbol: q.symbol, name: q.shortName || q.symbol, price: price.toFixed(2), change: change.toFixed(2), changePct: changePct.toFixed(2), volume, avgVolume, volRatio: volRatio.toFixed(1), ma50: ma50.toFixed(2), ma200: ma200.toFixed(2), ma50Dist: ma50Dist.toFixed(1), ma200Dist: ma200Dist.toFixed(1), marketCap, capSize, signals, score, direction, suggestedType: type, suggestedStrike: strike, suggestedExpiry: expDate.toISOString().split('T')[0] };
+    });
+    // Also add signals for stocks above both MAs (strong trend) even without volume spike
+    results.forEach(r => {
+      if (parseFloat(r.ma50Dist) > 3 && parseFloat(r.ma200Dist) > 5 && !r.signals.includes('momentum')) r.signals.push('momentum');
+      if (parseFloat(r.ma50Dist) < -3 && parseFloat(r.ma200Dist) < -5 && !r.signals.includes('momentum')) r.signals.push('momentum');
+    });
+    results.sort((a, b) => b.score - a.score || parseFloat(b.volRatio) - parseFloat(a.volRatio));
+    // Show all stocks — let the frontend filter
+    const data = { timestamp: new Date().toISOString(), total: results.length, results: results };
+    scanCache2.set('scan', { data, time: Date.now() });
+    res.json(data);
+  } catch (err) { res.json({ error: 'Scanner failed: ' + err.message }); }
+});
+
 // Serve static files
 app.use(express.static(__dirname));
 
@@ -2112,13 +2267,9 @@ if (dbAdmin) {
   console.log('[CRON] Weekly P&L summary active (every Monday at 9 AM ET)');
 }
 
-// ============================================
-// OPTIONS TOOLKIT — API PROXY ENDPOINTS
-// ============================================
-const quoteCache = new Map();
-const chainCache = new Map();
+// (Options/Scanner endpoints are now above the catch-all route)
 
-app.get('/api/options/quote', async (req, res) => {
+/* OLD_DUPLICATES_START
   const symbol = (req.query.symbol || '').toUpperCase();
   if (!symbol) return res.json({ error: 'Missing symbol' });
 
@@ -2346,6 +2497,7 @@ app.get('/api/scanner/scan', async (req, res) => {
     res.json({ error: 'Scanner failed: ' + err.message });
   }
 });
+OLD_DUPLICATES_END */
 
 // ============================================
 // Start Server
