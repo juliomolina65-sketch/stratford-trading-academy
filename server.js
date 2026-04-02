@@ -1950,9 +1950,18 @@ app.get('/api/chart/:symbol', async (req, res) => {
   const cached = chartDataCache.get(cacheKey);
   if (cached && Date.now() - cached.time < 300000) return res.json(cached.data);
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`;
-    const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    const json = await response.json();
+    const urls = [
+      `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`,
+      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`,
+    ];
+    let json = null;
+    for (const url of urls) {
+      try {
+        const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'application/json' } });
+        if (response.ok) { json = await response.json(); if (json?.chart?.result) break; }
+      } catch {}
+    }
+    if (!json) return res.json({ error: 'Could not fetch chart data' });
     const result = json?.chart?.result?.[0];
     if (!result) return res.json({ error: 'No data' });
     const meta = result.meta;
@@ -2330,9 +2339,26 @@ app.get('/api/scanner/scan', async (req, res) => {
     // ── Fetch Stock with Full TA ──
     const fetchStock = async (sym) => {
       try {
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=6mo`;
-        const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        const j = await r.json();
+        // Try multiple Yahoo Finance endpoints (some get blocked on cloud servers)
+        const urls = [
+          `https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=6mo`,
+          `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=6mo`,
+          `https://finance-query.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=6mo`
+        ];
+        let j = null;
+        for (const url of urls) {
+          try {
+            const r = await fetch(url, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json',
+                'Accept-Language': 'en-US,en;q=0.9'
+              }
+            });
+            if (r.ok) { j = await r.json(); if (j?.chart?.result) break; }
+          } catch {}
+        }
+        if (!j) return null;
         const meta = j?.chart?.result?.[0]?.meta;
         const quotes = j?.chart?.result?.[0]?.indicators?.quote?.[0];
         if (!meta || !quotes) return null;
