@@ -463,6 +463,32 @@
   </div>
 </div>
 
+<!-- STOCK CHART MODAL -->
+<div id="stockChartModal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:800px;">
+    <button class="modal-close" onclick="closeStockChart()">×</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <h3 id="chartModalTitle" style="margin:0;">—</h3>
+      <span id="chartModalPrice" style="font-family:var(--mono);font-size:18px;font-weight:700;"></span>
+      <span id="chartModalChange" style="font-size:14px;font-weight:600;"></span>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;" id="chartTimeframes">
+      <button class="filter-btn" onclick="loadStockChart(window._chartSymbol,'5d',this)">5D</button>
+      <button class="filter-btn" onclick="loadStockChart(window._chartSymbol,'1mo',this)">1M</button>
+      <button class="filter-btn active" onclick="loadStockChart(window._chartSymbol,'3mo',this)">3M</button>
+      <button class="filter-btn" onclick="loadStockChart(window._chartSymbol,'6mo',this)">6M</button>
+      <button class="filter-btn" onclick="loadStockChart(window._chartSymbol,'1y',this)">1Y</button>
+    </div>
+    <div style="position:relative;height:350px;">
+      <canvas id="stockChartCanvas"></canvas>
+      <div id="stockChartLoading" class="loading-state" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg2);">
+        <div><div class="spinner"></div><p>Loading chart...</p></div>
+      </div>
+    </div>
+    <div id="chartModalStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;"></div>
+  </div>
+</div>
+
 <script src="options-toolkit.js"></script>
 </body>
 </html>

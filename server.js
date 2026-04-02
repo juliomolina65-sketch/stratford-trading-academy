@@ -1938,6 +1938,44 @@ app.post('/api/admin/assign-strategy', async (req, res) => {
 });
 
 // ============================================
+// STOCK CHART DATA — Yahoo v8 API
+// ============================================
+const chartDataCache = new Map();
+
+app.get('/api/chart/:symbol', async (req, res) => {
+  const symbol = req.params.symbol.toUpperCase();
+  const range = req.query.range || '3mo';
+  const interval = range === '5d' ? '15m' : range === '1mo' ? '1h' : '1d';
+  const cacheKey = symbol + '_' + range;
+  const cached = chartDataCache.get(cacheKey);
+  if (cached && Date.now() - cached.time < 300000) return res.json(cached.data);
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`;
+    const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const json = await response.json();
+    const result = json?.chart?.result?.[0];
+    if (!result) return res.json({ error: 'No data' });
+    const meta = result.meta;
+    const timestamps = result.timestamp || [];
+    const quotes = result.indicators?.quote?.[0] || {};
+    const closes = quotes.close || [];
+    const volumes = quotes.volume || [];
+    const highs = quotes.high || [];
+    const lows = quotes.low || [];
+    const data = {
+      symbol, name: meta.shortName || meta.longName || symbol,
+      price: meta.regularMarketPrice, prevClose: meta.chartPreviousClose,
+      high52w: meta.fiftyTwoWeekHigh, low52w: meta.fiftyTwoWeekLow,
+      points: timestamps.map((t, i) => ({
+        time: t * 1000, close: closes[i], volume: volumes[i], high: highs[i], low: lows[i]
+      })).filter(p => p.close !== null)
+    };
+    chartDataCache.set(cacheKey, { data, time: Date.now() });
+    res.json(data);
+  } catch (err) { res.json({ error: err.message }); }
+});
+
+// ============================================
 // OPTIONS TOOLKIT — API PROXY ENDPOINTS
 // ============================================
 const quoteCache2 = new Map();
