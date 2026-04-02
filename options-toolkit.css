@@ -153,8 +153,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
   .trade-header{display:none}
 }
 /* TRADINGVIEW CHART */
-#tv_chart_container{height:500px!important;width:100%!important;}
+#tv_chart_container{height:100%!important;width:100%!important;}
 .tradingview-widget-container{height:100%;width:100%;}
+#stockChartModal .modal-content{resize:both;overflow:auto;min-width:400px;min-height:350px;}
 
 /* SMART SCANNER */
 .scanner-controls{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}

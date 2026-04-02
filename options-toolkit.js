@@ -637,18 +637,38 @@ function runSmartScan() {
       const capFilter = document.getElementById('scanMarketCap').value;
       const signalFilter = document.getElementById('scanSignal').value;
       const strategyFilter = document.getElementById('scanStrategy').value;
+      const minScore = parseInt(document.getElementById('scanMinScore').value) || 1;
+      const rsiFilter = document.getElementById('scanRSI').value;
+      const trendFilter = document.getElementById('scanTrend').value;
+      const sortBy = document.getElementById('scanSort').value;
 
-      if (capFilter !== 'all') {
-        results = results.filter(r => r.capSize === capFilter);
+      // Apply all filters
+      if (capFilter !== 'all') results = results.filter(r => r.capSize === capFilter);
+      if (signalFilter !== 'all') results = results.filter(r => r.signals.includes(signalFilter));
+      if (strategyFilter === 'calls') results = results.filter(r => r.direction === 'bullish');
+      else if (strategyFilter === 'puts') results = results.filter(r => r.direction === 'bearish');
+      results = results.filter(r => r.score >= minScore);
+
+      if (rsiFilter !== 'all') {
+        results = results.filter(r => {
+          const rsi = parseFloat(r.rsi);
+          if (rsiFilter === 'oversold') return rsi < 30;
+          if (rsiFilter === 'low') return rsi >= 30 && rsi < 45;
+          if (rsiFilter === 'neutral') return rsi >= 45 && rsi <= 55;
+          if (rsiFilter === 'high') return rsi > 55 && rsi <= 70;
+          if (rsiFilter === 'overbought') return rsi > 70;
+          return true;
+        });
       }
-      if (signalFilter !== 'all') {
-        results = results.filter(r => r.signals.includes(signalFilter));
-      }
-      if (strategyFilter === 'calls') {
-        results = results.filter(r => r.direction === 'bullish');
-      } else if (strategyFilter === 'puts') {
-        results = results.filter(r => r.direction === 'bearish');
-      }
+      if (trendFilter !== 'all') results = results.filter(r => r.trend === trendFilter);
+
+      // Sort
+      if (sortBy === 'volume') results.sort((a, b) => parseFloat(b.volRatio) - parseFloat(a.volRatio));
+      else if (sortBy === 'rsi_low') results.sort((a, b) => parseFloat(a.rsi) - parseFloat(b.rsi));
+      else if (sortBy === 'rsi_high') results.sort((a, b) => parseFloat(b.rsi) - parseFloat(a.rsi));
+      else if (sortBy === 'change_up') results.sort((a, b) => parseFloat(b.changePct) - parseFloat(a.changePct));
+      else if (sortBy === 'change_down') results.sort((a, b) => parseFloat(a.changePct) - parseFloat(b.changePct));
+      else results.sort((a, b) => b.score - a.score || parseFloat(b.volRatio) - parseFloat(a.volRatio));
 
       if (results.length === 0) {
         document.getElementById('scanEmpty').style.display = '';

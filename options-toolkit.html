@@ -407,7 +407,7 @@
     <p class="card-sub">AI-powered scanner analyzes volume spikes, momentum, IV rank, and unusual activity to find the best options plays right now.</p>
 
     <div class="scanner-controls">
-      <div class="form-row" style="max-width:700px;">
+      <div class="form-row" style="max-width:100%;">
         <div class="fg">
           <label>Market Cap</label>
           <select id="scanMarketCap">
@@ -423,8 +423,14 @@
             <option value="all" selected>All Signals</option>
             <option value="volume">Volume Spike</option>
             <option value="momentum">Momentum Breakout</option>
-            <option value="iv">Low IV (Cheap Options)</option>
             <option value="unusual">Unusual Activity</option>
+            <option value="oversold">RSI Oversold</option>
+            <option value="overbought">RSI Overbought</option>
+            <option value="macd_buy">MACD Buy Signal</option>
+            <option value="macd_sell">MACD Sell Signal</option>
+            <option value="golden_cross">Golden Cross</option>
+            <option value="death_cross">Death Cross</option>
+            <option value="bb_oversold">Bollinger Oversold</option>
           </select>
         </div>
         <div class="fg">
@@ -436,7 +442,52 @@
           </select>
         </div>
       </div>
-      <button class="btn-primary" onclick="runSmartScan()" id="scanBtn">🔍 Run Scanner</button>
+      <div class="form-row" style="max-width:100%;margin-top:8px;">
+        <div class="fg">
+          <label>Min Confidence</label>
+          <select id="scanMinScore">
+            <option value="1">Any (1+)</option>
+            <option value="5" selected>Medium (5+)</option>
+            <option value="7">High (7+)</option>
+            <option value="8">Very High (8+)</option>
+            <option value="9">Elite (9+)</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>RSI Range</label>
+          <select id="scanRSI">
+            <option value="all" selected>Any RSI</option>
+            <option value="oversold">Oversold (Under 30)</option>
+            <option value="low">Low (30-45)</option>
+            <option value="neutral">Neutral (45-55)</option>
+            <option value="high">High (55-70)</option>
+            <option value="overbought">Overbought (Over 70)</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Trend</label>
+          <select id="scanTrend">
+            <option value="all" selected>Any Trend</option>
+            <option value="strong uptrend">Strong Uptrend</option>
+            <option value="uptrend">Uptrend</option>
+            <option value="consolidating">Consolidating</option>
+            <option value="downtrend">Downtrend</option>
+            <option value="strong downtrend">Strong Downtrend</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Sort By</label>
+          <select id="scanSort">
+            <option value="score" selected>Confidence Score</option>
+            <option value="volume">Volume Ratio</option>
+            <option value="rsi_low">RSI (Lowest First)</option>
+            <option value="rsi_high">RSI (Highest First)</option>
+            <option value="change_up">Biggest Gainers</option>
+            <option value="change_down">Biggest Losers</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="runSmartScan()" id="scanBtn" style="margin-top:12px;">🔍 Run Scanner</button>
     </div>
   </div>
 
