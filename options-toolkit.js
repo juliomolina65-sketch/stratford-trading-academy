@@ -691,7 +691,7 @@ function runSmartScan() {
         const capFormatted = r.marketCap > 1e12 ? (r.marketCap / 1e12).toFixed(1) + 'T' : r.marketCap > 1e9 ? (r.marketCap / 1e9).toFixed(1) + 'B' : (r.marketCap / 1e6).toFixed(0) + 'M';
 
         return `
-          <div class="scan-card" style="cursor:pointer;" onclick="openStockChart('${r.symbol}', '${r.name}', '${r.price}', '${r.changePct}')"
+          <div class="scan-card" style="cursor:pointer;" onclick="openStockChart('${r.symbol}', '${r.name.replace(/'/g, "\\'")}', '${r.price}', '${r.changePct}')">
             <div class="scan-score ${scoreClass}">${r.score}</div>
             <div class="scan-info">
               <h4><span class="ticker">${r.symbol}</span> ${r.name} <span style="font-size:13px;color:${changeColor};font-weight:600;">${changeSign}${r.changePct}%</span></h4>
