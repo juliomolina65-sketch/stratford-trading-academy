@@ -716,6 +716,9 @@ function runSmartScan() {
                   : 'Stock trending down — below 50MA. Buy put, target +50% gain, stop at -30%.'}
               </div>
               <div style="font-size:10px;color:var(--accent);margin-top:4px;font-weight:600;">Risk: 1 contract max</div>
+              <button onclick="event.stopPropagation(); toggleWatchlist('${r.symbol}')" class="btn-watchlist" id="wl-${r.symbol}" style="margin-top:8px;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:${isInWatchlist(r.symbol) ? 'var(--amber)' : 'var(--bg3)'};color:${isInWatchlist(r.symbol) ? '#000' : 'var(--text2)'};transition:all .15s;">
+                ${isInWatchlist(r.symbol) ? '★ Watching' : '☆ Watch'}
+              </button>
             </div>
           </div>
         `;
@@ -730,7 +733,46 @@ function runSmartScan() {
 }
 
 // ═══════════════════════════════════════
-// STOCK CHART MODAL — TradingView Widget
+// WATCHLIST
+// ═══════════════════════════════════════
+
+function getWatchlist() {
+  try { return JSON.parse(localStorage.getItem('sa_watchlist') || '[]'); }
+  catch { return []; }
+}
+
+function isInWatchlist(symbol) {
+  return getWatchlist().includes(symbol);
+}
+
+function toggleWatchlist(symbol) {
+  let wl = getWatchlist();
+  if (wl.includes(symbol)) {
+    wl = wl.filter(s => s !== symbol);
+    showToast(symbol + ' removed from watchlist');
+  } else {
+    wl.push(symbol);
+    showToast('★ ' + symbol + ' added to watchlist');
+  }
+  localStorage.setItem('sa_watchlist', JSON.stringify(wl));
+
+  // Update button
+  const btn = document.getElementById('wl-' + symbol);
+  if (btn) {
+    if (wl.includes(symbol)) {
+      btn.style.background = 'var(--amber)';
+      btn.style.color = '#000';
+      btn.textContent = '★ Watching';
+    } else {
+      btn.style.background = 'var(--bg3)';
+      btn.style.color = 'var(--text2)';
+      btn.textContent = '☆ Watch';
+    }
+  }
+}
+
+// ═══════════════════════════════════════
+// STOCK CHART — FULLSCREEN TradingView
 // ═══════════════════════════════════════
 
 function openStockChart(symbol, name, price, changePct) {
@@ -742,8 +784,20 @@ function openStockChart(symbol, name, price, changePct) {
   changeEl.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
   changeEl.style.color = pct >= 0 ? 'var(--green)' : 'var(--red)';
 
-  document.getElementById('stockChartModal').style.display = 'flex';
-  document.getElementById('stockChartModal').querySelector('.modal-content').onclick = e => e.stopPropagation();
+  // Update watchlist button in modal
+  const wlBtn = document.getElementById('chartWatchlistBtn');
+  if (wlBtn) {
+    if (isInWatchlist(symbol)) {
+      wlBtn.style.background = 'var(--amber)'; wlBtn.style.color = '#000'; wlBtn.textContent = '★ Watching';
+    } else {
+      wlBtn.style.background = 'var(--bg3)'; wlBtn.style.color = 'var(--text2)'; wlBtn.textContent = '☆ Add to Watchlist';
+    }
+    wlBtn.onclick = function(e) { e.stopPropagation(); toggleWatchlist(symbol); openStockChart(symbol, name, price, changePct); };
+  }
+
+  const modal = document.getElementById('stockChartModal');
+  modal.style.display = 'flex';
+  modal.querySelector('.modal-content').onclick = e => e.stopPropagation();
 
   // Load TradingView widget
   const container = document.getElementById('tradingViewChart');
@@ -754,35 +808,85 @@ function openStockChart(symbol, name, price, changePct) {
   widget.innerHTML = '<div id="tv_chart_container"></div>';
   container.appendChild(widget);
 
-  const script = document.createElement('script');
-  script.src = 'https://s3.tradingview.com/tv.js';
-  script.onload = function() {
-    new TradingView.widget({
-      "autosize": true,
-      "symbol": symbol,
-      "interval": "D",
-      "timezone": "America/New_York",
-      "theme": "dark",
-      "style": "1",
-      "locale": "en",
-      "toolbar_bg": "#0a0e17",
-      "enable_publishing": false,
-      "hide_top_toolbar": false,
-      "hide_legend": false,
-      "save_image": true,
-      "container_id": "tv_chart_container",
-      "backgroundColor": "#0a0e17",
-      "gridColor": "rgba(255,255,255,0.04)",
-      "studies": ["RSI@tv-basicstudies", "MASimple@tv-basicstudies"],
-      "show_popup_button": true,
-      "popup_width": "1000",
-      "popup_height": "650"
-    });
+  const loadChart = function() {
+    if (typeof TradingView === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://s3.tradingview.com/tv.js';
+      script.onload = function() { createTVWidget(symbol); };
+      document.head.appendChild(script);
+    } else {
+      createTVWidget(symbol);
+    }
   };
-  document.head.appendChild(script);
+
+  loadChart();
+}
+
+function createTVWidget(symbol) {
+  new TradingView.widget({
+    "autosize": true,
+    "symbol": symbol,
+    "interval": "D",
+    "timezone": "America/New_York",
+    "theme": "dark",
+    "style": "1",
+    "locale": "en",
+    "toolbar_bg": "#0a0e17",
+    "enable_publishing": false,
+    "allow_symbol_change": true,
+    "hide_top_toolbar": false,
+    "hide_legend": false,
+    "save_image": true,
+    "container_id": "tv_chart_container",
+    "backgroundColor": "#0a0e17",
+    "gridColor": "rgba(255,255,255,0.04)",
+    "studies": ["RSI@tv-basicstudies", "MASimple@tv-basicstudies", "Volume@tv-basicstudies"],
+    "show_popup_button": true,
+    "popup_width": "1000",
+    "popup_height": "650",
+    "details": true,
+    "hotlist": true,
+    "calendar": false,
+    "withdateranges": true
+  });
+}
+
+function toggleChartFullscreen() {
+  const modal = document.getElementById('stockChartModal');
+  const content = modal.querySelector('.modal-content');
+  const chartDiv = document.getElementById('tradingViewChart');
+  const btn = document.getElementById('fullscreenBtn');
+
+  if (content.classList.contains('fullscreen')) {
+    content.classList.remove('fullscreen');
+    content.style.maxWidth = '1000px';
+    content.style.maxHeight = '';
+    content.style.borderRadius = '12px';
+    chartDiv.style.height = '500px';
+    btn.textContent = '⛶ Fullscreen';
+  } else {
+    content.classList.add('fullscreen');
+    content.style.maxWidth = '100%';
+    content.style.maxHeight = '100vh';
+    content.style.borderRadius = '0';
+    content.style.margin = '0';
+    content.style.width = '100vw';
+    content.style.height = '100vh';
+    chartDiv.style.height = 'calc(100vh - 56px)';
+    btn.textContent = '✕ Exit Fullscreen';
+  }
 }
 
 function closeStockChart() {
+  const content = document.getElementById('stockChartModal').querySelector('.modal-content');
+  content.classList.remove('fullscreen');
+  content.style.maxWidth = '1000px';
+  content.style.maxHeight = '';
+  content.style.borderRadius = '12px';
+  content.style.margin = '';
+  content.style.width = '';
+  content.style.height = '';
+  document.getElementById('tradingViewChart').style.height = '500px';
   document.getElementById('stockChartModal').style.display = 'none';
   document.getElementById('tradingViewChart').innerHTML = '';
 }
@@ -790,4 +894,11 @@ function closeStockChart() {
 // Close on backdrop click
 document.getElementById('stockChartModal').addEventListener('click', function(e) {
   if (e.target === this) closeStockChart();
+});
+
+// ESC to close
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.getElementById('stockChartModal').style.display === 'flex') {
+    closeStockChart();
+  }
 });

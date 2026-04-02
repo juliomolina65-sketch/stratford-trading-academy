@@ -466,13 +466,17 @@
 <!-- STOCK CHART MODAL — TradingView -->
 <div id="stockChartModal" class="modal" style="display:none;">
   <div class="modal-content" style="max-width:1000px;padding:0;overflow:hidden;">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);">
       <div style="display:flex;align-items:center;gap:12px;">
         <h3 id="chartModalTitle" style="margin:0;font-size:16px;">—</h3>
         <span id="chartModalPrice" style="font-family:var(--mono);font-size:16px;font-weight:700;"></span>
         <span id="chartModalChange" style="font-size:13px;font-weight:600;"></span>
       </div>
-      <button class="modal-close" onclick="closeStockChart()" style="position:static;font-size:20px;">×</button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button id="chartWatchlistBtn" style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text2);transition:all .15s;">☆ Add to Watchlist</button>
+        <button id="fullscreenBtn" onclick="toggleChartFullscreen()" style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text2);transition:all .15s;">⛶ Fullscreen</button>
+        <button class="modal-close" onclick="closeStockChart()" style="position:static;font-size:20px;">×</button>
+      </div>
     </div>
     <div id="tradingViewChart" style="height:500px;"></div>
   </div>
