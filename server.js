@@ -2459,10 +2459,43 @@ app.get('/api/scanner/scan', async (req, res) => {
       const bullish = bullPoints > bearPoints;
       const direction = bullish ? 'bullish' : 'bearish';
 
-      // ── SUGGESTED TRADE ──
-      const atm = Math.round(price / 5) * 5 || Math.round(price);
-      const strike = bullish ? atm + 5 : atm - 5;
+      // ── SUGGESTED TRADE (smart strike selection) ──
       const type = bullish ? 'CALL' : 'PUT';
+      let strike;
+      if (price >= 100) {
+        // For expensive stocks, round to nearest $5
+        const atm = Math.round(price / 5) * 5;
+        if (bullish) {
+          // Strike between ATM and resistance — slightly OTM for good risk/reward
+          const target = resistance || atm + 5;
+          strike = Math.round(((atm + target) / 2) / 5) * 5; // midpoint rounded to $5
+          if (strike <= atm) strike = atm + 5;
+        } else {
+          const target = support || atm - 5;
+          strike = Math.round(((atm + target) / 2) / 5) * 5;
+          if (strike >= atm) strike = atm - 5;
+        }
+      } else if (price >= 20) {
+        // Mid-price stocks, round to nearest $2.50
+        const atm = Math.round(price / 2.5) * 2.5;
+        if (bullish) {
+          strike = Math.round(((price + (resistance || price * 1.05)) / 2) / 2.5) * 2.5;
+          if (strike <= atm) strike = atm + 2.5;
+        } else {
+          strike = Math.round(((price + (support || price * 0.95)) / 2) / 2.5) * 2.5;
+          if (strike >= atm) strike = atm - 2.5;
+        }
+      } else {
+        // Cheap stocks, round to nearest $1
+        const atm = Math.round(price);
+        if (bullish) {
+          strike = Math.round((price + (resistance || price * 1.08)) / 2);
+          if (strike <= atm) strike = atm + 1;
+        } else {
+          strike = Math.round((price + (support || price * 0.92)) / 2);
+          if (strike >= atm) strike = atm - 1;
+        }
+      }
       const expDate = new Date();
       if (dteParam === 0) {
         // 0DTE — today, find nearest Friday or today
