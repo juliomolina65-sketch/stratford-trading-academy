@@ -794,18 +794,12 @@ function runSmartScan() {
               <div class="direction ${r.direction}" style="margin-bottom:6px;">${r.direction === 'bullish' ? '📈 BUY CALL' : '📉 BUY PUT'}</div>
               <div class="contract">${r.symbol} $${r.suggestedStrike} ${r.suggestedType}</div>
               <div class="expiry">Exp: ${r.suggestedExpiry}</div>
-              <div style="font-size:11px;margin-top:8px;line-height:1.5;max-width:180px;padding:8px 10px;border-radius:8px;background:${r.direction === 'bullish' ? 'rgba(0,217,126,.08)' : 'rgba(239,68,68,.08)'};border:1px solid ${r.direction === 'bullish' ? 'rgba(0,217,126,.2)' : 'rgba(239,68,68,.2)'};">
-                <div style="font-weight:700;color:${parseFloat(r.rsi) < 30 ? 'var(--green)' : parseFloat(r.rsi) > 70 ? 'var(--red)' : 'var(--text)'};margin-bottom:3px;">RSI: ${r.rsi}</div>
-                <div style="font-weight:700;color:${r.trend.includes('up') ? 'var(--green)' : r.trend.includes('down') ? 'var(--red)' : 'var(--text3)'};margin-bottom:3px;">Trend: ${r.trend}</div>
-                <div style="color:var(--text2);font-weight:600;">
-                  ${r.direction === 'bullish'
-                    ? '📈 Buy above <span style="color:var(--green);font-family:var(--mono);">$' + r.support + '</span>'
-                    : '📉 Sell below <span style="color:var(--red);font-family:var(--mono);">$' + r.resistance + '</span>'}
-                </div>
-                <div style="color:var(--amber);font-weight:600;">
-                  🎯 Target: <span style="font-family:var(--mono);">$${r.direction === 'bullish' ? r.resistance : r.support}</span>
-                </div>
-              </div>
+              <table style="font-size:11px;margin-top:8px;border-collapse:collapse;width:100%;max-width:180px;padding:8px;border-radius:8px;background:${r.direction === 'bullish' ? 'rgba(0,217,126,.06)' : 'rgba(239,68,68,.06)'};border:1px solid ${r.direction === 'bullish' ? 'rgba(0,217,126,.2)' : 'rgba(239,68,68,.2)'};">
+                <tr><td style="padding:4px 8px;color:var(--text3);font-weight:600;">RSI</td><td style="padding:4px 8px;text-align:right;font-weight:700;font-family:var(--mono);color:${parseFloat(r.rsi) < 30 ? 'var(--green)' : parseFloat(r.rsi) > 70 ? 'var(--red)' : 'var(--text)'};">${r.rsi}</td></tr>
+                <tr><td style="padding:4px 8px;color:var(--text3);font-weight:600;">Trend</td><td style="padding:4px 8px;text-align:right;font-weight:700;color:${r.trend.includes('up') ? 'var(--green)' : r.trend.includes('down') ? 'var(--red)' : 'var(--text3)'};">${r.trend}</td></tr>
+                <tr style="border-top:1px solid ${r.direction === 'bullish' ? 'rgba(0,217,126,.15)' : 'rgba(239,68,68,.15)'};"><td style="padding:5px 8px;color:var(--text2);font-weight:600;">${r.direction === 'bullish' ? '📈 Entry' : '📉 Entry'}</td><td style="padding:5px 8px;text-align:right;font-weight:700;font-family:var(--mono);color:${r.direction === 'bullish' ? 'var(--green)' : 'var(--red)'};">${r.direction === 'bullish' ? 'Above $' + r.support : 'Below $' + r.resistance}</td></tr>
+                <tr><td style="padding:4px 8px;color:var(--amber);font-weight:600;">🎯 Target</td><td style="padding:4px 8px;text-align:right;font-weight:700;font-family:var(--mono);color:var(--amber);">$${r.direction === 'bullish' ? r.resistance : r.support}</td></tr>
+              </table>
               <div style="font-size:10px;color:var(--accent);margin-top:4px;font-weight:600;">Risk: 1 contract max</div>
               <div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;">
                 <button onclick="event.stopPropagation(); tradeFromScan(${rIdx})" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:var(--green);color:#000;transition:all .15s;">🛒 Trade This</button>
