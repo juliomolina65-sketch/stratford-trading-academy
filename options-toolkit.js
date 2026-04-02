@@ -760,7 +760,7 @@ function toggleWatchlist(symbol) {
   }
   localStorage.setItem('sa_watchlist', JSON.stringify(wl));
 
-  // Update button
+  // Update button in scan card
   const btn = document.getElementById('wl-' + symbol);
   if (btn) {
     if (wl.includes(symbol)) {
@@ -773,7 +773,42 @@ function toggleWatchlist(symbol) {
       btn.textContent = '☆ Watch';
     }
   }
+  renderWatchlist();
 }
+
+function clearWatchlist() {
+  localStorage.setItem('sa_watchlist', '[]');
+  renderWatchlist();
+  // Update all watch buttons
+  document.querySelectorAll('[id^="wl-"]').forEach(btn => {
+    btn.style.background = 'var(--bg3)';
+    btn.style.color = 'var(--text2)';
+    btn.textContent = '☆ Watch';
+  });
+  showToast('Watchlist cleared');
+}
+
+function renderWatchlist() {
+  const wl = getWatchlist();
+  const section = document.getElementById('watchlistSection');
+  const container = document.getElementById('watchlistTickers');
+
+  if (wl.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = '';
+  container.innerHTML = wl.map(sym =>
+    `<div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;" onclick="openStockChart('${sym}','${sym}','','0')">
+      <span style="font-size:13px;font-weight:700;color:var(--accent);font-family:var(--mono);">${sym}</span>
+      <button onclick="event.stopPropagation(); toggleWatchlist('${sym}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 2px;">✕</button>
+    </div>`
+  ).join('');
+}
+
+// Render watchlist on load
+renderWatchlist();
 
 // ═══════════════════════════════════════
 // STOCK CHART — FULLSCREEN TradingView
@@ -860,37 +895,35 @@ function toggleChartFullscreen() {
   const content = modal.querySelector('.modal-content');
   const chartDiv = document.getElementById('tradingViewChart');
   const btn = document.getElementById('fullscreenBtn');
+  const symbol = window._chartSymbol;
 
   if (content.classList.contains('fullscreen')) {
     content.classList.remove('fullscreen');
-    content.style.maxWidth = '1000px';
-    content.style.maxHeight = '';
-    content.style.borderRadius = '12px';
+    content.style.cssText = 'max-width:1000px;padding:0;overflow:hidden;';
     chartDiv.style.height = '500px';
     btn.textContent = '⛶ Fullscreen';
   } else {
     content.classList.add('fullscreen');
-    content.style.maxWidth = '100%';
-    content.style.maxHeight = '100vh';
-    content.style.borderRadius = '0';
-    content.style.margin = '0';
-    content.style.width = '100vw';
-    content.style.height = '100vh';
-    chartDiv.style.height = 'calc(100vh - 56px)';
+    content.style.cssText = 'max-width:100vw;width:100vw;height:100vh;margin:0;padding:0;overflow:hidden;border-radius:0;';
+    chartDiv.style.height = 'calc(100vh - 50px)';
     btn.textContent = '✕ Exit Fullscreen';
   }
+
+  // Recreate TradingView widget to fit new size
+  chartDiv.innerHTML = '';
+  const widget = document.createElement('div');
+  widget.className = 'tradingview-widget-container';
+  widget.innerHTML = '<div id="tv_chart_container"></div>';
+  chartDiv.appendChild(widget);
+  createTVWidget(symbol);
 }
 
 function closeStockChart() {
   const content = document.getElementById('stockChartModal').querySelector('.modal-content');
   content.classList.remove('fullscreen');
-  content.style.maxWidth = '1000px';
-  content.style.maxHeight = '';
-  content.style.borderRadius = '12px';
-  content.style.margin = '';
-  content.style.width = '';
-  content.style.height = '';
+  content.style.cssText = 'max-width:1000px;padding:0;overflow:hidden;';
   document.getElementById('tradingViewChart').style.height = '500px';
+  document.getElementById('fullscreenBtn').textContent = '⛶ Fullscreen';
   document.getElementById('stockChartModal').style.display = 'none';
   document.getElementById('tradingViewChart').innerHTML = '';
 }

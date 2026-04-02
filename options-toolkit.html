@@ -392,6 +392,16 @@
 <!-- TAB 5: SMART SCANNER                  -->
 <!-- ═══════════════════════════════════════ -->
 <div id="tab-scanner" class="tab-panel">
+
+  <!-- WATCHLIST -->
+  <div id="watchlistSection" class="card" style="margin-bottom:1rem;display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h4 style="margin:0;font-size:14px;color:var(--amber);">★ Your Watchlist</h4>
+      <button onclick="clearWatchlist()" style="background:none;border:1px solid var(--border);color:var(--text3);padding:4px 10px;border-radius:4px;font-size:10px;cursor:pointer;">Clear All</button>
+    </div>
+    <div id="watchlistTickers" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+  </div>
+
   <div class="card" style="margin-bottom:1.5rem;">
     <h3 class="card-title">🎯 Smart Scanner — Find High-Probability Trades</h3>
     <p class="card-sub">AI-powered scanner analyzes volume spikes, momentum, IV rank, and unusual activity to find the best options plays right now.</p>
