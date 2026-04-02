@@ -2112,10 +2112,13 @@ app.get('/api/scanner/scan', async (req, res) => {
       const type = bullish ? 'CALL' : 'PUT';
       const expDate = new Date(); expDate.setDate(expDate.getDate() + 21);
       while (expDate.getDay() !== 5) expDate.setDate(expDate.getDate() + 1);
+      // Known cap sizes for watchlist (v8 API doesn't return marketCap)
+      const LARGE_CAPS = ['AAPL','MSFT','NVDA','TSLA','AMZN','META','GOOGL','NFLX','SPY','QQQ','V','MA','JPM','GS','LLY','UNH','AVGO','CRM','ORCL','XOM','CVX','TSM','QCOM','BA','DIS','IWM','GLD','TLT','SLV'];
+      const MID_CAPS = ['AMD','PYPL','SQ','COIN','UBER','ABNB','INTC','MU','PFE','SNAP','BABA','JD','OXY'];
       let capSize = 'small';
-      if (marketCap > 10e9) capSize = 'large';
-      else if (marketCap > 2e9) capSize = 'mid';
-      return { symbol: q.symbol, name: q.shortName || q.symbol, price: price.toFixed(2), change: change.toFixed(2), changePct: changePct.toFixed(2), volume, avgVolume, volRatio: volRatio.toFixed(1), ma50: ma50.toFixed(2), ma200: ma200.toFixed(2), ma50Dist: ma50Dist.toFixed(1), ma200Dist: ma200Dist.toFixed(1), marketCap, capSize, signals, score, direction, suggestedType: type, suggestedStrike: strike, suggestedExpiry: expDate.toISOString().split('T')[0] };
+      if (LARGE_CAPS.includes(q.symbol)) capSize = 'large';
+      else if (MID_CAPS.includes(q.symbol)) capSize = 'mid';
+      return { symbol: q.symbol, name: q.name || q.symbol, price: price.toFixed(2), change: change.toFixed(2), changePct: changePct.toFixed(2), volume, avgVolume, volRatio: volRatio.toFixed(1), ma50: ma50.toFixed(2), ma200: ma200.toFixed(2), ma50Dist: ma50Dist.toFixed(1), ma200Dist: ma200Dist.toFixed(1), marketCap, capSize, signals, score, direction, suggestedType: type, suggestedStrike: strike, suggestedExpiry: expDate.toISOString().split('T')[0] };
     });
     // Also add signals for stocks above both MAs (strong trend) even without volume spike
     results.forEach(r => {
