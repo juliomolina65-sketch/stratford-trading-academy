@@ -755,7 +755,7 @@ function runSmartScan() {
           }
         }).catch(() => {}); // Silently fail if no API key
 
-      container.innerHTML = results.map(r => {
+      container.innerHTML = results.map((r, rIdx) => {
         const scoreClass = r.score >= 8 ? 'score-high' : r.score >= 6 ? 'score-mid' : 'score-low';
         const changePctNum = parseFloat(r.changePct);
         const changeColor = changePctNum >= 0 ? 'var(--green)' : 'var(--red)';
@@ -768,7 +768,7 @@ function runSmartScan() {
         const capFormatted = r.marketCap > 1e12 ? (r.marketCap / 1e12).toFixed(1) + 'T' : r.marketCap > 1e9 ? (r.marketCap / 1e9).toFixed(1) + 'B' : (r.marketCap / 1e6).toFixed(0) + 'M';
 
         return `
-          <div class="scan-card" style="cursor:pointer;" onclick="chartFromScan(${results.indexOf(r)})">
+          <div class="scan-card" style="cursor:pointer;" onclick="chartFromScan(${rIdx})">
             <div class="scan-score ${scoreClass}">${r.score}</div>
             <div class="scan-info">
               <h4><span class="ticker">${r.symbol}</span> ${r.name} <span style="font-size:13px;color:${changeColor};font-weight:600;">${changeSign}${r.changePct}%</span></h4>
@@ -808,7 +808,7 @@ function runSmartScan() {
               </div>
               <div style="font-size:10px;color:var(--accent);margin-top:4px;font-weight:600;">Risk: 1 contract max</div>
               <div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;">
-                <button onclick="event.stopPropagation(); tradeFromScan(${results.indexOf(r)})" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:var(--green);color:#000;transition:all .15s;">🛒 Trade This</button>
+                <button onclick="event.stopPropagation(); tradeFromScan(${rIdx})" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:var(--green);color:#000;transition:all .15s;">🛒 Trade This</button>
                 <button onclick="event.stopPropagation(); toggleWatchlist('${r.symbol}')" class="btn-watchlist" id="wl-${r.symbol}" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:${isInWatchlist(r.symbol) ? 'var(--amber)' : 'var(--bg3)'};color:${isInWatchlist(r.symbol) ? '#000' : 'var(--text2)'};transition:all .15s;">
                   ${isInWatchlist(r.symbol) ? '★ Watch' : '☆ Watch'}
                 </button>
