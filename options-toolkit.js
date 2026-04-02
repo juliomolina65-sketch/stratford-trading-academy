@@ -706,10 +706,16 @@ function runSmartScan() {
               </div>
             </div>
             <div class="scan-trade">
-              <div class="suggested">SUGGESTED TRADE</div>
-              <div class="contract">$${r.suggestedStrike} ${r.suggestedType}</div>
+              <div class="suggested">🎯 ACTION PLAN</div>
+              <div class="direction ${r.direction}" style="margin-bottom:6px;">${r.direction === 'bullish' ? '📈 BUY CALL' : '📉 BUY PUT'}</div>
+              <div class="contract">${r.symbol} $${r.suggestedStrike} ${r.suggestedType}</div>
               <div class="expiry">Exp: ${r.suggestedExpiry}</div>
-              <div class="direction ${r.direction}">${r.direction.toUpperCase()}</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.4;max-width:160px;">
+                ${r.direction === 'bullish'
+                  ? 'Stock trending up — above 50MA. Buy call, target +50% gain, stop at -30%.'
+                  : 'Stock trending down — below 50MA. Buy put, target +50% gain, stop at -30%.'}
+              </div>
+              <div style="font-size:10px;color:var(--accent);margin-top:4px;font-weight:600;">Risk: 1 contract max</div>
             </div>
           </div>
         `;
@@ -724,9 +730,8 @@ function runSmartScan() {
 }
 
 // ═══════════════════════════════════════
-// STOCK CHART MODAL
+// STOCK CHART MODAL — TradingView Widget
 // ═══════════════════════════════════════
-let stockChart = null;
 
 function openStockChart(symbol, name, price, changePct) {
   window._chartSymbol = symbol;
@@ -740,143 +745,49 @@ function openStockChart(symbol, name, price, changePct) {
   document.getElementById('stockChartModal').style.display = 'flex';
   document.getElementById('stockChartModal').querySelector('.modal-content').onclick = e => e.stopPropagation();
 
-  // Reset timeframe buttons
-  document.querySelectorAll('#chartTimeframes .filter-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('#chartTimeframes .filter-btn')[2].classList.add('active'); // 3M default
+  // Load TradingView widget
+  const container = document.getElementById('tradingViewChart');
+  container.innerHTML = '';
 
-  loadStockChart(symbol, '3mo');
+  const widget = document.createElement('div');
+  widget.className = 'tradingview-widget-container';
+  widget.innerHTML = '<div id="tv_chart_container"></div>';
+  container.appendChild(widget);
+
+  const script = document.createElement('script');
+  script.src = 'https://s3.tradingview.com/tv.js';
+  script.onload = function() {
+    new TradingView.widget({
+      "autosize": true,
+      "symbol": symbol,
+      "interval": "D",
+      "timezone": "America/New_York",
+      "theme": "dark",
+      "style": "1",
+      "locale": "en",
+      "toolbar_bg": "#0a0e17",
+      "enable_publishing": false,
+      "hide_top_toolbar": false,
+      "hide_legend": false,
+      "save_image": true,
+      "container_id": "tv_chart_container",
+      "backgroundColor": "#0a0e17",
+      "gridColor": "rgba(255,255,255,0.04)",
+      "studies": ["RSI@tv-basicstudies", "MASimple@tv-basicstudies"],
+      "show_popup_button": true,
+      "popup_width": "1000",
+      "popup_height": "650"
+    });
+  };
+  document.head.appendChild(script);
 }
 
 function closeStockChart() {
   document.getElementById('stockChartModal').style.display = 'none';
-  if (stockChart) { stockChart.destroy(); stockChart = null; }
+  document.getElementById('tradingViewChart').innerHTML = '';
 }
 
 // Close on backdrop click
 document.getElementById('stockChartModal').addEventListener('click', function(e) {
   if (e.target === this) closeStockChart();
 });
-
-function loadStockChart(symbol, range, btn) {
-  if (btn) {
-    document.querySelectorAll('#chartTimeframes .filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  }
-
-  document.getElementById('stockChartLoading').style.display = 'flex';
-
-  fetch('/api/chart/' + symbol + '?range=' + range)
-    .then(r => r.json())
-    .then(data => {
-      document.getElementById('stockChartLoading').style.display = 'none';
-
-      if (data.error || !data.points || data.points.length === 0) {
-        showToast('No chart data for ' + symbol, 'error');
-        return;
-      }
-
-      // Update price
-      if (data.price) {
-        document.getElementById('chartModalPrice').textContent = '$' + parseFloat(data.price).toFixed(2);
-      }
-
-      // Stats
-      const prices = data.points.map(p => p.close);
-      const high = Math.max(...prices).toFixed(2);
-      const low = Math.min(...prices).toFixed(2);
-      const first = prices[0];
-      const last = prices[prices.length - 1];
-      const returnPct = ((last - first) / first * 100).toFixed(2);
-      const returnColor = returnPct >= 0 ? 'var(--green)' : 'var(--red)';
-
-      document.getElementById('chartModalStats').innerHTML = `
-        <div style="background:var(--bg3);padding:8px 12px;border-radius:8px;text-align:center;">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Period High</div>
-          <div style="font-size:14px;font-weight:700;color:var(--green);">$${high}</div>
-        </div>
-        <div style="background:var(--bg3);padding:8px 12px;border-radius:8px;text-align:center;">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Period Low</div>
-          <div style="font-size:14px;font-weight:700;color:var(--red);">$${low}</div>
-        </div>
-        <div style="background:var(--bg3);padding:8px 12px;border-radius:8px;text-align:center;">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Return</div>
-          <div style="font-size:14px;font-weight:700;color:${returnColor};">${returnPct >= 0 ? '+' : ''}${returnPct}%</div>
-        </div>
-        <div style="background:var(--bg3);padding:8px 12px;border-radius:8px;text-align:center;">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;">52W High</div>
-          <div style="font-size:14px;font-weight:700;color:var(--text);">$${data.high52w ? parseFloat(data.high52w).toFixed(2) : '—'}</div>
-        </div>
-      `;
-
-      // Build chart
-      const chartData = data.points.map(p => ({
-        x: p.time,
-        y: parseFloat(p.close.toFixed(2))
-      }));
-
-      const isPositive = last >= first;
-      const lineColor = isPositive ? '#00d97e' : '#ef4444';
-      const fillColor = isPositive ? 'rgba(0,217,126,0.08)' : 'rgba(239,68,68,0.08)';
-
-      if (stockChart) stockChart.destroy();
-      const ctx = document.getElementById('stockChartCanvas').getContext('2d');
-      stockChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          datasets: [{
-            data: chartData,
-            borderColor: lineColor,
-            borderWidth: 2,
-            pointRadius: 0,
-            pointHoverRadius: 4,
-            pointHoverBackgroundColor: lineColor,
-            fill: { target: 'origin', above: fillColor, below: fillColor },
-            tension: 0.1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { intersect: false, mode: 'index' },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: 'rgba(17,24,39,0.95)',
-              borderColor: 'rgba(255,255,255,0.1)',
-              borderWidth: 1,
-              callbacks: {
-                title: (items) => {
-                  const d = new Date(items[0].parsed.x);
-                  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: range === '5d' ? 'numeric' : undefined, minute: range === '5d' ? 'numeric' : undefined });
-                },
-                label: (item) => '$' + item.parsed.y.toFixed(2)
-              }
-            }
-          },
-          scales: {
-            x: {
-              type: 'linear',
-              grid: { color: 'rgba(255,255,255,0.03)' },
-              ticks: {
-                color: '#64748b',
-                font: { size: 10 },
-                maxTicksLimit: 8,
-                callback: v => {
-                  const d = new Date(v);
-                  return range === '5d' ? d.toLocaleDateString('en-US', { weekday: 'short' }) : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                }
-              }
-            },
-            y: {
-              grid: { color: 'rgba(255,255,255,0.03)' },
-              ticks: { color: '#64748b', font: { size: 10 }, callback: v => '$' + v }
-            }
-          }
-        }
-      });
-    })
-    .catch(err => {
-      document.getElementById('stockChartLoading').style.display = 'none';
-      showToast('Chart error: ' + err.message, 'error');
-    });
-}
