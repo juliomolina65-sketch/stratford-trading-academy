@@ -740,9 +740,38 @@ function runSmartScan() {
                   : 'RSI: ' + r.rsi + ' | Trend: ' + r.trend + '. Sell below $' + r.resistance + ', target $' + r.support + '.'}
               </div>
               <div style="font-size:10px;color:var(--accent);margin-top:4px;font-weight:600;">Risk: 1 contract max</div>
-              <button onclick="event.stopPropagation(); toggleWatchlist('${r.symbol}')" class="btn-watchlist" id="wl-${r.symbol}" style="margin-top:8px;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:${isInWatchlist(r.symbol) ? 'var(--amber)' : 'var(--bg3)'};color:${isInWatchlist(r.symbol) ? '#000' : 'var(--text2)'};transition:all .15s;">
-                ${isInWatchlist(r.symbol) ? '★ Watching' : '☆ Watch'}
-              </button>
+              <div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;">
+                <button onclick="event.stopPropagation(); paperQuickBuy('${r.symbol}')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:var(--green);color:#000;transition:all .15s;">🛒 Trade</button>
+                <button onclick="event.stopPropagation(); toggleWatchlist('${r.symbol}')" class="btn-watchlist" id="wl-${r.symbol}" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:${isInWatchlist(r.symbol) ? 'var(--amber)' : 'var(--bg3)'};color:${isInWatchlist(r.symbol) ? '#000' : 'var(--text2)'};transition:all .15s;">
+                  ${isInWatchlist(r.symbol) ? '★ Watch' : '☆ Watch'}
+                </button>
+                <button onclick="event.stopPropagation(); toggleHowTo('${r.symbol}')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--accent);transition:all .15s;">❓ How</button>
+              </div>
+            </div>
+          </div>
+          <div id="howto-${r.symbol}" class="howto-dropdown" style="display:none;background:var(--bg2);border:1px solid var(--accent);border-top:none;border-radius:0 0 12px 12px;margin-top:-13px;margin-bottom:12px;padding:16px 20px;font-size:12px;line-height:1.7;color:var(--text2);">
+            <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px;">📘 How to Trade ${r.symbol} — Step by Step</div>
+            <div style="display:grid;gap:8px;">
+              <div style="display:flex;gap:8px;"><span style="background:var(--accent);color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;">1</span><span><strong>Open your broker</strong> (Robinhood, Webull, TD Ameritrade, etc.) and search for <strong style="color:var(--accent);">${r.symbol}</strong></span></div>
+              <div style="display:flex;gap:8px;"><span style="background:var(--accent);color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;">2</span><span>Click <strong>"Trade Options"</strong> and select expiration date: <strong style="color:var(--amber);">${r.suggestedExpiry}</strong></span></div>
+              <div style="display:flex;gap:8px;"><span style="background:var(--accent);color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;">3</span><span>Select the <strong style="color:${r.direction === 'bullish' ? 'var(--green)' : 'var(--red)'};">$${r.suggestedStrike} ${r.suggestedType}</strong> contract</span></div>
+              <div style="display:flex;gap:8px;"><span style="background:var(--accent);color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;">4</span><span>Set quantity to <strong>1 contract</strong> (= 100 shares). Check the premium — that's your max risk</span></div>
+              <div style="display:flex;gap:8px;"><span style="background:var(--accent);color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;">5</span><span>Click <strong>"Buy to Open"</strong> — you now own the contract</span></div>
+            </div>
+            <div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:8px;">
+              <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px;">📊 When to Enter & Exit:</div>
+              <div style="color:var(--text3);font-size:11px;">
+                ${r.direction === 'bullish'
+                  ? '• <strong style="color:var(--green)">ENTRY:</strong> Buy when ' + r.symbol + ' is trading <strong>above $' + r.support + '</strong> (support level). This confirms the uptrend is intact.<br>'
+                    + '• <strong style="color:var(--amber)">TARGET:</strong> Take profit when the option is up <strong>+50% to +100%</strong>, or when stock approaches <strong>$' + r.resistance + '</strong> (resistance).<br>'
+                    + '• <strong style="color:var(--red)">STOP LOSS:</strong> If the stock drops <strong>below $' + r.support + '</strong>, the uptrend may be broken — sell to cut losses. Or set a -30% stop on the option premium.'
+                  : '• <strong style="color:var(--green)">ENTRY:</strong> Buy when ' + r.symbol + ' is trading <strong>below $' + r.resistance + '</strong> (resistance level). This confirms the downtrend is intact.<br>'
+                    + '• <strong style="color:var(--amber)">TARGET:</strong> Take profit when the option is up <strong>+50% to +100%</strong>, or when stock drops to <strong>$' + r.support + '</strong> (support).<br>'
+                    + '• <strong style="color:var(--red)">STOP LOSS:</strong> If the stock rises <strong>above $' + r.resistance + '</strong>, the downtrend may be broken — sell to cut losses. Or set a -30% stop on the option premium.'}
+              </div>
+            </div>
+            <div style="margin-top:8px;padding:8px 10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:6px;font-size:10px;color:var(--amber);">
+              ⚠️ <strong>Practice first!</strong> Use the 🎮 Paper Trading tab to simulate this exact trade with fake money before risking real cash.
             </div>
           </div>
         `;
@@ -754,6 +783,21 @@ function runSmartScan() {
       btn.textContent = '🔍 Run Scanner';
       showToast('Scanner error: ' + err.message, 'error');
     });
+}
+
+// ═══════════════════════════════════════
+// HOW TO TRADE DROPDOWN
+// ═══════════════════════════════════════
+function toggleHowTo(symbol) {
+  const el = document.getElementById('howto-' + symbol);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  // Close all others
+  document.querySelectorAll('.howto-dropdown').forEach(d => d.style.display = 'none');
+  if (!isOpen) {
+    el.style.display = '';
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 }
 
 // ═══════════════════════════════════════
