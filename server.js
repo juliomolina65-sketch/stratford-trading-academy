@@ -3036,14 +3036,40 @@ OLD_DUPLICATES_END */
 // PENNY STOCK SCANNER API
 // ============================================
 const PENNY_WATCHLIST = [
+  // Meme / High Volume
   'MULN','SNDL','TELL','CLOV','WISH','BBIG','ATER','PROG','FAMI','CEI',
-  'PHUN','DWAC','BKKT','NILE','IMPP','GFAI','INDO','MEGL','HKD','APRN',
-  'BBBY','OPEN','PLUG','WKHS','RIDE','GOEV','QS','LAZR','MVIS','SENS',
-  'BNGO','GNUS','NAKD','ZOM','CTRM','SHIP','SOS','OCGN','HCMC','TLRY',
-  'ACB','CGC','SIRI','SOFI','NIO','RIVN','LCID','PLTR','HOOD','DNA',
+  'PHUN','BKKT','NILE','IMPP','GFAI','INDO','MEGL','APRN',
+  'OPEN','PLUG','WKHS','RIDE','GOEV','QS','LAZR','MVIS','SENS',
+  'BNGO','GNUS','ZOM','CTRM','SHIP','SOS','OCGN','TLRY',
+  // Cannabis
+  'ACB','CGC','SIRI','HOOD','DNA','SNDL','HEXO','OGI','VFF','GRWG','CRON',
+  // EV / Autonomous
+  'NIO','RIVN','LCID','XPEV','LI','NIU','FFIE','NKLA','FSR','ARVL','REE','PTRA','GOEV','PSNY','WKHS',
+  // Space
   'IONQ','RKLB','SPCE','JOBY','MNTS','ASTR','RDW','VORB','LUNR','ASTS',
+  // Crypto Mining
   'BTBT','MARA','RIOT','HUT','BITF','CLSK','CIFR','CORZ','WULF','IREN',
-  'XPEV','LI','NIU','PSNY','FFIE','NKLA','FSR','ARVL','REE','PTRA'
+  // Biotech / Pharma
+  'SAVA','ATOS','CPRX','CTXR','VXRT','IBRX','TNXP','ZYNE','BCRX','HGEN',
+  'NERV','DARE','ADGI','ACST','PRQR','CANF','MDXH','MNMD','CYBN','CMPS',
+  'ATXI','NUVB','ALVR','RVMD','GERN','AGEN','VERU','FBIO','SESN','EIGR',
+  // Tech / Software
+  'PLTR','SOFI','BB','NOK','EXPR','BBAI','PRCH','RCAT','JOBY','IQ',
+  'GREE','BKSY','ME','CANO','PSFE','SKLZ','CLOV','UWMC','BARK','OPAD',
+  // Energy / Oil
+  'INDO','HUSA','IMPP','USWS','NEXT','PBT','BATL','NINE','NRT','GTE',
+  'VTNR','REI','CPG','TELL','BPT','PHX','SWN','AR','RRC','EQT',
+  // Mining / Materials
+  'GOLD','SVM','HL','CDE','PAAS','AG','MUX','USAS','GPL','FSM',
+  'BTG','EGO','KGC','SAND','MAG','SILV','AUMN','GATO','ASM','LODE',
+  // Real Estate / SPAC
+  'OPEN','UWMC','CANO','BARK','OPAD','MTTR','VIEW','DM','ARKO','HIMS',
+  'SDGR','MAPS','GENI','DKNG','BFLY','PAYO','TOST','BRZE',
+  // Misc Small Caps
+  'BBBY','IRNT','OTRK','ANY','GMBL','SYTA','WIMI','VNET','BEST','NIU',
+  'BIMI','CNET','EDBL','GBS','GROM','LEDS','MBOT','NCTY','ONCT','PCT',
+  'RCON','SIDU','UXIN','XELA','YSG','ZENV','BHAT','CLVR','CUEN','DMS',
+  'EFSH','FNCH','GGPI','HTOO','ISEE','JNVR','KPTI','LFLY','MGAM','NAOV'
 ];
 
 const pennyCache = new Map();
@@ -3154,8 +3180,8 @@ var pennyHandler = async (req, res) => {
     };
 
     const allResults = [];
-    for (let i = 0; i < PENNY_WATCHLIST.length; i += 10) {
-      const batch = PENNY_WATCHLIST.slice(i, i + 10);
+    for (let i = 0; i < PENNY_WATCHLIST.length; i += 15) {
+      const batch = PENNY_WATCHLIST.slice(i, i + 15);
       const batchResults = await Promise.all(batch.map(fetchPenny));
       allResults.push(...batchResults.filter(Boolean));
     }

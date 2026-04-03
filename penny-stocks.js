@@ -17,7 +17,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 // PENNY STOCK SCANNER
 // ═══════════════════════════════════════
 window._pennyResults = [];
-window._pennyShowCount = 15;
+window._pennyShowCount = 50;
 
 function runPennyScan() {
   const btn = document.getElementById('pScanBtn');
@@ -55,7 +55,7 @@ function runPennyScan() {
       else if (sort === 'price_low') results.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
 
       window._pennyResults = results;
-      window._pennyShowCount = 15;
+      window._pennyShowCount = 50;
 
       if (results.length === 0) {
         document.getElementById('pScanEmpty').style.display = '';
@@ -157,7 +157,7 @@ function renderPennyCards() {
 }
 
 function loadMorePenny() {
-  window._pennyShowCount = (window._pennyShowCount || 15) + 15;
+  window._pennyShowCount = (window._pennyShowCount || 50) + 50;
   renderPennyCards();
 }
 
