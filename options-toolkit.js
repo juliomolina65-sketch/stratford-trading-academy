@@ -730,8 +730,9 @@ function runSmartScan() {
 
       // Render cards
       const container = document.getElementById('scanCards');
-      // Store results globally for Trade button
+      // Store results globally for Trade button + Load More
       window._scanResults = results;
+      window._scanShowCount = 10;
 
       // Fetch real IV data for top 10 results (if Market Data API key is configured)
       const top10symbols = results.slice(0, 10).map(r => r.symbol).join(',');
@@ -755,7 +756,25 @@ function runSmartScan() {
           }
         }).catch(() => {}); // Silently fail if no API key
 
-      container.innerHTML = results.map((r, rIdx) => {
+      renderScanCards(results, container);
+    })
+    .catch(err => {
+      document.getElementById('scanLoading').style.display = 'none';
+      btn.disabled = false;
+      btn.textContent = '🔍 Run Scanner';
+      showToast('Scanner error: ' + err.message, 'error');
+    });
+}
+
+function renderScanCards(results, container) {
+  if (!container) container = document.getElementById('scanCards');
+  if (!results) results = window._scanResults || [];
+  const showCount = window._scanShowCount || 10;
+  const visible = results.slice(0, showCount);
+
+  const signalNames = { volume: 'Volume Spike', momentum: 'Momentum', iv: 'Low IV', unusual: 'Unusual Activity', oversold: 'RSI Oversold', overbought: 'RSI Overbought', macd_buy: 'MACD Buy', macd_sell: 'MACD Sell', golden_cross: 'Golden Cross', death_cross: 'Death Cross', bb_oversold: 'BB Oversold', bb_overbought: 'BB Overbought' };
+
+  container.innerHTML = visible.map((r, rIdx) => {
         const scoreClass = r.score >= 8 ? 'score-high' : r.score >= 6 ? 'score-mid' : 'score-low';
         const changePctNum = parseFloat(r.changePct);
         const changeColor = changePctNum >= 0 ? 'var(--green)' : 'var(--red)';
@@ -837,13 +856,27 @@ function runSmartScan() {
           </div>
         `;
       }).join('');
-    })
-    .catch(err => {
-      document.getElementById('scanLoading').style.display = 'none';
-      btn.disabled = false;
-      btn.textContent = '🔍 Run Scanner';
-      showToast('Scanner error: ' + err.message, 'error');
-    });
+
+  // Add Load More button if there are more results
+  if (results.length > showCount) {
+    container.innerHTML += `
+      <div style="text-align:center;padding:20px;">
+        <button onclick="loadMoreScan()" style="background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;border:none;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;">
+          Load More (${results.length - showCount} remaining)
+        </button>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;">Showing ${showCount} of ${results.length} results</div>
+      </div>`;
+  } else if (results.length > 0) {
+    container.innerHTML += `
+      <div style="text-align:center;padding:12px;font-size:11px;color:var(--text3);">
+        Showing all ${results.length} results
+      </div>`;
+  }
+}
+
+function loadMoreScan() {
+  window._scanShowCount = (window._scanShowCount || 10) + 10;
+  renderScanCards(window._scanResults);
 }
 
 // ═══════════════════════════════════════
