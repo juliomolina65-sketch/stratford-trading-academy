@@ -93,33 +93,55 @@ function renderPennyCards() {
     const changeColor = changePct >= 0 ? 'var(--green)' : 'var(--red)';
     const changeSign = changePct >= 0 ? '+' : '';
     const volFormatted = r.volume > 1e6 ? (r.volume/1e6).toFixed(1) + 'M' : (r.volume/1e3).toFixed(0) + 'K';
+    const avgVolFormatted = r.avgVolume > 1e6 ? (r.avgVolume/1e6).toFixed(1) + 'M' : r.avgVolume > 1e3 ? (r.avgVolume/1e3).toFixed(0) + 'K' : r.avgVolume;
     const tags = r.signals.map(s => {
       const names = { volume: 'Volume Spike', runner: 'Runner', breakout: 'Breakout', oversold: 'Oversold', momentum: 'Momentum' };
       const cls = s === 'runner' ? 'runner' : s === 'volume' ? 'volume' : s === 'breakout' ? 'breakout' : 'risky';
       return '<span class="penny-tag ' + cls + '">' + (names[s] || s) + '</span>';
     }).join('');
 
+    const scoreClass = r.score >= 8 ? 'score-high' : r.score >= 6 ? 'score-mid' : 'score-low';
+    const direction = changePct >= 0 ? 'bullish' : 'bearish';
+    const price = parseFloat(r.price);
+
+    // Calculate support/resistance approximations
+    const support = (price * 0.92).toFixed(4);
+    const resistance = (price * 1.12).toFixed(4);
+    const stopLoss = (price * 0.90).toFixed(4);
+    const takeProfit = (price * 1.20).toFixed(4);
+
     return `
-      <div class="penny-card" onclick="openPennyChart('${r.symbol}', '${r.name.replace(/'/g, "\\'")}', '${r.price}', '${r.changePct}')">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:12px;display:grid;grid-template-columns:56px 1fr 220px;gap:16px;align-items:start;cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'" onclick="pennyChartFromScan(${i})">
+        <div style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;font-family:var(--mono);${r.score >= 8 ? 'background:rgba(0,217,126,.15);color:var(--green);border:2px solid rgba(0,217,126,.3)' : r.score >= 6 ? 'background:rgba(0,200,240,.15);color:var(--accent);border:2px solid rgba(0,200,240,.3)' : 'background:rgba(245,158,11,.15);color:var(--amber);border:2px solid rgba(245,158,11,.3)'};">${r.score}</div>
         <div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="penny-price" style="color:var(--accent);">${r.symbol}</span>
-            <span style="font-size:12px;color:var(--text3);">${r.name}</span>
-            <span style="font-size:11px;color:var(--text3);background:var(--bg3);padding:2px 6px;border-radius:4px;">Score: ${r.score}/10</span>
+          <h4 style="font-size:16px;margin:0 0 4px;display:flex;align-items:center;gap:8px;">
+            <span style="color:var(--green);font-family:var(--mono);">${r.symbol}</span>
+            <span style="font-weight:400;color:var(--text3);font-size:12px;">${r.name}</span>
+            <span style="font-size:13px;color:${changeColor};font-weight:600;">${changeSign}${r.changePct}%</span>
+          </h4>
+          <div style="font-size:14px;font-weight:600;font-family:var(--mono);color:var(--text);">$${r.price} <span style="font-size:12px;color:${changeColor};">${changeSign}$${r.change}</span></div>
+          <div class="penny-signals" style="margin-top:6px;">${tags}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:var(--text3);margin-top:8px;">
+            <span>RSI: <strong style="color:${parseFloat(r.rsi) < 30 ? 'var(--green)' : parseFloat(r.rsi) > 70 ? 'var(--red)' : 'var(--text)'}">${r.rsi}</strong></span>
+            <span>Trend: <strong style="color:${(r.trend||'').includes('up') ? 'var(--green)' : (r.trend||'').includes('down') ? 'var(--red)' : 'var(--text3)'}">${r.trend}</strong></span>
+            <span>Vol: <strong>${volFormatted}</strong> (${r.volRatio}x)</span>
+            <span>Avg Vol: <strong>${avgVolFormatted}</strong></span>
           </div>
-          <div style="display:flex;align-items:baseline;gap:12px;margin-top:4px;">
-            <span class="penny-price">$${r.price}</span>
-            <span class="penny-change" style="color:${changeColor};">${changeSign}${r.changePct}% (${changeSign}$${r.change})</span>
-          </div>
-          <div class="penny-vol">Vol: ${volFormatted} ${r.volRatio ? '(' + r.volRatio + 'x avg)' : ''} | RSI: ${r.rsi || '—'} | Trend: ${r.trend || '—'}</div>
-          <div class="penny-signals">${tags}</div>
         </div>
-        <div class="penny-action">
-          <div class="pct" style="color:${changeColor};">${changeSign}${r.changePct}%</div>
-          <div style="display:flex;gap:4px;margin-top:6px;justify-content:flex-end;">
+        <div style="text-align:right;width:100%;">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);font-weight:600;">🎯 ACTION PLAN</div>
+          <div style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;margin:4px 0;${direction === 'bullish' ? 'background:rgba(0,217,126,.15);color:var(--green)' : 'background:rgba(239,68,68,.15);color:var(--red)'};">${direction === 'bullish' ? '📈 BUY' : '📉 SHORT/AVOID'}</div>
+          <table style="font-size:11px;margin-top:6px;border-collapse:collapse;width:100%;border-radius:8px;background:${direction === 'bullish' ? 'rgba(0,217,126,.06)' : 'rgba(239,68,68,.06)'};border:1px solid ${direction === 'bullish' ? 'rgba(0,217,126,.2)' : 'rgba(239,68,68,.2)'};">
+            <tr><td style="padding:4px 8px;color:var(--text3);font-weight:600;">RSI</td><td style="padding:4px 8px;text-align:right;font-weight:700;font-family:var(--mono);color:${parseFloat(r.rsi) < 30 ? 'var(--green)' : parseFloat(r.rsi) > 70 ? 'var(--red)' : 'var(--text)'};">${r.rsi}</td></tr>
+            <tr><td style="padding:4px 8px;color:var(--text3);font-weight:600;">Trend</td><td style="padding:4px 8px;text-align:right;font-weight:700;color:${(r.trend||'').includes('up') ? 'var(--green)' : (r.trend||'').includes('down') ? 'var(--red)' : 'var(--text3)'};">${r.trend}</td></tr>
+            <tr style="border-top:1px solid rgba(255,255,255,.06);"><td style="padding:4px 8px;color:var(--text3);font-weight:600;">🛑 Stop Loss</td><td style="padding:4px 8px;text-align:right;font-weight:700;font-family:var(--mono);color:var(--red);">$${stopLoss}</td></tr>
+            <tr><td style="padding:4px 8px;color:var(--amber);font-weight:600;">🎯 Target</td><td style="padding:4px 8px;text-align:right;font-weight:700;font-family:var(--mono);color:var(--green);">$${takeProfit}</td></tr>
+          </table>
+          <div style="display:flex;gap:4px;margin-top:8px;justify-content:flex-end;">
             <button onclick="event.stopPropagation(); ppQuickBuy('${r.symbol}', ${r.price})" style="background:var(--green);color:#000;border:none;padding:5px 10px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;">🛒 Trade</button>
             <button onclick="event.stopPropagation(); togglePennyWatch('${r.symbol}')" id="pw-${r.symbol}" style="background:${isPennyWatched(r.symbol) ? 'var(--amber)' : 'var(--bg3)'};color:${isPennyWatched(r.symbol) ? '#000' : 'var(--text2)'};border:1px solid var(--border);padding:5px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;">${isPennyWatched(r.symbol) ? '★' : '☆'}</button>
           </div>
+          <div style="font-size:9px;color:var(--text3);margin-top:4px;">⚠️ Penny stocks are high risk</div>
         </div>
       </div>`;
   }).join('');
@@ -178,6 +200,12 @@ function renderPennyWatchTab() {
 // ═══════════════════════════════════════
 // CHART MODAL
 // ═══════════════════════════════════════
+function pennyChartFromScan(idx) {
+  const r = window._pennyResults && window._pennyResults[idx];
+  if (!r) return;
+  openPennyChart(r.symbol, r.name, r.price, r.changePct);
+}
+
 function openPennyChart(symbol, name, price, changePct) {
   document.getElementById('pChartTitle').textContent = symbol + (name && name !== symbol ? ' — ' + name : '');
   if (price) document.getElementById('pChartPrice').textContent = '$' + price;
@@ -190,14 +218,18 @@ function openPennyChart(symbol, name, price, changePct) {
   document.getElementById('pennyChartModal').querySelector('.modal-content').onclick = e => e.stopPropagation();
 
   const container = document.getElementById('pennyTVChart');
-  container.innerHTML = '<div class="tradingview-widget-container"><div id="penny_tv_container"></div></div>';
+  container.innerHTML = '';
+  const widgetDiv = document.createElement('div');
+  widgetDiv.id = 'penny_tv_' + Date.now();
+  widgetDiv.style.cssText = 'width:100%;height:100%;';
+  container.appendChild(widgetDiv);
 
   const loadTV = () => {
     new TradingView.widget({
       autosize: true, symbol: symbol, interval: 'D', timezone: 'America/New_York',
       theme: 'dark', style: '1', locale: 'en', toolbar_bg: '#0a0e17',
       enable_publishing: false, allow_symbol_change: true, hide_top_toolbar: false,
-      save_image: true, container_id: 'penny_tv_container',
+      save_image: true, container_id: widgetDiv.id,
       backgroundColor: '#0a0e17', gridColor: 'rgba(255,255,255,0.04)',
       studies: ['RSI@tv-basicstudies', 'Volume@tv-basicstudies'],
       show_popup_button: true, popup_width: '1200', popup_height: '800',
