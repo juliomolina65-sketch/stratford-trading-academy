@@ -164,15 +164,23 @@ function loadMorePenny() {
 // ═══════════════════════════════════════
 // WATCHLIST
 // ═══════════════════════════════════════
-function getPennyWatch() { try { return JSON.parse(localStorage.getItem('sa_penny_watch') || '[]'); } catch { return []; } }
-function isPennyWatched(sym) { return getPennyWatch().includes(sym); }
+function getPennyWatch() { try { return JSON.parse(localStorage.getItem('sa_penny_watch2') || '[]'); } catch { return []; } }
+function isPennyWatched(sym) { return getPennyWatch().some(w => w.symbol === sym); }
 function togglePennyWatch(sym) {
   let wl = getPennyWatch();
-  if (wl.includes(sym)) { wl = wl.filter(s => s !== sym); showToast(sym + ' removed'); }
-  else { wl.push(sym); showToast('★ ' + sym + ' added'); }
-  localStorage.setItem('sa_penny_watch', JSON.stringify(wl));
+  if (isPennyWatched(sym)) {
+    wl = wl.filter(w => w.symbol !== sym);
+    showToast(sym + ' removed');
+  } else {
+    // Find price from scan results
+    const scanResult = (window._pennyResults || []).find(r => r.symbol === sym);
+    const price = scanResult ? scanResult.price : '—';
+    wl.push({ symbol: sym, priceWhenAdded: price, dateAdded: new Date().toISOString().split('T')[0] });
+    showToast('★ ' + sym + ' added at $' + price);
+  }
+  localStorage.setItem('sa_penny_watch2', JSON.stringify(wl));
   const btn = document.getElementById('pw-' + sym);
-  if (btn) { btn.style.background = wl.includes(sym) ? 'var(--amber)' : 'var(--bg3)'; btn.style.color = wl.includes(sym) ? '#000' : 'var(--text2)'; btn.textContent = wl.includes(sym) ? '★' : '☆'; }
+  if (btn) { btn.style.background = isPennyWatched(sym) ? 'var(--amber)' : 'var(--bg3)'; btn.style.color = isPennyWatched(sym) ? '#000' : 'var(--text2)'; btn.textContent = isPennyWatched(sym) ? '★' : '☆'; }
 }
 function addPennyWatch() {
   const input = document.getElementById('pWatchInput');
@@ -181,20 +189,29 @@ function addPennyWatch() {
   input.value = '';
   renderPennyWatchTab();
 }
-function clearPennyWatch() { localStorage.setItem('sa_penny_watch', '[]'); renderPennyWatchTab(); showToast('Watchlist cleared'); }
+function clearPennyWatch() { localStorage.setItem('sa_penny_watch2', '[]'); renderPennyWatchTab(); showToast('Watchlist cleared'); }
 function renderPennyWatchTab() {
   const wl = getPennyWatch();
   const grid = document.getElementById('pWatchGrid');
   const empty = document.getElementById('pWatchEmpty');
   if (wl.length === 0) { grid.innerHTML = ''; empty.style.display = ''; return; }
   empty.style.display = 'none';
-  grid.innerHTML = wl.map(sym => `
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'" onclick="openPennyChart('${sym}','${sym}','','0')">
+  grid.innerHTML = wl.map(w => {
+    const daysAgo = Math.floor((new Date() - new Date(w.dateAdded)) / (1000*60*60*24));
+    return `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'" onclick="openPennyChart('${w.symbol}','${w.symbol}','${w.priceWhenAdded}','0')">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:15px;font-weight:700;color:var(--green);font-family:var(--mono);">${sym}</span>
-        <button onclick="event.stopPropagation(); togglePennyWatch('${sym}'); renderPennyWatchTab();" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;">✕</button>
+        <span style="font-size:16px;font-weight:700;color:var(--green);font-family:var(--mono);">${w.symbol}</span>
+        <button onclick="event.stopPropagation(); togglePennyWatch('${w.symbol}'); renderPennyWatchTab();" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;">✕</button>
       </div>
-    </div>`).join('');
+      <div style="margin-top:6px;font-size:11px;color:var(--text3);">
+        💰 Price when added: <strong style="color:var(--text);font-family:var(--mono);">$${w.priceWhenAdded}</strong>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px;">
+        📅 ${w.dateAdded} (${daysAgo === 0 ? 'today' : daysAgo + 'd ago'})
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ═══════════════════════════════════════
