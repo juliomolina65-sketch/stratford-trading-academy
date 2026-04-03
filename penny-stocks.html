@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Penny Stocks Scanner — Stratford Academy</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 48'%3E%3Cpath d='M20 2L4 8v14c0 10 6.5 19 16 22 9.5-3 16-12 16-22V8L20 2z' stroke='url(%23g)' stroke-width='1.5' fill='none'/%3E%3Ctext x='20' y='30' text-anchor='middle' font-family='sans-serif' font-size='12' font-weight='700' fill='url(%23g)'%3ESA%3C/text%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='40' y2='48'%3E%3Cstop stop-color='%2300b8e6'/%3E%3Cstop offset='1' stop-color='%238b6fff'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<link rel="stylesheet" href="options-toolkit.css?v=7">
+<style>
+  .penny-hero{background:linear-gradient(135deg,rgba(0,217,126,.06),rgba(245,158,11,.06));border:1px solid rgba(0,217,126,.15);border-radius:12px;padding:24px;margin-bottom:20px;text-align:center;}
+  .penny-hero h2{font-size:24px;margin:0 0 6px;color:var(--green);}
+  .penny-hero p{font-size:13px;color:var(--text3);margin:0;}
+  .penny-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;display:grid;grid-template-columns:1fr 180px;gap:16px;align-items:center;cursor:pointer;transition:border-color .2s;}
+  .penny-card:hover{border-color:var(--green);}
+  .penny-price{font-family:var(--mono);font-size:18px;font-weight:700;}
+  .penny-change{font-size:13px;font-weight:600;}
+  .penny-vol{font-size:11px;color:var(--text3);}
+  .penny-signals{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
+  .penny-tag{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;}
+  .penny-tag.runner{background:rgba(0,217,126,.12);color:var(--green);}
+  .penny-tag.volume{background:rgba(139,111,255,.12);color:var(--purple);}
+  .penny-tag.breakout{background:rgba(0,200,240,.12);color:var(--accent);}
+  .penny-tag.risky{background:rgba(239,68,68,.12);color:var(--red);}
+  .penny-action{text-align:right;}
+  .penny-action .pct{font-size:22px;font-weight:800;font-family:var(--mono);}
+  @media(max-width:768px){.penny-card{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="/dashboard.html" class="topbar-back">← Back to Dashboard</a>
+  <span class="topbar-title">🪙 Penny Stocks Scanner</span>
+  <span class="topbar-badge" style="background:var(--green);">BETA</span>
+</header>
+
+<nav class="toolkit-tabs">
+  <button class="tab-btn active" data-tab="pscan">🔍 Scanner</button>
+  <button class="tab-btn" data-tab="pwatchlist">★ Watchlist</button>
+  <button class="tab-btn" data-tab="ppaper">🎮 Paper Trading</button>
+</nav>
+
+<!-- SCANNER TAB -->
+<div id="tab-pscan" class="tab-panel active">
+  <div class="penny-hero">
+    <h2>🪙 Penny Stock Scanner</h2>
+    <p>Find stocks under $5 with big volume, momentum, and breakout potential. Updated with real market data.</p>
+  </div>
+
+  <div class="card" style="margin-bottom:1rem;">
+    <div class="scanner-controls">
+      <div class="form-row" style="max-width:100%;">
+        <div class="fg">
+          <label>Price Range</label>
+          <select id="pPriceRange">
+            <option value="0-1">Under $1</option>
+            <option value="0-2">Under $2</option>
+            <option value="0-5" selected>Under $5</option>
+            <option value="1-5">$1 - $5</option>
+            <option value="2-5">$2 - $5</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Signal</label>
+          <select id="pSignal">
+            <option value="all" selected>All Signals</option>
+            <option value="volume">Volume Spike (2x+)</option>
+            <option value="runner">Runner (5%+ move)</option>
+            <option value="breakout">Breakout</option>
+            <option value="oversold">RSI Oversold</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Min Volume</label>
+          <select id="pMinVol">
+            <option value="0">Any Volume</option>
+            <option value="100000">100K+</option>
+            <option value="500000" selected>500K+</option>
+            <option value="1000000">1M+</option>
+            <option value="5000000">5M+</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Sort By</label>
+          <select id="pSort">
+            <option value="change" selected>Biggest Movers</option>
+            <option value="volume">Highest Volume</option>
+            <option value="score">Confidence Score</option>
+            <option value="price_low">Price (Low→High)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="runPennyScan()" id="pScanBtn">🔍 Scan Penny Stocks</button>
+    </div>
+  </div>
+
+  <div id="pScanLoading" style="display:none;" class="loading-state">
+    <div class="spinner"></div>
+    <p>Scanning penny stocks...</p>
+  </div>
+
+  <div id="pScanStats" style="display:none;">
+    <div class="stats-row" style="margin-bottom:1rem;">
+      <div class="stat-card stat-green">
+        <span class="stat-label">Stocks Found</span>
+        <span class="stat-value" id="pCount">0</span>
+      </div>
+      <div class="stat-card stat-cyan">
+        <span class="stat-label">Avg Change</span>
+        <span class="stat-value" id="pAvgChange">0%</span>
+      </div>
+      <div class="stat-card stat-purple">
+        <span class="stat-label">Top Mover</span>
+        <span class="stat-value" id="pTopMover">—</span>
+      </div>
+      <div class="stat-card stat-amber">
+        <span class="stat-label">Biggest Volume</span>
+        <span class="stat-value" id="pTopVol">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="pScanCards"></div>
+
+  <div id="pScanEmpty" style="display:none;text-align:center;padding:3rem;color:var(--text3);">
+    <p>No penny stocks match your filters. Try adjusting the criteria.</p>
+  </div>
+</div>
+
+<!-- WATCHLIST TAB -->
+<div id="tab-pwatchlist" class="tab-panel">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div>
+        <h3 class="card-title">★ Penny Stock Watchlist</h3>
+        <p class="card-sub" style="margin:0;">Stocks you're tracking. Click any to view chart.</p>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div class="input-group" style="max-width:250px;">
+          <input type="text" id="pWatchInput" placeholder="Add ticker..." style="font-size:13px;" />
+          <button class="btn-sm btn-accent" onclick="addPennyWatch()">+ Add</button>
+        </div>
+        <button onclick="clearPennyWatch()" style="background:none;border:1px solid var(--border);color:var(--text3);padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;">Clear</button>
+      </div>
+    </div>
+    <div id="pWatchGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;"></div>
+    <div id="pWatchEmpty" style="text-align:center;padding:3rem;color:var(--text3);font-size:13px;">No stocks in watchlist. Add tickers above or click ☆ on scanner results.</div>
+  </div>
+</div>
+
+<!-- PAPER TRADING TAB -->
+<div id="tab-ppaper" class="tab-panel">
+  <div class="stats-row" style="margin-bottom:1rem;">
+    <div class="stat-card stat-green">
+      <span class="stat-label">Cash</span>
+      <span class="stat-value" id="ppCash">$5,000.00</span>
+    </div>
+    <div class="stat-card stat-cyan">
+      <span class="stat-label">Holdings Value</span>
+      <span class="stat-value" id="ppHoldings">$0.00</span>
+    </div>
+    <div class="stat-card" id="ppPLCard">
+      <span class="stat-label">Total P&L</span>
+      <span class="stat-value" id="ppPL">$0.00</span>
+    </div>
+    <div class="stat-card stat-purple">
+      <span class="stat-label">Trades</span>
+      <span class="stat-value" id="ppTradeCount">0</span>
+    </div>
+  </div>
+
+  <div class="panel-grid">
+    <div class="panel-left" style="position:static;">
+      <div class="card">
+        <h3 class="card-title">🛒 Buy Penny Stock</h3>
+        <div class="fg" style="margin-bottom:12px;">
+          <label>Ticker</label>
+          <div class="input-group">
+            <input type="text" id="ppTicker" placeholder="MULN" />
+            <button class="btn-sm btn-accent" onclick="ppFetchPrice()">Get Price</button>
+          </div>
+        </div>
+        <div id="ppStockInfo" style="display:none;background:var(--bg3);border-radius:8px;padding:10px 14px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;">
+            <span id="ppStockName" style="font-weight:600;"></span>
+            <span id="ppStockPrice" style="font-family:var(--mono);font-weight:700;font-size:16px;"></span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="fg">
+            <label>Shares</label>
+            <input type="number" id="ppShares" value="100" min="1" />
+          </div>
+          <div class="fg">
+            <label>Total Cost</label>
+            <div id="ppCostPreview" style="background:var(--bg3);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-weight:700;font-size:16px;color:var(--accent);">$0.00</div>
+          </div>
+        </div>
+        <button class="btn-primary btn-full" onclick="ppBuy()">🛒 Buy Shares</button>
+      </div>
+      <div style="margin-top:12px;text-align:center;">
+        <button onclick="ppReset()" style="background:none;border:1px solid var(--border);color:var(--text3);padding:8px 16px;border-radius:6px;font-size:11px;cursor:pointer;">🔄 Reset to $5,000</button>
+      </div>
+    </div>
+
+    <div class="panel-right">
+      <div class="card" style="margin-bottom:1rem;">
+        <h4 style="margin-bottom:12px;">📂 Holdings</h4>
+        <div id="ppPositions"></div>
+      </div>
+      <div class="card">
+        <h4 style="margin-bottom:12px;">📜 Trade History</h4>
+        <div id="ppHistory"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHART MODAL -->
+<div id="pennyChartModal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:1000px;padding:0;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <h3 id="pChartTitle" style="margin:0;font-size:16px;">—</h3>
+        <span id="pChartPrice" style="font-family:var(--mono);font-size:16px;font-weight:700;"></span>
+        <span id="pChartChange" style="font-size:13px;font-weight:600;"></span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button id="pFullscreenBtn" onclick="togglePennyFullscreen()" style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text2);">⛶ Fullscreen</button>
+        <button onclick="closePennyChart()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);">×</button>
+      </div>
+    </div>
+    <div id="pennyTVChart" style="height:500px;"></div>
+  </div>
+</div>
+
+<script src="penny-stocks.js?v=1"></script>
+</body>
+</html>

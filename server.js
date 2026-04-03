@@ -3020,6 +3020,144 @@ app.get('/api/scanner/scan', async (req, res) => {
 OLD_DUPLICATES_END */
 
 // ============================================
+// PENNY STOCK SCANNER API
+// ============================================
+const PENNY_WATCHLIST = [
+  'MULN','SNDL','TELL','CLOV','WISH','BBIG','ATER','PROG','FAMI','CEI',
+  'PHUN','DWAC','BKKT','NILE','IMPP','GFAI','INDO','MEGL','HKD','APRN',
+  'BBBY','OPEN','PLUG','WKHS','RIDE','GOEV','QS','LAZR','MVIS','SENS',
+  'BNGO','GNUS','NAKD','ZOM','CTRM','SHIP','SOS','OCGN','HCMC','TLRY',
+  'ACB','CGC','SIRI','SOFI','NIO','RIVN','LCID','PLTR','HOOD','DNA',
+  'IONQ','RKLB','SPCE','JOBY','MNTS','ASTR','RDW','VORB','LUNR','ASTS',
+  'BTBT','MARA','RIOT','HUT','BITF','CLSK','CIFR','CORZ','WULF','IREN',
+  'XPEV','LI','NIU','PSNY','FFIE','NKLA','FSR','ARVL','REE','PTRA'
+];
+
+const pennyCache = new Map();
+
+app.get('/api/penny/scan', async (req, res) => {
+  const cached = pennyCache.get('scan');
+  if (cached && Date.now() - cached.time < 600000) return res.json(cached.data);
+
+  try {
+    const fetchPenny = async (sym) => {
+      try {
+        const urls = [
+          `https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3mo`,
+          `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=3mo`,
+        ];
+        let j = null;
+        for (const url of urls) {
+          try {
+            const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'application/json' } });
+            if (r.ok) { j = await r.json(); if (j?.chart?.result) break; }
+          } catch {}
+        }
+
+        // Fallback to Market Data API
+        if (!j?.chart?.result && MD_API_KEY) {
+          try {
+            const from = new Date(); from.setMonth(from.getMonth() - 3);
+            const mdUrl = `https://api.marketdata.app/v1/stocks/candles/daily/${sym}/?from=${from.toISOString().split('T')[0]}`;
+            const mdR = await fetch(mdUrl, { headers: { 'Authorization': 'Bearer ' + MD_API_KEY, 'Accept': 'application/json' } });
+            const mdJ = await mdR.json();
+            if (mdJ.s === 'ok' && mdJ.c && mdJ.c.length > 5) {
+              const closes = mdJ.c;
+              const volumes = mdJ.v || [];
+              const price = closes[closes.length - 1];
+              const prevClose = closes[closes.length - 2] || price;
+              if (price > 5) return null; // skip if not penny stock
+              const change = price - prevClose;
+              const changePct = prevClose ? (change / prevClose * 100) : 0;
+              const vol = volumes[volumes.length - 1] || 0;
+              const avgVol = volumes.slice(-20).reduce((s,v) => s+v, 0) / Math.min(20, volumes.length);
+              const volRatio = vol / Math.max(avgVol, 1);
+
+              // Simple TA
+              const rsi = closes.length > 14 ? (() => { let g=0,l=0; for(let i=closes.length-14;i<closes.length;i++){const d=closes[i]-closes[i-1];if(d>0)g+=d;else l-=d;} const ag=g/14,al=l/14; return al===0?100:100-(100/(1+ag/al)); })() : 50;
+              const ma20 = closes.slice(-20).reduce((s,v)=>s+v,0)/Math.min(20,closes.length);
+              const trend = price > ma20 ? (changePct > 2 ? 'strong uptrend' : 'uptrend') : (changePct < -2 ? 'strong downtrend' : 'downtrend');
+
+              const signals = [];
+              if (volRatio > 2) signals.push('volume');
+              if (Math.abs(changePct) > 5) signals.push('runner');
+              if (price > ma20 && changePct > 3) signals.push('breakout');
+              if (rsi < 30) signals.push('oversold');
+              if (trend.includes('strong')) signals.push('momentum');
+
+              let score = 3;
+              if (volRatio > 2) score += 1;
+              if (volRatio > 4) score += 1;
+              if (Math.abs(changePct) > 5) score += 1;
+              if (Math.abs(changePct) > 10) score += 1;
+              if (signals.length >= 2) score += 1;
+              if (rsi < 25 || rsi > 75) score += 1;
+              score = Math.min(10, Math.max(1, score));
+
+              return { symbol: sym, name: sym, price: price.toFixed(4), change: change.toFixed(4), changePct: changePct.toFixed(2), volume: vol, avgVolume: avgVol, volRatio: volRatio.toFixed(1), rsi: rsi.toFixed(1), trend, signals, score };
+            }
+          } catch {}
+        }
+
+        if (!j?.chart?.result) return null;
+        const meta = j.chart.result[0].meta;
+        const quotes = j.chart.result[0].indicators.quote[0];
+        const closes = (quotes.close || []).filter(v => v !== null);
+        const volumes = (quotes.volume || []).filter(v => v !== null);
+        if (closes.length < 5) return null;
+        const price = meta.regularMarketPrice || closes[closes.length - 1];
+        if (price > 5) return null; // skip non-penny
+        const prevClose = meta.chartPreviousClose || closes[closes.length - 2] || price;
+        const change = price - prevClose;
+        const changePct = prevClose ? (change / prevClose * 100) : 0;
+        const vol = meta.regularMarketVolume || volumes[volumes.length - 1] || 0;
+        const avgVol = volumes.slice(-20).reduce((s,v) => s+v, 0) / Math.min(20, volumes.length);
+        const volRatio = vol / Math.max(avgVol, 1);
+        const name = meta.shortName || meta.longName || sym;
+
+        const rsi = closes.length > 14 ? (() => { let g=0,l=0; for(let i=closes.length-14;i<closes.length;i++){const d=closes[i]-closes[i-1];if(d>0)g+=d;else l-=d;} const ag=g/14,al=l/14; return al===0?100:100-(100/(1+ag/al)); })() : 50;
+        const ma20 = closes.slice(-20).reduce((s,v)=>s+v,0)/Math.min(20,closes.length);
+        const trend = price > ma20 ? (changePct > 2 ? 'strong uptrend' : 'uptrend') : (changePct < -2 ? 'strong downtrend' : 'downtrend');
+
+        const signals = [];
+        if (volRatio > 2) signals.push('volume');
+        if (Math.abs(changePct) > 5) signals.push('runner');
+        if (price > ma20 && changePct > 3) signals.push('breakout');
+        if (rsi < 30) signals.push('oversold');
+        if (trend.includes('strong')) signals.push('momentum');
+
+        let score = 3;
+        if (volRatio > 2) score += 1;
+        if (volRatio > 4) score += 1;
+        if (Math.abs(changePct) > 5) score += 1;
+        if (Math.abs(changePct) > 10) score += 1;
+        if (signals.length >= 2) score += 1;
+        if (rsi < 25 || rsi > 75) score += 1;
+        score = Math.min(10, Math.max(1, score));
+
+        return { symbol: sym, name, price: price.toFixed(4), change: change.toFixed(4), changePct: changePct.toFixed(2), volume: vol, avgVolume: avgVol, volRatio: volRatio.toFixed(1), rsi: rsi.toFixed(1), trend, signals, score };
+      } catch { return null; }
+    };
+
+    const allResults = [];
+    for (let i = 0; i < PENNY_WATCHLIST.length; i += 10) {
+      const batch = PENNY_WATCHLIST.slice(i, i + 10);
+      const batchResults = await Promise.all(batch.map(fetchPenny));
+      allResults.push(...batchResults.filter(Boolean));
+    }
+
+    allResults.sort((a, b) => Math.abs(parseFloat(b.changePct)) - Math.abs(parseFloat(a.changePct)));
+
+    const data = { timestamp: new Date().toISOString(), total: allResults.length, results: allResults };
+    pennyCache.set('scan', { data, time: Date.now() });
+    res.json(data);
+  } catch (err) {
+    console.error('[PENNY] Scan error:', err.message);
+    res.json({ error: 'Penny scan failed: ' + err.message });
+  }
+});
+
+// ============================================
 // OPTIONS ALERT SCANNER — Runs every 5 min during market hours
 // ============================================
 const alertCache = new Map();
