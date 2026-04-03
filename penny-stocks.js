@@ -386,6 +386,51 @@ function ppBuy() {
   if (document.getElementById('ppSLTPPreview')) document.getElementById('ppSLTPPreview').style.display = 'none';
 }
 
+function ppCheckPrice(posId, ticker, entryPrice, shares) {
+  const liveDiv = document.getElementById('ppLive-' + posId);
+  if (!liveDiv) return;
+  liveDiv.style.display = '';
+  liveDiv.innerHTML = '<span style="color:var(--text3);">Loading current price...</span>';
+
+  fetch('/api/chart/' + ticker + '?range=5d')
+    .then(r => r.json())
+    .then(data => {
+      if (data.price) {
+        const currentPrice = parseFloat(data.price);
+        const pl = (currentPrice - entryPrice) * shares;
+        const plPct = ((currentPrice - entryPrice) / entryPrice * 100);
+        const plColor = pl >= 0 ? 'var(--green)' : 'var(--red)';
+        const plSign = pl >= 0 ? '+' : '';
+
+        liveDiv.innerHTML = `
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+            <div>
+              <div style="font-size:10px;color:var(--text3);">Current Price</div>
+              <div style="font-family:var(--mono);font-weight:700;color:var(--accent);font-size:14px;">$${currentPrice.toFixed(4)}</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--text3);">Your Entry</div>
+              <div style="font-family:var(--mono);font-weight:700;color:var(--text);font-size:14px;">$${entryPrice.toFixed(4)}</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--text3);">Unrealized P&L</div>
+              <div style="font-family:var(--mono);font-weight:700;color:${plColor};font-size:14px;">${plSign}$${pl.toFixed(2)} (${plSign}${plPct.toFixed(1)}%)</div>
+            </div>
+          </div>
+          <div style="margin-top:6px;font-size:10px;color:var(--text3);">
+            ${currentPrice > entryPrice ? '📈 Stock is UP from your entry — you\'re in profit!' : currentPrice < entryPrice ? '📉 Stock is DOWN from your entry' : '➡️ Stock is at your entry price'}
+            ${data.name ? ' | ' + data.name : ''}
+          </div>
+        `;
+      } else {
+        liveDiv.innerHTML = '<span style="color:var(--red);">Could not fetch price for ' + ticker + '</span>';
+      }
+    })
+    .catch(() => {
+      liveDiv.innerHTML = '<span style="color:var(--red);">API error — try again</span>';
+    });
+}
+
 function ppSell(posId, exitPrice) {
   if (!exitPrice) { exitPrice = parseFloat(prompt('Enter sell price:')); if (!exitPrice) return; }
   const acc = getPPAccount();
@@ -430,15 +475,19 @@ function renderPP() {
     return `
     <div style="padding:12px 0;border-bottom:1px solid var(--border);font-size:13px;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div>
+        <div style="cursor:pointer;" onclick="openPennyChart('${p.ticker}','${p.ticker}','${p.price}','0')">
           <strong style="color:var(--green);font-family:var(--mono);font-size:14px;">${p.ticker}</strong>
           <span style="color:var(--text3);margin-left:6px;">${p.shares} shares @ $${p.price.toFixed(4)}</span>
           <div style="font-size:11px;color:var(--text3);margin-top:2px;">
             📅 ${p.date} (${daysHeld === 0 ? 'today' : daysHeld + 'd ago'}) | Cost: $${p.cost.toFixed(2)}
           </div>
         </div>
-        <button onclick="ppSell('${p.id}')" style="background:var(--red);color:#fff;border:none;padding:6px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;">Sell</button>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button onclick="ppCheckPrice('${p.id}', '${p.ticker}', ${p.price}, ${p.shares})" style="background:var(--bg3);color:var(--accent);border:1px solid var(--border);padding:6px 10px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;">📈 Check Price</button>
+          <button onclick="ppSell('${p.id}')" style="background:var(--red);color:#fff;border:none;padding:6px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;">Sell</button>
+        </div>
       </div>
+      <div id="ppLive-${p.id}" style="display:none;margin-top:6px;padding:8px 10px;background:var(--bg3);border-radius:6px;font-size:11px;"></div>
       ${(p.stopLoss || p.takeProfit) ? '<div style="display:flex;gap:12px;margin-top:6px;padding:6px 10px;background:var(--bg3);border-radius:6px;font-size:11px;">' +
         (p.stopLoss ? '<span style="color:var(--red);">🛑 SL: <strong style="font-family:var(--mono);">$' + p.stopLoss.toFixed(4) + '</strong> (' + (((p.stopLoss - p.price) / p.price * 100)).toFixed(1) + '%)</span>' : '') +
         (p.takeProfit ? '<span style="color:var(--green);">🎯 TP: <strong style="font-family:var(--mono);">$' + p.takeProfit.toFixed(4) + '</strong> (+' + (((p.takeProfit - p.price) / p.price * 100)).toFixed(1) + '%)</span>' : '') +
