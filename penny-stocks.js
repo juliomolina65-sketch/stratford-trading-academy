@@ -332,7 +332,23 @@ function ppQuickBuy(sym, price) {
   if (document.getElementById('ppStopLoss')) document.getElementById('ppStopLoss').value = (p * 0.90).toFixed(4);
   if (document.getElementById('ppTakeProfit')) document.getElementById('ppTakeProfit').value = (p * 1.20).toFixed(4);
   updatePPCost();
+  updatePPPreview();
   showToast('Pre-filled ' + sym + ' @ $' + p.toFixed(4) + ' — SL: -10%, TP: +20%');
+}
+
+function updatePPPreview() {
+  const price = window._ppPrice || 0;
+  const shares = parseInt(document.getElementById('ppShares').value) || 100;
+  const sl = parseFloat((document.getElementById('ppStopLoss') || {}).value) || 0;
+  const tp = parseFloat((document.getElementById('ppTakeProfit') || {}).value) || 0;
+  const preview = document.getElementById('ppSLTPPreview');
+  if (preview && price > 0 && (sl > 0 || tp > 0)) {
+    preview.style.display = '';
+    const slEl = document.getElementById('ppSLPreview');
+    const tpEl = document.getElementById('ppTPPreview');
+    if (slEl) slEl.innerHTML = sl > 0 ? '🛑 Stop Loss at $' + sl.toFixed(4) + ' — Max loss: <strong>$' + ((price - sl) * shares).toFixed(2) + '</strong> (' + (((sl - price) / price * 100)).toFixed(1) + '%)' : '';
+    if (tpEl) tpEl.innerHTML = tp > 0 ? '🎯 Take Profit at $' + tp.toFixed(4) + ' — Profit: <strong>+$' + ((tp - price) * shares).toFixed(2) + '</strong> (+' + (((tp - price) / price * 100)).toFixed(1) + '%)' : '';
+  } else if (preview) preview.style.display = 'none';
 }
 
 function updatePPCost() {
@@ -342,22 +358,7 @@ function updatePPCost() {
 }
 ['ppShares', 'ppStopLoss', 'ppTakeProfit'].forEach(id => {
   const el = document.getElementById(id);
-  if (el) el.addEventListener('input', () => {
-    updatePPCost();
-    // SL/TP preview
-    const price = window._ppPrice || 0;
-    const shares = parseInt(document.getElementById('ppShares').value) || 100;
-    const sl = parseFloat((document.getElementById('ppStopLoss') || {}).value) || 0;
-    const tp = parseFloat((document.getElementById('ppTakeProfit') || {}).value) || 0;
-    const preview = document.getElementById('ppSLTPPreview');
-    if (preview && price > 0 && (sl > 0 || tp > 0)) {
-      preview.style.display = '';
-      const slEl = document.getElementById('ppSLPreview');
-      const tpEl = document.getElementById('ppTPPreview');
-      if (slEl) slEl.innerHTML = sl > 0 ? '🛑 Stop Loss at $' + sl.toFixed(4) + ' — Max loss: <strong>$' + ((price - sl) * shares).toFixed(2) + '</strong> (' + (((sl - price) / price * 100)).toFixed(1) + '%)' : '';
-      if (tpEl) tpEl.innerHTML = tp > 0 ? '🎯 Take Profit at $' + tp.toFixed(4) + ' — Profit: <strong>+$' + ((tp - price) * shares).toFixed(2) + '</strong> (+' + (((tp - price) / price * 100)).toFixed(1) + '%)' : '';
-    } else if (preview) preview.style.display = 'none';
-  });
+  if (el) el.addEventListener('input', () => { updatePPCost(); updatePPPreview(); });
 });
 
 function ppBuy() {
