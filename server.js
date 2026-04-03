@@ -2612,6 +2612,19 @@ app.get('/api/scanner/scan', async (req, res) => {
   } catch (err) { res.json({ error: 'Scanner failed: ' + err.message }); }
 });
 
+// ── Penny Stock Scanner (route must be before catch-all) ──
+app.get('/api/penny/scan', async (req, res) => {
+  // Delegate to pennyHandler (defined below after helper functions)
+  if (typeof pennyHandler === 'function') return pennyHandler(req, res);
+  res.json({ error: 'Penny scanner not loaded yet', results: [] });
+});
+
+// ── Alert test (route must be before catch-all) ──
+app.get('/api/alerts/test', async (req, res) => {
+  if (typeof alertTestHandler === 'function') return alertTestHandler(req, res);
+  res.json({ error: 'Alert handler not loaded yet' });
+});
+
 // Serve static files
 app.use(express.static(__dirname));
 
@@ -3035,7 +3048,8 @@ const PENNY_WATCHLIST = [
 
 const pennyCache = new Map();
 
-app.get('/api/penny/scan', async (req, res) => {
+// Handler assigned to route registered above catch-all
+var pennyHandler = async (req, res) => {
   const cached = pennyCache.get('scan');
   if (cached && Date.now() - cached.time < 600000) return res.json(cached.data);
 
@@ -3155,7 +3169,7 @@ app.get('/api/penny/scan', async (req, res) => {
     console.error('[PENNY] Scan error:', err.message);
     res.json({ error: 'Penny scan failed: ' + err.message });
   }
-});
+};
 
 // ============================================
 // OPTIONS ALERT SCANNER — Runs every 5 min during market hours
@@ -3302,7 +3316,7 @@ console.log('[ALERT] Options alert scanner active — runs every 5 min during ma
 console.log('[ALERT] Alerts sent to:', ADMIN_EMAILS.join(', '));
 
 // Manual trigger endpoint for testing
-app.get('/api/alerts/test', async (req, res) => {
+var alertTestHandler = async (req, res) => {
   console.log('[ALERT] Manual test trigger...');
   try {
     const results = await runAlertScan();
@@ -3316,7 +3330,7 @@ app.get('/api/alerts/test', async (req, res) => {
   } catch (err) {
     res.json({ error: err.message });
   }
-});
+};
 
 // ============================================
 // Start Server
