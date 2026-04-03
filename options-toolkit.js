@@ -988,7 +988,8 @@ function tradeFromScan(idx) {
   paperQuickBuy(r.symbol, {
     name: r.name, price: r.price, strike: r.suggestedStrike,
     type: r.suggestedType, direction: r.direction,
-    support: r.support, resistance: r.resistance
+    support: r.support, resistance: r.resistance,
+    expiry: r.suggestedExpiry
   });
 }
 
@@ -1014,12 +1015,14 @@ function paperQuickBuy(sym, scanData) {
       b.classList.toggle('active', b.textContent.toLowerCase().includes(paperType));
     });
 
-    // Auto-fill suggested SL/TP based on premium estimate
-    // SL at -30% of premium, TP at +100%
+    // Pre-fill expiry from scanner
+    if (scanData.expiry && document.getElementById('paperExpiry'))
+      document.getElementById('paperExpiry').value = scanData.expiry;
+
     if (document.getElementById('paperStopLoss')) document.getElementById('paperStopLoss').value = '';
     if (document.getElementById('paperTakeProfit')) document.getElementById('paperTakeProfit').value = '';
 
-    showToast('Pre-filled ' + sym + ' $' + scanData.strike + ' ' + scanData.type + ' — enter premium and buy!');
+    showToast('Pre-filled ' + sym + ' $' + scanData.strike + ' ' + scanData.type + (scanData.expiry ? ' exp ' + scanData.expiry : '') + ' — enter premium and buy!');
   } else {
     paperFetchPrice();
   }
@@ -1056,6 +1059,17 @@ function getPaperAccount() {
 function savePaperAccount(acc) {
   localStorage.setItem('sa_paper_account', JSON.stringify(acc));
 }
+
+// Set default expiry date (3 weeks from now, snapped to Friday)
+(function() {
+  const el = document.getElementById('paperExpiry');
+  if (el && !el.value) {
+    const d = new Date();
+    d.setDate(d.getDate() + 21);
+    while (d.getDay() !== 5) d.setDate(d.getDate() + 1);
+    el.value = d.toISOString().split('T')[0];
+  }
+})();
 
 function paperFetchPrice() {
   const ticker = document.getElementById('paperTicker').value.trim().toUpperCase();
@@ -1114,6 +1128,7 @@ function paperBuy() {
   const contracts = parseInt(document.getElementById('paperContracts').value) || 1;
   const stopLoss = parseFloat((document.getElementById('paperStopLoss') || {}).value) || null;
   const takeProfit = parseFloat((document.getElementById('paperTakeProfit') || {}).value) || null;
+  const expiry = (document.getElementById('paperExpiry') || {}).value || null;
 
   if (!ticker || !strike || !premium) { showToast('Fill in all fields', 'error'); return; }
 
@@ -1134,7 +1149,7 @@ function paperBuy() {
     ticker, type: paperType, strike, premium, contracts,
     entryDate: new Date().toISOString().split('T')[0],
     cost, stockPriceAtEntry: window._paperCurrentPrice || 0,
-    stopLoss, takeProfit
+    stopLoss, takeProfit, expiry
   });
 
   // Update equity curve
@@ -1272,7 +1287,12 @@ function renderPaper() {
             <div style="margin-top:4px;font-size:11px;color:var(--text3);">
               📅 Opened: <strong style="color:var(--text2);">${p.entryDate}</strong>
               <span style="margin-left:8px;">⏱ ${daysHeld === 0 ? 'Today' : daysHeld + ' day' + (daysHeld !== 1 ? 's' : '') + ' ago'}</span>
-              ${p.stockPriceAtEntry ? '<span style="margin-left:8px;">📈 Stock at entry: $' + parseFloat(p.stockPriceAtEntry).toFixed(2) + '</span>' : ''}
+              ${p.expiry ? (() => {
+                const dte = Math.ceil((new Date(p.expiry) - new Date()) / (1000*60*60*24));
+                const dteColor = dte <= 3 ? 'var(--red)' : dte <= 7 ? 'var(--amber)' : 'var(--text2)';
+                return '<span style="margin-left:8px;">⏳ Exp: <strong style="color:' + dteColor + ';">' + p.expiry + '</strong> (' + (dte <= 0 ? 'EXPIRED' : dte + ' days left') + ')</span>';
+              })() : ''}
+              ${p.stockPriceAtEntry ? '<span style="margin-left:8px;">📈 Entry price: $' + parseFloat(p.stockPriceAtEntry).toFixed(2) + '</span>' : ''}
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
