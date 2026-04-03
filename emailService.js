@@ -600,6 +600,7 @@ function sendCustomEmail(email, name, subject, bodyText) {
 module.exports = {
   initEmail,
   setFirestore,
+  sendEmail,
   sendWelcomeEmail,
   sendSubscriptionEmail,
   sendTradeSignalEmail,

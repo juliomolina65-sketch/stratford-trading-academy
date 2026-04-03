@@ -3020,6 +3020,167 @@ app.get('/api/scanner/scan', async (req, res) => {
 OLD_DUPLICATES_END */
 
 // ============================================
+// OPTIONS ALERT SCANNER — Runs every 5 min during market hours
+// ============================================
+const alertCache = new Map();
+
+// Internal function to run the scanner and get results
+async function runAlertScan() {
+  try {
+    const response = await fetch(`http://localhost:${PORT}/api/scanner/scan?dte=21`);
+    const data = await response.json();
+    return data.results || [];
+  } catch (err) {
+    console.error('[ALERT] Scanner fetch failed:', err.message);
+    return [];
+  }
+}
+
+// Runs Mon-Fri, every 5 minutes from 9:30 AM to 4:00 PM ET
+// Cron: every 5 min, but we check the time inside
+cron.schedule('*/5 9-16 * * 1-5', async () => {
+  // Check if within market hours (9:30 AM - 4:00 PM ET)
+  const now = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+  const etNow = new Date(now);
+  const hour = etNow.getHours();
+  const min = etNow.getMinutes();
+  const timeNum = hour * 100 + min;
+
+  if (timeNum < 930 || timeNum > 1600) return; // outside market hours
+
+  console.log(`[ALERT] Running options alert scan at ${etNow.toLocaleTimeString('en-US')} ET`);
+
+  try {
+    const results = await runAlertScan();
+
+    // Filter for high confidence (score 8+)
+    const highConf = results.filter(r => r.score >= 8);
+
+    if (highConf.length === 0) {
+      console.log('[ALERT] No high confidence signals found');
+      return;
+    }
+
+    // Check which ones we already alerted on today (don't spam)
+    const today = new Date().toISOString().split('T')[0];
+    const alertedToday = alertCache.get(today) || new Set();
+
+    const newAlerts = highConf.filter(r => !alertedToday.has(r.symbol));
+
+    if (newAlerts.length === 0) {
+      console.log('[ALERT] All high-conf signals already alerted today');
+      return;
+    }
+
+    // Build email content
+    const alertRows = newAlerts.map(r => {
+      const dir = r.direction === 'bullish' ? '📈 BUY CALL' : '📉 BUY PUT';
+      const dirColor = r.direction === 'bullish' ? '#00d97e' : '#ef4444';
+      return `
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #1a2236;">
+            <div style="font-size:16px;font-weight:800;color:#00c8f0;font-family:monospace;">${r.symbol}</div>
+            <div style="font-size:11px;color:#94a3b8;">${r.name}</div>
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #1a2236;text-align:center;">
+            <div style="background:${r.score >= 9 ? '#00d97e15' : '#00c8f015'};color:${r.score >= 9 ? '#00d97e' : '#00c8f0'};font-size:20px;font-weight:800;width:40px;height:40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:2px solid ${r.score >= 9 ? '#00d97e30' : '#00c8f030'};">${r.score}</div>
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #1a2236;">
+            <div style="font-size:14px;font-weight:700;color:${dirColor};">${dir}</div>
+            <div style="font-size:13px;color:#f1f5f9;font-family:monospace;">${r.symbol} $${r.suggestedStrike} ${r.suggestedType}</div>
+            <div style="font-size:11px;color:#94a3b8;">Exp: ${r.suggestedExpiry}</div>
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #1a2236;">
+            <div style="font-size:13px;color:#f1f5f9;font-family:monospace;">$${r.price}</div>
+            <div style="font-size:11px;color:${parseFloat(r.changePct) >= 0 ? '#00d97e' : '#ef4444'};">${parseFloat(r.changePct) >= 0 ? '+' : ''}${r.changePct}%</div>
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #1a2236;font-size:11px;color:#94a3b8;">
+            <div>RSI: <strong style="color:${parseFloat(r.rsi) < 30 ? '#00d97e' : parseFloat(r.rsi) > 70 ? '#ef4444' : '#f1f5f9'}">${r.rsi}</strong></div>
+            <div>Trend: <strong style="color:${r.trend.includes('up') ? '#00d97e' : r.trend.includes('down') ? '#ef4444' : '#94a3b8'}">${r.trend}</strong></div>
+            <div>${r.direction === 'bullish' ? 'Buy above' : 'Sell below'}: <strong>$${r.direction === 'bullish' ? r.support : r.resistance}</strong></div>
+            <div>Target: <strong style="color:#f59e0b;">$${r.direction === 'bullish' ? r.resistance : r.support}</strong></div>
+          </td>
+        </tr>`;
+    }).join('');
+
+    const subject = `🎯 ${newAlerts.length} High-Confidence Options Alert${newAlerts.length > 1 ? 's' : ''} — Score ${newAlerts[0].score}/10`;
+
+    const html = `
+      <div style="font-family:-apple-system,'Segoe UI',sans-serif;background:#0a0e17;color:#f1f5f9;max-width:700px;margin:0 auto;border-radius:12px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#00c8f0,#8b6fff);padding:24px 28px;">
+          <h1 style="margin:0;font-size:20px;color:#fff;">🎯 Options Alert — ${newAlerts.length} Signal${newAlerts.length > 1 ? 's' : ''} Found</h1>
+          <p style="margin:6px 0 0;font-size:13px;color:rgba(255,255,255,0.8);">${new Date().toLocaleString('en-US', { timeZone: 'America/New_York', dateStyle: 'full', timeStyle: 'short' })} ET</p>
+        </div>
+        <div style="padding:20px 28px;">
+          <p style="font-size:13px;color:#94a3b8;margin:0 0 16px;">The Smart Scanner found <strong style="color:#00c8f0;">${newAlerts.length}</strong> high-confidence trade${newAlerts.length > 1 ? 's' : ''} (score 8+/10):</p>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;">
+                <th style="padding:8px 12px;text-align:left;">Stock</th>
+                <th style="padding:8px 12px;text-align:center;">Score</th>
+                <th style="padding:8px 12px;text-align:left;">Trade</th>
+                <th style="padding:8px 12px;text-align:left;">Price</th>
+                <th style="padding:8px 12px;text-align:left;">Analysis</th>
+              </tr>
+            </thead>
+            <tbody>${alertRows}</tbody>
+          </table>
+          <div style="margin-top:20px;padding:14px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:8px;">
+            <p style="margin:0;font-size:11px;color:#f59e0b;">⚠️ <strong>Reminder:</strong> Always do your own research. Use the Paper Trading simulator to practice before risking real money. These are signals, not financial advice.</p>
+          </div>
+          <div style="text-align:center;margin-top:20px;">
+            <a href="https://stratfordtradingacademy.com/options-toolkit.html" style="display:inline-block;background:linear-gradient(135deg,#00c8f0,#8b6fff);color:#fff;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;">Open Options Toolkit →</a>
+          </div>
+        </div>
+      </div>`;
+
+    // Send to admin emails
+    for (const email of ADMIN_EMAILS) {
+      try {
+        await emailService.sendEmail(email, subject, html);
+        console.log(`[ALERT] Sent ${newAlerts.length} alert(s) to ${email}`);
+      } catch (err) {
+        console.error(`[ALERT] Failed to send to ${email}:`, err.message);
+      }
+    }
+
+    // Mark as alerted
+    newAlerts.forEach(r => alertedToday.add(r.symbol));
+    alertCache.set(today, alertedToday);
+
+    // Clean old cache entries
+    for (const [key] of alertCache) {
+      if (key !== today) alertCache.delete(key);
+    }
+
+  } catch (err) {
+    console.error('[ALERT] Alert scan error:', err.message);
+  }
+}, {
+  timezone: 'America/New_York'
+});
+
+console.log('[ALERT] Options alert scanner active — runs every 5 min during market hours (9:30 AM - 4:00 PM ET, Mon-Fri)');
+console.log('[ALERT] Alerts sent to:', ADMIN_EMAILS.join(', '));
+
+// Manual trigger endpoint for testing
+app.get('/api/alerts/test', async (req, res) => {
+  console.log('[ALERT] Manual test trigger...');
+  try {
+    const results = await runAlertScan();
+    const highConf = results.filter(r => r.score >= 8);
+    res.json({
+      message: 'Alert scan complete',
+      totalScanned: results.length,
+      highConfidence: highConf.length,
+      alerts: highConf.map(r => ({ symbol: r.symbol, score: r.score, direction: r.direction, strike: r.suggestedStrike, type: r.suggestedType }))
+    });
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+});
+
+// ============================================
 // Start Server
 // ============================================
 app.listen(PORT, () => {
