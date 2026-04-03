@@ -323,11 +323,16 @@ function ppQuickBuy(sym, price) {
   document.querySelector('[data-tab="ppaper"]').classList.add('active');
   document.getElementById('tab-ppaper').classList.add('active');
   document.getElementById('ppTicker').value = sym;
-  window._ppPrice = parseFloat(price);
+  const p = parseFloat(price);
+  window._ppPrice = p;
   document.getElementById('ppStockInfo').style.display = '';
   document.getElementById('ppStockName').textContent = sym;
-  document.getElementById('ppStockPrice').textContent = '$' + parseFloat(price).toFixed(4);
+  document.getElementById('ppStockPrice').textContent = '$' + p.toFixed(4);
+  // Auto-fill SL at -10% and TP at +20%
+  if (document.getElementById('ppStopLoss')) document.getElementById('ppStopLoss').value = (p * 0.90).toFixed(4);
+  if (document.getElementById('ppTakeProfit')) document.getElementById('ppTakeProfit').value = (p * 1.20).toFixed(4);
   updatePPCost();
+  showToast('Pre-filled ' + sym + ' @ $' + p.toFixed(4) + ' — SL: -10%, TP: +20%');
 }
 
 function updatePPCost() {
@@ -335,22 +340,49 @@ function updatePPCost() {
   const cost = (window._ppPrice || 0) * shares;
   document.getElementById('ppCostPreview').textContent = '$' + cost.toFixed(2);
 }
-const ppSharesEl = document.getElementById('ppShares');
-if (ppSharesEl) ppSharesEl.addEventListener('input', updatePPCost);
+['ppShares', 'ppStopLoss', 'ppTakeProfit'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => {
+    updatePPCost();
+    // SL/TP preview
+    const price = window._ppPrice || 0;
+    const shares = parseInt(document.getElementById('ppShares').value) || 100;
+    const sl = parseFloat((document.getElementById('ppStopLoss') || {}).value) || 0;
+    const tp = parseFloat((document.getElementById('ppTakeProfit') || {}).value) || 0;
+    const preview = document.getElementById('ppSLTPPreview');
+    if (preview && price > 0 && (sl > 0 || tp > 0)) {
+      preview.style.display = '';
+      const slEl = document.getElementById('ppSLPreview');
+      const tpEl = document.getElementById('ppTPPreview');
+      if (slEl) slEl.innerHTML = sl > 0 ? '🛑 Stop Loss at $' + sl.toFixed(4) + ' — Max loss: <strong>$' + ((price - sl) * shares).toFixed(2) + '</strong> (' + (((sl - price) / price * 100)).toFixed(1) + '%)' : '';
+      if (tpEl) tpEl.innerHTML = tp > 0 ? '🎯 Take Profit at $' + tp.toFixed(4) + ' — Profit: <strong>+$' + ((tp - price) * shares).toFixed(2) + '</strong> (+' + (((tp - price) / price * 100)).toFixed(1) + '%)' : '';
+    } else if (preview) preview.style.display = 'none';
+  });
+});
 
 function ppBuy() {
   const ticker = document.getElementById('ppTicker').value.trim().toUpperCase();
   const shares = parseInt(document.getElementById('ppShares').value) || 100;
   const price = window._ppPrice;
+  const stopLoss = parseFloat((document.getElementById('ppStopLoss') || {}).value) || null;
+  const takeProfit = parseFloat((document.getElementById('ppTakeProfit') || {}).value) || null;
+
   if (!ticker || !price) { showToast('Enter ticker and fetch price first', 'error'); return; }
+  if (stopLoss && stopLoss >= price) { showToast('Stop loss must be below entry price ($' + price.toFixed(4) + ')', 'error'); return; }
+  if (takeProfit && takeProfit <= price) { showToast('Take profit must be above entry price ($' + price.toFixed(4) + ')', 'error'); return; }
+
   const cost = price * shares;
   const acc = getPPAccount();
   if (cost > acc.balance) { showToast('Not enough cash! Need $' + cost.toFixed(2), 'error'); return; }
   acc.balance -= cost;
-  acc.positions.push({ id: 'PP' + Date.now(), ticker, shares, price, cost, date: new Date().toISOString().split('T')[0] });
+  acc.positions.push({ id: 'PP' + Date.now(), ticker, shares, price, cost, date: new Date().toISOString().split('T')[0], stopLoss, takeProfit });
   savePPAccount(acc);
   renderPP();
   showToast('Bought ' + shares + ' shares of ' + ticker + ' @ $' + price.toFixed(4));
+  // Clear SL/TP fields
+  if (document.getElementById('ppStopLoss')) document.getElementById('ppStopLoss').value = '';
+  if (document.getElementById('ppTakeProfit')) document.getElementById('ppTakeProfit').value = '';
+  if (document.getElementById('ppSLTPPreview')) document.getElementById('ppSLTPPreview').style.display = 'none';
 }
 
 function ppSell(posId, exitPrice) {
@@ -392,15 +424,26 @@ function renderPP() {
   // Holdings
   const posC = document.getElementById('ppPositions');
   if (acc.positions.length === 0) posC.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3);font-size:13px;">No holdings. Buy some penny stocks!</div>';
-  else posC.innerHTML = acc.positions.map(p => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
-      <div>
-        <strong style="color:var(--green);font-family:var(--mono);">${p.ticker}</strong>
-        <span style="color:var(--text3);margin-left:6px;">${p.shares} shares @ $${p.price.toFixed(4)}</span>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">📅 ${p.date} | Cost: $${p.cost.toFixed(2)}</div>
+  else posC.innerHTML = acc.positions.map(p => {
+    const daysHeld = Math.floor((new Date() - new Date(p.date)) / (1000*60*60*24));
+    return `
+    <div style="padding:12px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <strong style="color:var(--green);font-family:var(--mono);font-size:14px;">${p.ticker}</strong>
+          <span style="color:var(--text3);margin-left:6px;">${p.shares} shares @ $${p.price.toFixed(4)}</span>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">
+            📅 ${p.date} (${daysHeld === 0 ? 'today' : daysHeld + 'd ago'}) | Cost: $${p.cost.toFixed(2)}
+          </div>
+        </div>
+        <button onclick="ppSell('${p.id}')" style="background:var(--red);color:#fff;border:none;padding:6px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;">Sell</button>
       </div>
-      <button onclick="ppSell('${p.id}')" style="background:var(--red);color:#fff;border:none;padding:6px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;">Sell</button>
-    </div>`).join('');
+      ${(p.stopLoss || p.takeProfit) ? '<div style="display:flex;gap:12px;margin-top:6px;padding:6px 10px;background:var(--bg3);border-radius:6px;font-size:11px;">' +
+        (p.stopLoss ? '<span style="color:var(--red);">🛑 SL: <strong style="font-family:var(--mono);">$' + p.stopLoss.toFixed(4) + '</strong> (' + (((p.stopLoss - p.price) / p.price * 100)).toFixed(1) + '%)</span>' : '') +
+        (p.takeProfit ? '<span style="color:var(--green);">🎯 TP: <strong style="font-family:var(--mono);">$' + p.takeProfit.toFixed(4) + '</strong> (+' + (((p.takeProfit - p.price) / p.price * 100)).toFixed(1) + '%)</span>' : '') +
+        '</div>' : ''}
+    </div>`;
+  }).join('');
 
   // History
   const hisC = document.getElementById('ppHistory');
