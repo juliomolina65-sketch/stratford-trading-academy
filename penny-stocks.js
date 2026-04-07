@@ -48,6 +48,9 @@ function runPennyScan() {
       const minVol = parseInt((document.getElementById('pMinVol') || {}).value) || 0;
       if (minVol > 0) results = results.filter(r => r.volume >= minVol);
 
+      const minConfidence = parseInt((document.getElementById('pConfidence') || {}).value) || 0;
+      if (minConfidence > 0) results = results.filter(r => r.score >= minConfidence);
+
       const sort = (document.getElementById('pSort') || {}).value || 'change';
       if (sort === 'change') results.sort((a, b) => Math.abs(parseFloat(b.changePct)) - Math.abs(parseFloat(a.changePct)));
       else if (sort === 'volume') results.sort((a, b) => b.volume - a.volume);
@@ -112,7 +115,10 @@ function renderPennyCards() {
 
     return `
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:12px;display:grid;grid-template-columns:56px 1fr 220px;gap:16px;align-items:start;cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'" onclick="pennyChartFromScan(${i})">
-        <div style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;font-family:var(--mono);${r.score >= 8 ? 'background:rgba(0,217,126,.15);color:var(--green);border:2px solid rgba(0,217,126,.3)' : r.score >= 6 ? 'background:rgba(0,200,240,.15);color:var(--accent);border:2px solid rgba(0,200,240,.3)' : 'background:rgba(245,158,11,.15);color:var(--amber);border:2px solid rgba(245,158,11,.3)'};">${r.score}</div>
+        <div style="width:56px;display:flex;flex-direction:column;align-items:center;gap:2px;">
+          <div style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;font-family:var(--mono);${r.score >= 8 ? 'background:rgba(0,217,126,.15);color:var(--green);border:2px solid rgba(0,217,126,.3)' : r.score >= 6 ? 'background:rgba(0,200,240,.15);color:var(--accent);border:2px solid rgba(0,200,240,.3)' : r.score >= 4 ? 'background:rgba(245,158,11,.15);color:var(--amber);border:2px solid rgba(245,158,11,.3)' : 'background:rgba(239,68,68,.15);color:var(--red);border:2px solid rgba(239,68,68,.3)'};">${r.score}</div>
+          <div style="font-size:8px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;${r.score >= 8 ? 'color:var(--green)' : r.score >= 6 ? 'color:var(--accent)' : r.score >= 4 ? 'color:var(--amber)' : 'color:var(--red)'}">${r.score >= 8 ? 'HIGH' : r.score >= 6 ? 'MEDIUM' : r.score >= 4 ? 'LOW' : 'RISKY'}</div>
+        </div>
         <div>
           <h4 style="font-size:16px;margin:0 0 4px;display:flex;align-items:center;gap:8px;">
             <span style="color:var(--green);font-family:var(--mono);">${r.symbol}</span>

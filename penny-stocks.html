@@ -82,11 +82,20 @@
           </select>
         </div>
         <div class="fg">
+          <label>Confidence</label>
+          <select id="pConfidence">
+            <option value="0" selected>All Levels</option>
+            <option value="8">🔥 High (8+)</option>
+            <option value="6">✅ Medium+ (6+)</option>
+            <option value="4">⚡ Low+ (4+)</option>
+          </select>
+        </div>
+        <div class="fg">
           <label>Sort By</label>
           <select id="pSort">
-            <option value="change" selected>Biggest Movers</option>
+            <option value="score" selected>Confidence Score</option>
+            <option value="change">Biggest Movers</option>
             <option value="volume">Highest Volume</option>
-            <option value="score">Confidence Score</option>
             <option value="price_low">Price (Low→High)</option>
           </select>
         </div>
