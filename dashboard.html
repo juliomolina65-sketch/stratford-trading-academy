@@ -7351,6 +7351,10 @@ async function logoutUser(){
   localStorage.removeItem('sa_paper_demo');
   localStorage.removeItem('sa_connected_brokers');
   localStorage.removeItem('sa_points');
+  localStorage.removeItem('sa_trades');
+  localStorage.removeItem('sa_calendar_notes');
+  userTradesCache=[];
+  _adminMembersData=[];
   const title=document.querySelector('#page-dashboard .page-title');
   if(title)title.textContent='Welcome back';
   const un=document.querySelector('.user-name');
