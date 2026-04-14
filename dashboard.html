@@ -9503,7 +9503,7 @@ async function loadMemberDetail(idx){
         var pnlS=t.pnl===null?'—':(t.pnl>=0?'+$'+t.pnl.toLocaleString():'-$'+Math.abs(t.pnl).toLocaleString());
         var actionC=t.action==='BUY'?'var(--green)':'var(--red)';
         var tTime=t.timestamp?(typeof t.timestamp==='object'&&t.timestamp.toDate?t.timestamp.toDate():new Date(t.timestamp)):null;
-        var tTimeStr=tTime?tTime.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+        var tTimeStr=tTime?tTime.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—';
         html+='<tr><td style="padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text3);font-family:var(--mono);font-size:10px;white-space:nowrap">'+tTimeStr+'</td>';
         html+='<td style="padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2)">'+(t.strategy||'—')+'</td>';
         html+='<td style="padding:6px 10px;border-bottom:1px solid var(--border);font-weight:600;color:'+actionC+'">'+t.action+'</td>';
@@ -12157,7 +12157,7 @@ function renderTradesTable(trades){
     var statusClass=t.status==='closed'?'sent':t.status==='open'?'pending':'failed';
     var pnlStr=t.pnl!==null&&t.pnl!==undefined?'$'+t.pnl.toFixed(2):'—';
     var pnlColor=t.pnl>0?'var(--green)':t.pnl<0?'var(--red)':'var(--text3)';
-    var timeStr=t.timestamp?new Date(t.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    var timeStr=t.timestamp?new Date(t.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—';
     return '<tr data-strategy="'+t.strategy+'" data-broker="'+(t.broker||'')+'" data-action="'+t.action+'" data-time="'+(t.timestamp||'')+'">'+
       '<td class="mono" style="font-size:11px;color:var(--text3)">'+timeStr+'</td>'+
       '<td><span class="badge '+actionClass+'">'+t.action+'</span></td>'+
