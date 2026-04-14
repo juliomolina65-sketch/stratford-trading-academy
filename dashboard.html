@@ -9119,6 +9119,7 @@ function nav(id,el,crumb){
   if(id==='rewards') updatePointsDisplay();
   if(id==='settings') loadSettingsUI();
   if(id==='admin-overview') renderAdminOverview();
+  if(id==='trades'){ loadUserTrades(200).then(function(trades){ renderTradesTable(trades); updateDashboardStats(trades); }); }
   if(id==='admin-members') renderAdminMembers();
   if(id==='admin-coupons') renderAdminCoupons();
   if(id==='admin-strategies') renderAdminStrategies();
